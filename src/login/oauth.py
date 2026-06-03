@@ -114,11 +114,36 @@ TOKEN_EXTRACTION_CONFIGS: dict[str, TokenExtractionConfig] = {
     "glm": TokenExtractionConfig(
         login_url="https://chatglm.cn",
         token_sources=[
-            TokenSource(type="cookie", key="chatglm_refresh_token"),
+            # GLM 把 refresh_token 存到 localStorage.token
+            # 同时存在 cookie chatglm_refresh_token（双保险）
             TokenSource(type="localStorage", key="token"),
+            TokenSource(type="localStorage", key="chatglm_refresh_token"),
+            TokenSource(type="localStorage", key="refreshToken"),
+            TokenSource(type="cookie", key="chatglm_refresh_token"),
+            # 拦截 chatglm.cn 的 Authorization 头
+            TokenSource(
+                type="networkHeader",
+                key="Authorization",
+                url_pattern="*://*.chatglm.cn/*",
+                extract_pattern="^Bearer\\s+(.+)$",
+            ),
+            TokenSource(
+                type="networkHeader",
+                key="Authorization",
+                url_pattern="*://*.bigmodel.cn/*",
+                extract_pattern="^Bearer\\s+(.+)$",
+            ),
         ],
         target_domains=[".chatglm.cn", "chatglm.cn", ".bigmodel.cn", "bigmodel.cn"],
-        success_url_patterns=["chatglm.cn", "bigmodel.cn"],
+        # 登录成功的 URL 模式（区分于登录页 / 静态资源）
+        success_url_patterns=[
+            "chatglm.cn/main",          # 主聊天页
+            "chatglm.cn/chat",
+            "chatglm.cn/conversation",
+            "bigmodel.cn/center",
+            "bigmodel.cn/big",          # 模型广场
+            "bigmodel.cn/console",
+        ],
         window_title="GLM Login",
     ),
     "yuanbao": TokenExtractionConfig(
@@ -659,6 +684,17 @@ class OAuthManager:
                 creds["serviceToken"] = value
             elif key == "xiaomichatbot_ph":
                 creds["xiaomichatbot_ph"] = value
+            elif key == "token":
+                # GLM 把 refresh_token 存到 localStorage.token
+                # 必须优先于通用 else 分支处理
+                if "refresh_token" not in creds and "chatglm_refresh_token" not in creds:
+                    creds["refresh_token"] = value
+                creds["token"] = value
+            elif key == "chatglm_refresh_token":
+                creds["chatglm_refresh_token"] = value
+                creds["refresh_token"] = value
+            elif key == "refreshToken":
+                creds["refresh_token"] = value
             else:
                 creds[key] = value
 
