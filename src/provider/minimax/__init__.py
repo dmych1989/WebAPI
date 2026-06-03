@@ -248,15 +248,130 @@ class MiniMaxProvider(BaseProvider):
     # ---- Health Check ----
 
     async def health_check(self) -> bool:
+        """健康检查：调用 agent.minimaxi.com 的 device/register 端点
+        （对齐 Chat2API src/main/proxy/adapters/minimax.ts requestDeviceInfo）
+
+        - JWT 格式 API Key → 解析 user_id → 构造 device/register 请求
+        - 200 + statusInfo.code==0 → 凭证有效
+        """
         try:
             await self.login()
+            api_key = self._api_key
+
+            # 解析 realUserID（从 JWT 解析或拆解 userId+token 格式）
+            real_user_id = None
+            jwt_token = api_key
+            if api_key and "+" in api_key:
+                parts = api_key.split("+", 1)
+                real_user_id = parts[0]
+                jwt_token = parts[1] if len(parts) > 1 else api_key
+            else:
+                # 尝试从 JWT 解析 user_id
+                import base64
+                try:
+                    if api_key and api_key.count(".") == 2:
+                        parts = api_key.split(".")
+                        payload_b64 = parts[1]
+                        padding = 4 - len(payload_b64) % 4
+                        if padding != 4:
+                            payload_b64 += "=" * padding
+                        payload = json.loads(
+                            base64.urlsafe_b64decode(payload_b64).decode("utf-8", errors="replace")
+                        )
+                        # JWT 中 user 在嵌套对象里 (e.g. {"user": {"id": "..."}})
+                        nested_user = payload.get("user") if isinstance(payload.get("user"), dict) else {}
+                        real_user_id = (
+                            payload.get("user_id")
+                            or payload.get("id")
+                            or nested_user.get("id")
+                        )
+                except Exception:
+                    pass
+
+            if not real_user_id:
+                logger.warning("[MiniMax] health_check: failed to extract realUserID from token")
+                return False
+
+            # 构造 device/register 请求（对齐 Chat2API）
+            import time
+            import hashlib
+            import uuid as uuidlib
+
+            AGENT_BASE = "https://agent.minimaxi.com"
+            random_uuid = str(uuidlib.uuid4())
+            unix_ms = str(int(time.time() * 1000))
+            timestamp = int(time.time())
+
+            user_data = {
+                "device_platform": "web",
+                "biz_id": "3",
+                "app_id": "3001",
+                "version_code": "22201",
+                "uuid": random_uuid,
+                "device_id": None,
+                "os_name": "Mac",
+                "browser_name": "chrome",
+                "device_memory": 8,
+                "cpu_core_num": 11,
+                "browser_language": "zh-CN",
+                "browser_platform": "MacIntel",
+                "user_id": real_user_id,
+                "screen_width": 1920,
+                "screen_height": 1080,
+                "unix": unix_ms,
+                "lang": "zh",
+                "token": jwt_token,
+                "timezone_offset": 28800,
+                "sys_language": "zh",
+                "client": "web",
+            }
+
+            # 构造 query string
+            query_str = "&".join(
+                f"{k}={v}" for k, v in user_data.items() if v is not None
+            )
+            data_json = json.dumps({"uuid": random_uuid})
+            full_uri = f"/v1/api/user/device/register?{query_str}"
+            unix_md5 = hashlib.md5(unix_ms.encode("utf-8")).hexdigest()
+            yy = hashlib.md5(
+                f"{full_uri}_{data_json}{unix_md5}ooui".encode("utf-8")
+            ).hexdigest()
+            signature = hashlib.md5(
+                f"{timestamp}{jwt_token}{data_json}".encode("utf-8")
+            ).hexdigest()
+
+            headers = {
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "zh-CN,zh;q=0.9",
+                "Content-Type": "application/json",
+                "Origin": AGENT_BASE,
+                "Referer": f"{AGENT_BASE}/",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+                "token": jwt_token,
+                "x-timestamp": str(timestamp),
+                "x-signature": signature,
+                "yy": yy,
+            }
+
             session = await self._transport._get_session()
-            async with session.get(
-                f"{self._api_base}/models",
-                headers=self._build_headers(),
-                timeout=aiohttp.ClientTimeout(total=10),
+            async with session.post(
+                f"{AGENT_BASE}{full_uri}",
+                json={"uuid": random_uuid},
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=15),
             ) as resp:
-                return resp.status == 200
+                if resp.status != 200:
+                    logger.debug(f"[MiniMax] health_check HTTP {resp.status}")
+                    return False
+                body = await resp.json()
+                status_info = body.get("statusInfo", {}) if isinstance(body, dict) else {}
+                if status_info.get("code") == 0:
+                    return True
+                logger.debug(
+                    f"[MiniMax] health_check failed: code={status_info.get('code')}, "
+                    f"message={status_info.get('message', '')[:100]}"
+                )
+                return False
         except Exception as e:
             logger.debug(f"[MiniMax] health_check failed: {type(e).__name__}: {e}")
             return False

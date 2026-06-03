@@ -86,9 +86,12 @@ class BaseOAuthAdapter(ABC):
 
 
 # ----------------------------------------------------------------------
-# 适配器注册表
+# 适配器注册表（使用工厂模式）
 # ----------------------------------------------------------------------
 
+from src.login.adapters.factory import AdapterFactory, create_adapter
+
+# 注册所有适配器
 from src.login.adapters.deepseek import DeepSeekAdapter
 from src.login.adapters.glm import GLMAdapter
 from src.login.adapters.kimi import KimiAdapter
@@ -98,22 +101,20 @@ from src.login.adapters.qwen import QwenAdapter
 from src.login.adapters.doubao import DoubaoAdapter
 from src.login.adapters.yuanbao import YuanbaoAdapter
 
-ADAPTERS: dict[str, type[BaseOAuthAdapter] | None] = {
-    "deepseek": DeepSeekAdapter,
-    "glm": GLMAdapter,
-    "kimi": KimiAdapter,
-    "minimax": MiniMaxAdapter,
-    "mimo": MiMoAdapter,
-    "qwen": QwenAdapter,
-    "doubao": DoubaoAdapter,
-    "yuanbao": YuanbaoAdapter,
-    "coze": None,  # Coze 使用 PAT，直接 API 验证
-}
+# 注册适配器
+AdapterFactory.register_adapter("deepseek", DeepSeekAdapter)
+AdapterFactory.register_adapter("glm", GLMAdapter)
+AdapterFactory.register_adapter("kimi", KimiAdapter)
+AdapterFactory.register_adapter("minimax", MiniMaxAdapter)
+AdapterFactory.register_adapter("mimo", MiMoAdapter)
+AdapterFactory.register_adapter("qwen", QwenAdapter)
+AdapterFactory.register_adapter("doubao", DoubaoAdapter)
+AdapterFactory.register_adapter("yuanbao", YuanbaoAdapter)
 
 
 def get_adapter(provider: str) -> Optional[BaseOAuthAdapter]:
-    """获取指定 Provider 的 OAuth 适配器"""
-    cls = ADAPTERS.get(provider)
-    if cls is None:
+    """获取指定 Provider 的 OAuth 适配器（向后兼容）"""
+    try:
+        return create_adapter(provider)
+    except ValueError:
         return None
-    return cls()

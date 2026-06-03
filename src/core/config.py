@@ -293,6 +293,10 @@ def save_config(cfg: AppConfig, config_path: Optional[Path] = None, encrypt_cred
                     account["token"] = credential_crypto.encrypt(account["token"])
                 if account.get("cookie") and not credential_crypto.is_encrypted(account["cookie"]):
                     account["cookie"] = credential_crypto.encrypt(account["cookie"])
+                if account.get("service_token") and not credential_crypto.is_encrypted(account["service_token"]):
+                    account["service_token"] = credential_crypto.encrypt(account["service_token"])
+                if account.get("xiaomichatbot_ph") and not credential_crypto.is_encrypted(account["xiaomichatbot_ph"]):
+                    account["xiaomichatbot_ph"] = credential_crypto.encrypt(account["xiaomichatbot_ph"])
 
     with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)

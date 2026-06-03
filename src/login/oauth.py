@@ -690,6 +690,8 @@ class OAuthManager:
         """保存凭证到 config.yaml（对齐 Chat2API 保存逻辑 + 实际 Provider API）"""
         self._emit_progress("pending", "Saving credentials to config...")
 
+        from src.utils.crypto import credential_crypto
+
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f) or {}
 
@@ -712,12 +714,13 @@ class OAuthManager:
             account.pop(f, None)
 
         # 根据 provider 类型保存字段（对齐各 Provider 传输协议）
+        # 所有凭证字段都要加密存储（对齐 Chat2API storeManager.encryptCredentials）
         if self.provider == "doubao":
             # 豆包：完整 Cookie 字符串
             cookie = credentials.get("cookie")
             if cookie and len(cookie) > 50:
-                account["cookie"] = cookie
-                self._emit_progress("success", f"Cookie saved ({len(cookie)} chars)")
+                account["cookie"] = credential_crypto.encrypt(cookie)
+                self._emit_progress("success", f"Cookie saved ({len(cookie)} chars, encrypted)")
             else:
                 self._emit_progress("error", "No valid cookie captured for Doubao")
                 return
@@ -726,19 +729,19 @@ class OAuthManager:
             cookie = credentials.get("cookie")
             x_token = credentials.get("x_token")
             if cookie and len(cookie) > 50:
-                account["cookie"] = cookie
-                self._emit_progress("success", f"Cookie saved ({len(cookie)} chars)")
+                account["cookie"] = credential_crypto.encrypt(cookie)
+                self._emit_progress("success", f"Cookie saved ({len(cookie)} chars, encrypted)")
             else:
                 self._emit_progress("error", "No valid cookie captured for Yuanbao")
                 return
             if x_token:
-                account["x_token"] = x_token
+                account["x_token"] = credential_crypto.encrypt(x_token)
         elif self.provider == "qwen":
             # 通义千问：tongyi_sso_ticket
             ticket = credentials.get("ticket") or credentials.get("tongyi_sso_ticket") or credentials.get("token")
             if ticket:
-                account["token"] = ticket
-                self._emit_progress("success", f"Qwen token saved ({len(ticket)} chars)")
+                account["token"] = credential_crypto.encrypt(ticket)
+                self._emit_progress("success", f"Qwen token saved ({len(ticket)} chars, encrypted)")
             else:
                 self._emit_progress("error", "No valid ticket captured for Qwen")
                 return
@@ -748,34 +751,34 @@ class OAuthManager:
             user_id = credentials.get("user_id")
             if token:
                 if user_id:
-                    account["token"] = f"{user_id}:{token}"
-                    account["user_id"] = user_id
+                    account["token"] = credential_crypto.encrypt(f"{user_id}:{token}")
+                    account["user_id"] = credential_crypto.encrypt(user_id)
                 else:
-                    account["token"] = token
-                self._emit_progress("success", f"MiniMax token saved")
+                    account["token"] = credential_crypto.encrypt(token)
+                self._emit_progress("success", f"MiniMax token saved (encrypted)")
             else:
                 self._emit_progress("error", "No valid token captured for MiniMax")
                 return
         elif self.provider == "mimo":
             # MiMo：3 个必需字段（对齐 Chat2API mimo.ts）
             service_token = credentials.get("service_token") or credentials.get("serviceToken") or credentials.get("token")
-            user_id = credentials.get("user_id")
+            user_id = credentials.get("user_id") or credentials.get("userId")
             ph_token = credentials.get("xiaomichatbot_ph") or credentials.get("ph_token")
             if not service_token:
                 self._emit_progress("error", "MiMo: serviceToken is required")
                 return
-            account["service_token"] = service_token
+            account["service_token"] = credential_crypto.encrypt(service_token)
             if user_id:
-                account["user_id"] = user_id
+                account["user_id"] = credential_crypto.encrypt(user_id)
             if ph_token:
-                account["xiaomichatbot_ph"] = ph_token
-            self._emit_progress("success", "MiMo credentials saved")
+                account["xiaomichatbot_ph"] = credential_crypto.encrypt(ph_token)
+            self._emit_progress("success", "MiMo credentials saved (encrypted)")
         elif self.provider == "glm":
             # 智谱 GLM：Bearer Token
             token = credentials.get("token") or credentials.get("refresh_token")
             if token:
-                account["token"] = token
-                self._emit_progress("success", f"GLM token saved ({len(token)} chars)")
+                account["token"] = credential_crypto.encrypt(token)
+                self._emit_progress("success", f"GLM token saved ({len(token)} chars, encrypted)")
             else:
                 self._emit_progress("error", "No valid token captured for GLM")
                 return
@@ -783,8 +786,8 @@ class OAuthManager:
             # Coze: PAT
             token = credentials.get("token")
             if token:
-                account["token"] = token
-                self._emit_progress("success", "Coze token saved")
+                account["token"] = credential_crypto.encrypt(token)
+                self._emit_progress("success", "Coze token saved (encrypted)")
             else:
                 self._emit_progress("error", "No token captured for Coze")
                 return
@@ -797,8 +800,8 @@ class OAuthManager:
                 or credentials.get("refresh_token")
             )
             if token:
-                account["token"] = token
-                self._emit_progress("success", f"Token saved ({len(token)} chars)")
+                account["token"] = credential_crypto.encrypt(token)
+                self._emit_progress("success", f"Token saved ({len(token)} chars, encrypted)")
             else:
                 self._emit_progress("error", f"No valid token captured for {self.provider}")
                 return

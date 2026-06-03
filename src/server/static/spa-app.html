@@ -1329,7 +1329,7 @@ function showLoginWaitingModal(provider) {
     minimax: '1. 用浏览器打开 MiniMax 并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
     doubao: '1. 用浏览器打开豆包并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取 Cookie 后关闭浏览器',
     yuanbao: '1. 用浏览器打开腾讯元宝并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
-    glm: '智谱 GLM 使用官方 API Key，请点击「手动输入」',
+    glm: '1. 用浏览器打开 chatglm.cn 并登录账号<br>2. 按 F12 打开开发者工具 → Application → Local Storage<br>3. 找到 key 为 <code>token</code> 的值，粘贴到下方<br>4. 系统将自动验证 refresh_token 并获取 access_token',
     mimo: '1. 用浏览器打开小米 AI Studio 并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
   };
   const tip = tips[provider] || '请在浏览器中完成登录，系统将自动提取凭证...';

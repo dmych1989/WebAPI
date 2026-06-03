@@ -925,7 +925,7 @@ async def oauth_browser_login(provider: str):
     """
     from src.login.oauth import OAuthManager, TOKEN_EXTRACTION_CONFIGS
 
-    SUPPORTED = {"deepseek", "kimi", "qwen", "minimax", "doubao", "yuanbao", "mimo"}
+    SUPPORTED = {"deepseek", "kimi", "qwen", "minimax", "doubao", "yuanbao", "glm", "mimo"}
 
     if provider not in SUPPORTED:
         return {

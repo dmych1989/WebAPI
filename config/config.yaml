@@ -14,45 +14,13 @@ load_balance:
 providers:
   deepseek:
     enabled: true
-    accounts:
-    - name: account-1
-      token: enc:v1:gAAAAABqH-ipw0B1MtN9ZMkrGYw6xq_A2NW58Y5HvQhT-RAnLE6XEVi0amw83JqBgA9YZ3cgUvaCm3X3F2L-C_JJhHvmbw-E0KNuDIufhOCLnHBgjl_e2X0c6yRo9coZlVA1WUhUvGbcX8bNpxsTx9FXJ7Q3bNk5wViqZ0Ns8Mxl9tv-iZt4kg0=
-      cookie: enc:v1:gAAAAABqH-ipDG6MNpap5tM_32QF4VwycFLUdngdnZg94OSow-A5t-exWmFxMcXRy1KY856XTkDN0OqwEz0_5eEHK8h3K8lylg0uSoXFDp5Jut-TdK5I19CkMasskcQAoN7FveblzJwighudXegP-KTmfB3-iJCexVK2oH9A5Z6qWrve6QJ7xX8pz7J1Cm4DJaFh78LT-H4q9D5tAhKEo4NZPMN35j9kqUiYBMMNBXo6db-i3Nn9TUfS7o3qhr244TV-N_rICahzkGW4MM2Ce408gfYwgLMCUWcMxbmDIierCkMbPcu07koNRTQW6jX7JmRsOMewZYr53YufzlxOzoHHk9HCTvW-RP8H03HpruFCxHkMC5gIC2q5hVvMHt79jOalx6PS_AhhgFtgki_FxXbBocth1OYoj1UjgH28sCtwRGfAy5oO4FxMS6fk9qZuwhLxrVwJE7lUbRrzMKfu8vPP3c87E5sy4WY0-sxGhPKwC2ESkUF0Ugs=
-      user_id: ''
-      models:
-      - deepseek-chat
-      - deepseek-reasoner
-      - deepseek-v4-flash
-      - deepseek-v4-pro
-      max_concurrent: 5
-      health_check_interval: 60
-      enabled: true
+    accounts: []
   kimi:
     enabled: true
-    accounts:
-    - name: account-1
-      token: enc:v1:gAAAAABqH-ip99jXvxlyDZW37lDHq8bzipeO4KeUDXdIKU-hcv7kt7-7iQWEUmkCMWtkxG9MKVZkbXRVsWGzsTAeJUvzBHoq1u4pmTVEO_07A84OLlatD2ixV7VxuGHlkkuGi_oZdrT9oieI7hqpbJodRqtrwOTciiPX9AIAchcOxNF9Pilj2SwIi43lTi5ftEkoP7NYWHu0bqJzAYUGGDNmPwGK9BXJKz7xbZG5_iT5YWifxLDG8BPluvaH-r-u_2lkclenVgge67_RlnzPzbD6Irs-v0YuDwrJSAweU1l2NQPX88i6oFI7ZvWSLqPjLhfgtlB7UmNU-nF8aboZennaQ0RlzGqC4XABgVCaJf36ZzR5VvG8qk1Z0NoZidmZ0UG42wecuS2ebH4rXU9j5WKbr79SzghZO3wbyVisaWdOVEkG9FcYtZJpdqTxHA_pMdHmuQm3qPKnsTGuq4tBOP42KlfHjhf37SlBEh7kvMutKpUc_blPYarAMC6lOc2hVdwHYd3cbmdgvgZbPvE7bZr6XMv6Wt7iMEOZ28d5Je3H71OhJTBVUvDwQ3GwHQ-XpNGpfZiSrWTaPy-wRUB-VfNjx3hYhcs89BA-3iAzPMhP0IcHo5ScqA1hofNod6kI0LSvYTauirBhLCUIClhsUf7Wqj3kfi-AeenAJ0ZPGKD_M9jf1DW0rL9BkYMJXGAB2RdqD0_sL_6M0_VYqrzRUgX2QNWFXxSjon3ZsPpaNSagnaLTQwIr-z3t4k6F1-DeNdrL3nvWEWekU-fK-pVmZGd-G4MIZSsSYGfC-o2P-wSUNa6sncurKlI=
-      cookie: ''
-      user_id: ''
-      models:
-      - Kimi-K2.6
-      max_concurrent: 5
-      health_check_interval: 60
-      enabled: true
+    accounts: []
   qwen:
     enabled: true
-    accounts:
-    - name: account-1
-      token: enc:v1:gAAAAABqH-ipSWhq5VnuB3FzTBFPgSoKsrjpiMuuW5pamOvo11ow_R6YUliOWRCC588W_HjL3IGRUcyns0uoMRpsE-8sG3Y-SeVt7AukzwucGFKhOBG-0I8QHRJe_F4nhyvz8cR03VcnJnlofFW23CpORWiTp3yhHOpvNFlYKqZ2FpQJkqoJoyQ=
-      cookie: ''
-      user_id: ''
-      models:
-      - qwen-max
-      - qwen-plus
-      - qwen-turbo
-      max_concurrent: 5
-      health_check_interval: 60
-      enabled: true
+    accounts: []
   minimax:
     enabled: true
     accounts: []

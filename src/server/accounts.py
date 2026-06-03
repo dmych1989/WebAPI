@@ -29,20 +29,24 @@ router = APIRouter()
 
 class CreateAccountRequest(BaseModel):
     """创建账号请求"""
-    name: str = Field(..., min_length=1, description="账号名称")
+    name: str = Field(..., validation_alias="account_name", description="账号名称")
     token: str = Field(default="", description="Bearer Token / JWT")
     cookie: str = Field(default="", description="Cookie 字符串")
     user_id: str = Field(default="", description="Real User ID")
+    service_token: str = Field(default="", description="MiMo serviceToken")
+    xiaomichatbot_ph: str = Field(default="", description="MiMo xiaomichatbot_ph")
     models: list[str] = Field(default_factory=list)
     max_concurrent: int = Field(default=5, ge=1, le=20)
 
 
 class UpdateAccountRequest(BaseModel):
     """更新账号请求（所有字段可选）"""
-    name: Optional[str] = Field(default=None, min_length=1)
+    name: Optional[str] = Field(default=None, validation_alias="account_name", min_length=1)
     token: Optional[str] = None
     cookie: Optional[str] = None
     user_id: Optional[str] = None
+    service_token: Optional[str] = None
+    xiaomichatbot_ph: Optional[str] = None
     models: Optional[list[str]] = None
     max_concurrent: Optional[int] = Field(default=None, ge=1, le=20)
     enabled: Optional[bool] = None
@@ -79,12 +83,15 @@ async def list_accounts(provider: str):
             "has_token": bool(acc.token),
             "has_cookie": bool(acc.cookie),
             "has_user_id": bool(acc.user_id),
+            "has_service_token": bool(getattr(acc, "service_token", None)),
+            "has_xiaomichatbot_ph": bool(getattr(acc, "xiaomichatbot_ph", None)),
             "models": acc.models,
             "max_concurrent": acc.max_concurrent,
             # 脱敏显示凭证前几位
             "token_preview": (acc.token[:20] + "..." if acc.token and len(acc.token) > 20 else acc.token) if acc.token else "",
             "cookie_preview": (acc.cookie[:30] + "..." if acc.cookie and len(acc.cookie) > 30 else acc.cookie) if acc.cookie else "",
             "user_id_preview": acc.user_id or "",
+            "service_token_preview": (getattr(acc, "service_token", "")[:20] + "..." if getattr(acc, "service_token", None) and len(getattr(acc, "service_token", "")) > 20 else getattr(acc, "service_token", "")) if getattr(acc, "service_token", None) else "",
         })
 
     return {"provider": provider, "accounts": accounts, "total": len(accounts)}
@@ -99,8 +106,8 @@ async def create_account(provider: str, body: CreateAccountRequest):
     if provider not in ProviderRegistry.list_all():
         raise HTTPException(status_code=400, detail=f"Unknown provider: {provider}")
 
-    if not body.token and not body.cookie:
-        raise HTTPException(status_code=400, detail="至少需要提供 token 或 cookie")
+    if not body.token and not body.cookie and not body.service_token:
+        raise HTTPException(status_code=400, detail="至少需要提供 token、cookie 或 service_token")
 
     config = get_config()
     provider_config = config.providers.get(provider)
@@ -124,6 +131,11 @@ async def create_account(provider: str, body: CreateAccountRequest):
         health_check_interval=60,
         enabled=True,
     )
+    # MiMo 专用字段
+    if body.service_token:
+        new_account.service_token = body.service_token
+    if body.xiaomichatbot_ph:
+        new_account.xiaomichatbot_ph = body.xiaomichatbot_ph
     provider_config.accounts.append(new_account)
 
     save_config(config)
@@ -177,6 +189,17 @@ async def update_account(provider: str, account_name: str, body: UpdateAccountRe
     if body.user_id is not None:
         target.user_id = body.user_id
         changes.append("user_id")
+    if body.service_token is not None:
+        target.service_token = body.service_token
+        changes.append("service_token")
+        account_pool.mark_healthy(provider, account_name)
+        for s in account_pool._accounts.get(provider, []):
+            if s.name == account_name:
+                s.cooldown_until = 0.0
+                break
+    if body.xiaomichatbot_ph is not None:
+        target.xiaomichatbot_ph = body.xiaomichatbot_ph
+        changes.append("xiaomichatbot_ph")
     if body.models is not None:
         target.models = body.models
         changes.append("models")
