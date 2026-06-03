@@ -87,6 +87,18 @@ class BaseProvider(ABC):
         """生成对话标题（可选）"""
         return ""
 
+    async def clear_conversations(self) -> dict:
+        """清除所有对话历史（Provider 可选实现）
+
+        Returns:
+            dict: {
+                "ok": bool,
+                "deleted_count": int,
+                "detail": str,
+            }
+        """
+        return {"ok": False, "deleted_count": 0, "detail": "该 Provider 未实现 clear_conversations"}
+
 
 # =============================================================================
 # Provider 注册中心

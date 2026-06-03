@@ -557,3 +557,41 @@ class DeepSeekProvider(BaseProvider):
             return True
         except Exception:
             return False
+
+    # ---- Clear Conversations ----
+
+    async def clear_conversations(self) -> dict:
+        """删除 DeepSeek 的所有历史对话
+
+        流程:
+        1. GET /v0/chat_session/fetch_page 列出所有 session
+        2. POST /v0/chat_session/delete_batch 批量删除
+        """
+        try:
+            token = await self.login()
+            session = await self._transport._get_session()
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            }
+
+            # 1. 列出所有 session
+            list_url = f"{DEEPSEEK_BASE}/v0/chat_session/fetch_page?p=0&ps=200"
+            async with session.get(list_url, headers=headers) as resp:
+                if resp.status != 200:
+                    return {"ok": False, "deleted_count": 0, "detail": f"列出 session 失败: HTTP {resp.status}"}
+                payload = await resp.json()
+            data = payload.get("data", {})
+            sessions = data.get("chat_sessions", []) or data.get("sessions", []) or []
+            if not sessions:
+                return {"ok": True, "deleted_count": 0, "detail": "没有历史对话"}
+
+            # 2. 批量删除
+            ids = [s.get("id") for s in sessions if s.get("id")]
+            del_url = f"{DEEPSEEK_BASE}/v0/chat_session/delete_batch"
+            async with session.post(del_url, json={"chat_session_ids": ids}, headers=headers) as resp:
+                if resp.status != 200:
+                    return {"ok": False, "deleted_count": 0, "detail": f"批量删除失败: HTTP {resp.status}"}
+                return {"ok": True, "deleted_count": len(ids), "detail": f"已删除 {len(ids)} 个对话"}
+        except Exception as e:
+            return {"ok": False, "deleted_count": 0, "detail": str(e)}

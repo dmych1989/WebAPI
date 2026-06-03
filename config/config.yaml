@@ -16,14 +16,11 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      token: enc:v1:gAAAAABqH2-nVKFRu2C8iOxinYgCbMj1CAFgJnzpOXC_FycXFWliYJ5-4dzj4zsPmkdCEy1x-D2pBTzEC4PfvOaf0Xd63ROeCzsJ1uWL-6mFCXE4h-y2xSKdnUe6Nndz8MLhiXxk0jqv2NHsmND_CLJYapBQYE37ylJu-kpW82RJtPWKhPbqtdg=
-      cookie: enc:v1:gAAAAABqH2-n-9ixCyerEHyOVsPGQrV_soafNeLHOpDGZldB720TABnWoliLG457O6v5ySde1k1j9B-TebId1cHRBwoRpeOrzHx0MEARRZHZHMk4TJkRCj89yGEEoOzMcnGVf07M0pXV6fo3PAAtrrJ0LlOqNPT4qR01WKwej7c8jZ5x_od3z0ItgXvEpVKpknFGCroeXJZtvrb2Rj4TPeJlhbncXqEcCmEUaNv8RcLkj-CzRsnudvPE-m2AvyclsGc75DF9fMABaWNxlhJ0ZNZ02GzDTAPzRiA2-hCU9EFmVWoO4P3-mRLRPt0i5aTf_bJ5Y2Z402D0z3oHEZkYytm-yazKx0Y39XbEb1542O9U2qkHv7BPNRF1SL4lfLpWY8i30WlY4yG7huMi_pTpyxijpUX798XYbmg6MLRSrzOKE204UId-A037uHrMEiqnv1wAPwEVe3cpWKg3JyrTKtkXv-Lpmkmq8cgciWqj8CMgcfdwGpo9SFU=
-      models:
-      - deepseek-v4-flash
-      - deepseek-v4-pro
+      models: []
       max_concurrent: 5
       health_check_interval: 60
-      enabled: true
+      token: enc:v1:gAAAAABqH4-0YQ-kGZYnPvRY0n1OiEjwjTqEaLXMrEA3kZQ1eLAJURADTgei2w2OOoNtE-zNk0MFi5uT8xk9kIsPkKLyi3GzKnMOxp2cbtvFJ76sRh8XNba_3QAsZjSwg4yxq0LwvjOLq4eb9HzncS3sxOGxvB2cY9xaipH_PdsuZ_Rr5eQP_3c=
+      cookie: enc:v1:gAAAAABqH4-0CmWg1WEnmcACFlnBvxWrpZedlTR9Gspk2dp0d1tJzt5T_F0iQCQcq1aC7opkhE38YsHn1EJnz85TYKHb2Mk7eF1c-TwZiVzZ9TcRbuQhR2550N3rvR1D1V8yM9Wu-a3vM450UkO78TsGhpwj86BDn6F09n5zxSmt3s66WNcbtgQ4gfb7U8b44vYH2W1S37GQPneZjsX8Cqn53LfGcbF3wM1TFVGHnBWaLbxDRiFqvlx4nhyXoPs2nMtaOt3Hu6QwyFECMvekn9LyeCQCdBLCcSq0RvILJY4DGJnw7AhPoq612v70wQsQ81cU5xgLYyfMCD7iREhhXtXVYXpdd9fDtLb8yHRamd1kLUmsZg_aAhStpRzbW8Su-ShVBtrOdwyBpXwH9eUnrs7fSS3Qx7ZHcm01BN7J6FTpwFjS6heu9gPNsCM-EnluItTdvCgGBpDpCv9Z6UPYXuw9Fg4gZmJANbcOnpulZh40pjR8rqPx12U=
   kimi:
     enabled: true
     accounts:
@@ -36,10 +33,10 @@ providers:
       health_check_interval: 60
       enabled: true
   qwen:
-    enabled: false
+    enabled: true
     accounts:
     - name: account-1
-      token: enc:v1:gAAAAABqH2-nnXnblClWOohrnYT_X0XYe_H8iaQ1I3ytsBw9zYWv6DZnBkJGLW5Egi_MIkGULGpo4aZZQsFWS-xk3JtF_c-2BbhSbUWbBiaSxAtkKUm1BjI=
+      token: ''
       cookie: ''
       models:
       - qwen-max
@@ -49,10 +46,10 @@ providers:
       health_check_interval: 60
       enabled: true
   minimax:
-    enabled: false
+    enabled: true
     accounts:
     - name: account-1
-      token: enc:v1:gAAAAABqH2-nO6wwVZCwZgwAVw4mSdI3GpDzkImSlbKGE7-7fG8Gp-gqUJlaTv26YJ2SbJE8uXaWPBDrStc-Z934FYVtFX8yGWxyHCmP6ciwKRHTKpYkVfY=
+      token: ''
       cookie: ''
       models:
       - MiniMax-Text-01
@@ -64,8 +61,11 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      token: ''
-      cookie: enc:v1:gAAAAABqH2-nirr-2j6KZunJuyMnrCrDkLxMOINK2sZsyKwltekOsZeWauN0_xNEO4jWEHI9EPR8Da8Z1MRjLDvYSBWfn1_Ff31lM1Ku0f_rGJftxjlD3Qze-1uypHmYgoqvLgucSsVL_cgxzWE1iIuph_PlZcsNg7uv7ugxx-VY7yWvm2_uEDMn7_-Ij7EB7jjY4_IWPR5BNNkmL9Em8FTJMSW0LLJQFzMzBR-SrVSNuP_-D0xMK4VNSrJRSNJ6pCWaIAhedsDKXVVeAQzbfmfWvNmrkJ7KIIyjIELgBCJ3x8IIrYqxmVYdKaRaJ-NDnwALLfDsckKSWLtNI1lDzQmgmXfyiIZimLhzjTMcHZCguwrYqU6YWb2RNhJ6OMmMAdB2X7bJ-219PCWMWUIdIliaBfaSsFNq4uaRNuOBf_14pVj5sE65fNS7Cvf0Cawz2giRMcBfZmKf66g1uZ3tk-k5vdJJwU9-QtmeTzmWbaQTtr2wP3X8vqC-AHIqnULhD3u8GM8yBJNCZB1v1BSEUbREHheRcmgs_I2I_aywLH4MvV8OYRL-BRGYtGyXxyjqm-mMWZP5kFAHrw53hRc9NqtrcOCxDkAwrWL0fRPMEh4fB8u4iKkePyW04KI_MAMxmZbUL0a12txQqbk6WoBQK8zyaDcceYg0BPBXAjju2EYdLzcsdUFfoyhJhjyg9u_wqb2OkeUJCtclLu3DFIoLrebABg89XV-4tn_byJdUM6lGCTPNER4c05UsSS8U0QuQS0Z9ofmcdkZIjXY01kCWEiHasMm7XYfzXekasL_jwd5d4plGObeyKacsdZ8uIt1An1wVYJk6eoKDfzvMvNMDvfJGKS7oZ0tCvZ7iJaOQkZlUkY8mfSHOkl_2DZSEcELoQypicBv7d6HTPP4y4EOgxgRNcCeCvD5iSw==
+      cookie: hook_slardar_session_id=202606030945451D6017C187761DD6CAA2; i18next=zh;
+        flow_ssr_sidebar_expand=1; flow_user_country=CN; passport_csrf_token=2f7032c9b2ec1a8580223c1a5786064e;
+        passport_csrf_token_default=2f7032c9b2ec1a8580223c1a5786064e; odin_tt=44311746a55f9051bf11053d6c7f574ed42029e373f8a5b88d38cc8d5bc073860f631bed161c8981d5115e6f7094b19028fb2de88af046c182de7f37580a57d9428d8d1a8ecb904895d0a1b9aa9456d9;
+        s_v_web_id=verify_mpwc1xkw_klen98Hp_dhJO_41vJ_903z_8V8s5ZufNncG; ttwid=1%7CqLB147q1dEocY-E-v0a9u_lBHOJM7Pmex_wF5XnXyYY%7C1780451145%7C91d0b439cfeb22a20783bc96ea40e2d96d2a64f84919a0a567bbf1bcf99d3aa4;
+        biz_trace_id=6ea98cfc
       models:
       - doubao-pro-32k
       - doubao-lite-32k
@@ -76,17 +76,17 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      cookie: _qimei_uuid42=1a6020e0c201004a3bea60b03f3e66e1e43bd97649; _qimei_fingerprint=1dbff698f586ffa0e1f4e12567c0b712;
-        _qimei_i_3=56f84d85c65252dd9295fa38588070e5f0bff5f0415905d1e0887b5d72c72964626234943989e2a197a7;
+      cookie: _qimei_uuid42=1a6020e0c201004a3bea60b03f3e66e1e43bd97649; _qimei_i_3=56f84d85c65252dd9295fa38588070e5f0bff5f0415905d1e0887b5d72c72964626234943989e2a197a7;
         _qimei_h38=b8856f923bea60b03f3e66e10200000ad1a602; _ga=GA1.1.1756704052.1780380759;
         ui=A094E9C8-CDF8-4A41-9644-64D05DECB066; __aegis_uid=34ce7f000001b108-36f76ef0f9bb75d1-6253;
-        _qpsvr_localtk=0.21456432643372025; pt_login_sig=r9ua7oMP9Md*k16p2zQpfsMUku-7sVYjY6zAuhMPuG43YMo6QK7RiasY8ydRDUiD;
-        pt_clientip=9db66ef0f9bb01fc; pt_serverip=e78c7f0000014809; pt_local_token=-162216226;
-        uikey=c151d448c9986a4b93fb7e0d56f369d55c08984d6ab3bc403779ee8febf9e549; pt_guid_sig=59c2c11174159570ee41014ab5f1a6cfcace55a5d0fdbd8cd022193590a101b1;
-        olu=c149e3d6ef96122dfda1bd4cbbf46c753e2b119450a5099e; qrsig=2f195b29f4ecb7c04da7bccb69be65c659d6c2915dbfe12cc37f6ea2fa60436f83a265768c6ca951086fd1f137b4bb1f5a1648a8757e576ff9793117f59d7e9c;
-        _qimei_i_1=6fed6bd09d5255dd979efc3309d122e6f7bca4f244585684b2da29582493206c616366c139d8e4dcd4aad5d9;
-        _TDID_CK=1780445546399; 561553b295037d16=fOu4jFT03zzry8nLDQqFeM%2F3O9tr%2BaXme86dXdlXx%2Be%2Flc4zao8gLDseNUgXs1fmFN%2FXs9vOwG32tmDhwmY2zZziaUVCAbHeKK4ZPYtRw96VK%2B5ETZT2ry%2BYnXjUZbsuYyutY4AGeIfeFD0BSho6CQQOLLYqiJubadVprcwquvs6ZQTegMYfIX4nsKJKlJTItNzKraw%2FD5VaA4emDxayyKfD9G0n8NG2foWh4R1LQP86Kgec0jiujnP%2FPV10wFKztPs2ZjZ9yYU44IlTzEtOUJ3PmMXm2OEamkFKVKHFyN54gex6v5HOEA%3D%3D;
-        _ga_6P1G7NCG3R=GS2.1.s1780445547$o3$g0$t1780445547$j60$l0$h1883360415
+        _qpsvr_localtk=0.21456432643372025; olu=c149e3d6ef96122dfda1bd4cbbf46c753e2b119450a5099e;
+        qrsig=2f195b29f4ecb7c04da7bccb69be65c659d6c2915dbfe12cc37f6ea2fa60436f83a265768c6ca951086fd1f137b4bb1f5a1648a8757e576ff9793117f59d7e9c;
+        561553b295037d16=fOu4jFT03zzry8nLDQqFeM%2F3O9tr%2BaXme86dXdlXx%2Be%2Flc4zao8gLDseNUgXs1fmFN%2FXs9vOwG32tmDhwmY2zZziaUVCAbHeKK4ZPYtRw96VK%2B5ETZT2ry%2BYnXjUZbsuYyutY4AGeIfeFD0BSho6CQQOLLYqiJubadVprcwquvs6ZQTegMYfIX4nsKJKlJTItNzKraw%2FD5VaA4emDxayyKfD9G0n8NG2foWh4R1LQP86Kgec0jiujnP%2FPV10wFKztPs2ZjZ9yYU44IlTzEtOUJ3PmMXm2OEamkFKVKHFyN54gex6v5HOEA%3D%3D;
+        _qimei_fingerprint=97926863301956edce9081f2b2edf32a; _TDID_CK=1780451136352;
+        _qimei_i_1=25ff2ed09d5255dd979efc3309d122e6f7bca4f244585684b2da29582493206c616366c139d8e4dcd4f7e3fb;
+        _ga_6P1G7NCG3R=GS2.1.s1780451139$o4$g0$t1780451139$j60$l0$h1339275442; pt_login_sig=NQUnKU-U2nQ7K1WOFDibf6py-iKVw8pEMBX*YcAMOMVKkiBAffR2MZTUQRGDU4zU;
+        pt_clientip=e6096ef0f9bbf708; pt_serverip=05747f000001d21f; pt_local_token=1211297483;
+        uikey=33e0409e603b277db08edae6b4081a870ad62871ed2eb822252741bb24d6086e; pt_guid_sig=358dcdbc21de5af72af9a8acc1fdae24f9289ef3e679f05479f1f7a2e2430aeb
       models:
       - hunyuan-pro
       - hunyuan-turbo
@@ -97,8 +97,16 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      token: ''
-      cookie: ''
+      cookie: acw_tc=3ccdc16d17804509488138684e24682fcd68165bebff9de8b878cdb539d2a2;
+        HMACCOUNT_BFESS=8F973236EEA997D5; Hm_lvt_a1b1a5545a8f11fdd72d54f10971c4ea=1780450951;
+        HMACCOUNT=8F973236EEA997D5; sensorsdata2015jssdkchannel=%7B%22prop%22%3A%7B%22_sa_channel_landing_url%22%3A%22%22%7D%7D;
+        sajssdk_2015_cross_new_user=1; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%2219e8b258211fc2-05050e89cc2afb8-26011851-2073600-19e8b2582121a45%22%2C%22first_id%22%3A%22%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMTllOGIyNTgyMTFmYzItMDUwNTBlODljYzJhZmI4LTI2MDExODUxLTIwNzM2MDAtMTllOGIyNTgyMTIxYTQ1In0%3D%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%22%2C%22value%22%3A%22%22%7D%7D;
+        _ga=GA1.1.987882119.1780450952; acw_tc=3ccdc16d17804509507558782e2468d1f66565e5c0e8202390612cc44ad6a2;
+        605ea18895037d16=KhxnW5kHsyXP18lbthjra6dpGUc51nZLqhGtG5W9XDfkIydDLJoxfMiEcoplKMfsYCCwworxaCZV1Vyw3FB6WlU%2Frwv5ac64ldeK%2B5qVuPGbteFMSHnRAU6NZWAY0ngbTJuCSctU%2BK29Lpnn14hfoLL47n3rzdCUIFGndmFRQjw8l0WPYOlcIqdB7rqRxYstMTHrTDbMBqnv3r5OAHw37y8nObquYwR%2FU%2Bag59UeUhpqZjg92Q%2BYIhDjKbK23cRWlSoyunZ4%2BTyFK5obavxWUaYyfo45QTIEzOtChfSnlUqhekMT%2F%2F8Y4w%3D%3D;
+        Hm_lpvt_a1b1a5545a8f11fdd72d54f10971c4ea=1780451126; _ga_SF8X67RPF9=GS2.1.s1780450951$o1$g1$t1780451127$j60$l0$h0;
+        _TDID_CK=1780451127702; sensorsdata2015jssdksession=%7B%22session_id%22%3A%2219e8b25821b1def0e6d70dd60023f826011851207360019e8b25821c1570%22%2C%22first_session_time%22%3A1780450951706%2C%22latest_session_time%22%3A1780451129107%7D;
+        SERVERCORSID=9a4fea2aa7602ad876b7fe538a245c3a|1780451127|1780450950; ssxmod_itna=1-eqIxnD9DRDBGqBIxYjxY5iOQG73i=i8qDzxC59K0CDmxjKid3DUiYN0jtK2DDwhyGxsjGGvtKSD0yDNwDA5Dnzx7YDt=SphzSiDh5iGdaD24Ed3B6mHXpFiLIZGnRkVFzCdeijCD4KoTuYPKxGLDY=DCwGxMkeD4f3Dt4DIDAYDDxDWf4DLDYoDYRT5xGpdMQnrXQbQD0YDzqDgD7QQUeDEDG3D0Sb4BEAduci=gxDlBoOzWiddDYpdxc0727FDAwDiqSbDjdPD/RwXggbDGqC2g2WiutYvT3RHsPGuDG=kZe2OprTWPcrv=_PpmP=4xheNje4Cqd7DzA5qAqzDxqAG50GKfqojiN0DIPrb7ebQYDnmtY0YKnGCqb_5ZUypRy/KxbUxxT4ebRzQ4xGGPV_sYwtn7N/ri/pxeRYlGPY_xlE57mGj0YeA77IzFF5xnYDEx5xasrY=ADD;
+        ssxmod_itna2=1-eqIxnD9DRDBGqBIxYjxY5iOQG73i=i8qDzxC59K0CDmxjKid3DUiYN0jtK2DDwhyGxsjGGvtKwDnnYP3Yi3B5DLYxhnINx0yL1bgSiS6xkxVRGxEv5ua3NEQ/pc=xE8vTpGlSc6AHrBKR8GZYYNylAtqeW3edQLViuqzlM3zQfxNli5yC7iqDqTNeC0tTqQdn2DviiiPKDxIK2YwG4_z/oY4lrYOMP3OPD
       models:
       - glm-4-plus
       - glm-4-flash
@@ -106,6 +114,16 @@ providers:
       - glm-z1-air
       - glm-4-airx
       - glm-zero-preview
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  coze:
+    enabled: true
+    accounts:
+    - name: account-1
+      token: ''
+      models:
+      - coze-chat
       max_concurrent: 5
       health_check_interval: 60
       enabled: true
@@ -136,6 +154,9 @@ model_mappings:
     actual_model: null
   '*glm*':
     provider: glm
+    actual_model: null
+  '*coze*':
+    provider: coze
     actual_model: null
 provider_fallback: {}
 context_management:

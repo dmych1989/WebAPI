@@ -259,8 +259,47 @@ class ContextManager:
         """清空对话"""
         if conversation_id in self.conversations:
             del self.conversations[conversation_id]
-            del self.conversation_metadata[conversation_id]
+            if conversation_id in self.conversation_metadata:
+                del self.conversation_metadata[conversation_id]
             logger.info(f"[ContextManager] 清空对话: {conversation_id}")
+
+    def clear_all(self) -> int:
+        """清空所有对话记录
+
+        Returns:
+            清除的对话数量
+        """
+        count = len(self.conversations)
+        self.conversations.clear()
+        self.conversation_metadata.clear()
+        self.stats["total_conversations"] = 0
+        self.stats["total_messages"] = 0
+        logger.info(f"[ContextManager] 清空全部对话: {count} 个")
+        return count
+
+    def clear_provider(self, provider: str) -> int:
+        """清空指定 Provider 的对话记录
+
+        按 conversation_id 前缀匹配。
+
+        Args:
+            provider: Provider 名称（如 deepseek, kimi 等）
+
+        Returns:
+            清除的对话数量
+        """
+        prefix = f"{provider}_"
+        to_remove = [cid for cid in self.conversations if cid.startswith(prefix)]
+        for cid in to_remove:
+            del self.conversations[cid]
+            if cid in self.conversation_metadata:
+                del self.conversation_metadata[cid]
+
+        self.stats["total_conversations"] = max(
+            0, self.stats.get("total_conversations", 0) - len(to_remove)
+        )
+        logger.info(f"[ContextManager] 清空 {provider} 对话: {len(to_remove)} 个")
+        return len(to_remove)
     
     async def get_conversation_stats(self, conversation_id: str) -> Dict[str, Any]:
         """获取对话统计信息"""

@@ -82,6 +82,10 @@ def create_app() -> FastAPI:
     from src.server.server_settings import router as server_settings_router
     app.include_router(server_settings_router, prefix="/admin")
 
+    # 账号管理路由（/admin/providers/...）
+    from src.server.accounts import router as accounts_router
+    app.include_router(accounts_router, prefix="/admin")
+
     # 静态管理界面
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():

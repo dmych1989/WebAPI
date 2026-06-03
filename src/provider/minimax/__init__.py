@@ -68,10 +68,22 @@ class MiniMaxProvider(BaseProvider):
     def __init__(self, account: AccountConfig):
         self.account = account
         self._token: Optional[str] = account.token
+        self._user_id: Optional[str] = getattr(account, "user_id", None)
         self._access_token: Optional[str] = None
         self._access_token_expires: float = 0
         self._transport = APIReverseTransport()
         self._conversation_id: Optional[str] = None
+
+    def _build_auth_headers(self) -> dict:
+        """构建带 Authorization 和 Real User ID 的请求头"""
+        headers = {
+            "Authorization": f"Bearer {self._token}" if self._token else "",
+        }
+        if self._user_id:
+            # MiniMax (Hailuo) API 需要 Real User ID 作为额外认证字段
+            headers["X-Real-User-Id"] = str(self._user_id)
+            headers["X-User-Id"] = str(self._user_id)
+        return headers
 
     # ---- Auth ----
 
@@ -93,7 +105,7 @@ class MiniMaxProvider(BaseProvider):
         async with session.get(
             f"{MINIMAX_BASE}/api/user/info",
             headers={
-                "Authorization": f"Bearer {self._token}",
+                **self._build_auth_headers(),
                 **FAKE_HEADERS,
             },
         ) as resp:
@@ -179,7 +191,7 @@ class MiniMaxProvider(BaseProvider):
             url,
             json=payload,
             headers={
-                "Authorization": f"Bearer {token}",
+                **self._build_auth_headers(),
                 **FAKE_HEADERS,
             },
         ) as resp:
@@ -251,7 +263,7 @@ class MiniMaxProvider(BaseProvider):
             url,
             json=payload,
             headers={
-                "Authorization": f"Bearer {token}",
+                **self._build_auth_headers(),
                 **FAKE_HEADERS,
             },
         ) as resp:

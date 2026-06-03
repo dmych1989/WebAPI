@@ -109,9 +109,12 @@ class LoadBalanceConfig(BaseModel):
 
 class AccountConfig(BaseModel):
     """单个账号配置"""
+    model_config = {"extra": "allow"}  # 允许额外字段（如 user_id, metadata 等）
+
     name: str
     token: str = ""
     cookie: str = ""
+    user_id: str = ""  # 某些 Provider (如 MiniMax) 需要的 Real User ID
     models: list[str] = Field(default_factory=list)
     max_concurrent: int = 5
     health_check_interval: int = 60

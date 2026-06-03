@@ -47,33 +47,76 @@ class APIReverseTransport:
     async def post(
         self,
         url: str,
-        json: dict | None = None,
+        json_data: dict | None = None,
         headers: dict | None = None,
+        json: dict | None = None,
         stream: bool = False,
         extra_headers: dict | None = None,
+        timeout: float | None = None,
     ) -> aiohttp.ClientResponse:
         """发送 POST 请求"""
         session = await self._get_session()
-
         merged_headers = {**(headers or {})}
         if extra_headers:
             merged_headers.update(extra_headers)
 
-        logger.debug(f"[API] POST {url}")
+        # 支持 json_data (新参数) 和 json (旧参数) 两种调用方式
+        body = json_data or json
 
-        return await session.post(
+        if timeout:
+            session_kwargs = {"url": url, "json": body, "headers": merged_headers}
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=timeout),
+                headers={"User-Agent": merged_headers.get("User-Agent", "")},
+            ) as tmp_session:
+                return await tmp_session.post(**session_kwargs)
+
+        logger.debug(f"[API] POST {url}")
+        return await session.post(url, json=body, headers=merged_headers)
+
+    async def post_stream_raw(
+        self,
+        url: str,
+        json_data: dict,
+        headers: dict | None = None,
+        timeout: float = 120,
+    ) -> AsyncIterator[bytes]:
+        """发送 POST 请求并以原始字节流返回
+        
+        用于 SSE streaming 等需要实时处理响应字节的场景。
+        Coze API v3 SSE 流需要此方法。
+        
+        Yields:
+            Raw bytes chunks from response body
+        """
+        session = await self._get_session()
+        async with session.post(
             url,
-            json=json,
-            headers=merged_headers,
-        )
+            json=json_data,
+            headers=headers or {},
+            timeout=aiohttp.ClientTimeout(total=timeout, sock_read=timeout),
+        ) as response:
+            if response.status != 200:
+                body = await response.read()
+                raise ProviderError(
+                    f"POST {url} returned {response.status}: {body[:500]}"
+                )
+            async for chunk in response.content.iter_chunks():
+                yield chunk[0]  # chunk is (data, end_of_http_chunk)
 
     async def get(
         self,
         url: str,
         headers: dict | None = None,
+        timeout: float | None = None,
     ) -> aiohttp.ClientResponse:
         """发送 GET 请求"""
         session = await self._get_session()
+        if timeout:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=timeout),
+            ) as tmp_session:
+                return await tmp_session.get(url, headers=headers or {})
         return await session.get(url, headers=headers or {})
 
     async def check_response(self, response: aiohttp.ClientResponse) -> None:

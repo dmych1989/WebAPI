@@ -173,17 +173,35 @@ PROVIDER_CONFIGS = {
         "login_url": "https://agent.minimaxi.com/",
         "auth_type": "token",
         "extractors": [
+            # MiniMax 主 Token：localStorage._token (JWT)，与 Chat2API 一致
+            {
+                "type": "localStorage",
+                "key": "_token",
+                "save_as": "token",
+            },
+            # user_detail_agent 包含 realUserID（miniMax 验证需要 user_id+token 拼接）
+            {
+                "type": "localStorage",
+                "key": "user_detail_agent",
+                "save_as": "user_id",
+            },
+            # 兜底 1：网络请求截取 Authorization header
+            {
+                "type": "network_auth",
+                "url_pattern": "minimaxi.com",
+                "save_as": "token",
+            },
+            # 兜底 2：localStorage access_token（旧 key 名）
             {
                 "type": "localStorage",
                 "key": "access_token",
-                "header_key": "Authorization",
-                "header_prefix": "Bearer ",
+                "save_as": "token",
             },
+            # 兜底 3：localStorage token
             {
                 "type": "localStorage",
                 "key": "token",
-                "header_key": "Authorization",
-                "header_prefix": "Bearer ",
+                "save_as": "token",
             },
         ],
         "validate_url": "https://hailuoai.com/api/user/info",
@@ -258,6 +276,23 @@ PROVIDER_CONFIGS = {
         "cookie_validate_check": "yuanbao",
         "config_key": "cookie",
     },
+    "coze": {
+        "name": "Coze (扣子)",
+        "login_url": "https://www.coze.cn/",
+        "auth_type": "manual_pat",
+        "extractors": [],
+        "config_key": "token",
+        "pat_instructions": [
+            "Coze 使用 Personal Access Token (PAT) 认证",
+            "",
+            "获取 PAT 步骤：",
+            "1. 访问 https://www.coze.cn/home/ → 登录你的扣子账号",
+            "2. 点击左下角头像 → 「个人设置」→「访问令牌 (PAT)」",
+            "3. 点击「新建令牌」→ 设置名称和过期时间 → 复制生成的 Token",
+            "",
+            "⚠️ Token 只显示一次，请妥善保存！",
+        ],
+    },
 }
 
 
@@ -307,20 +342,72 @@ class TokenExtractor:
         return self.extracted
 
     async def _start_browser(self):
-        """启动 Playwright 浏览器"""
+        """启动 Playwright 浏览器（自动 fallback headless 模式）"""
         try:
             from playwright.async_api import async_playwright
-        except ImportError:
-            print("\n  [ERR] 需要安装 playwright:")
-            print("     pip install playwright")
-            print("     playwright install chromium")
-            sys.exit(1)
+        except ImportError as e:
+            raise RuntimeError(
+                "未安装 playwright，请先运行:\n"
+                "  pip install playwright\n"
+                "  playwright install chromium"
+            ) from e
 
+        # 检查 Chromium 是否已安装
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(
-            headless=self.headless,
-            args=["--no-sandbox", "--disable-setuid-sandbox"],
-        )
+        try:
+            self.playwright.chromium.executable_path
+        except Exception:
+            if self.playwright:
+                await self.playwright.stop()
+            raise RuntimeError(
+                "Playwright Chromium 浏览器未安装，请运行:\n"
+                "  playwright install chromium"
+            )
+
+        # 尝试启动浏览器（GUI 模式 → 无头模式自动降级）
+        browser_started = False
+        attempts = [
+            (self.headless, "GUI"),
+            (True, "无头"),
+        ]
+
+        last_error = ""
+        for headless_mode, mode_name in attempts:
+            try:
+                self.browser = await self.playwright.chromium.launch(
+                    headless=headless_mode,
+                    args=["--no-sandbox", "--disable-setuid-sandbox"],
+                )
+                browser_started = True
+                if headless_mode != self.headless:
+                    print(f"  [i]  GUI 模式不可用，已自动切换到无头模式")
+                    print(f"       浏览器将在后台运行，登录页面 URL 见下方提示")
+                if headless_mode:
+                    print(f"  [i]  无头模式：请手动打开浏览器访问登录页面")
+                break
+            except Exception as e:
+                last_error = str(e)
+                if headless_mode == self.headless:
+                    print(f"  [i]  {mode_name} 模式启动失败: {e}")
+                if self.browser:
+                    try:
+                        await self.browser.close()
+                    except Exception:
+                        pass
+                    self.browser = None
+                continue
+
+        if not browser_started:
+            if self.playwright:
+                await self.playwright.stop()
+            raise RuntimeError(
+                f"Playwright 浏览器启动失败（已尝试 GUI 和无头模式）\n"
+                f"  错误: {last_error}\n"
+                f"  可能原因:\n"
+                f"    1. Chromium 未安装: playwright install chromium\n"
+                f"    2. 系统缺少依赖（Linux 需 libnss3 等）\n"
+                f"  替代方案: 使用「✏️ 输入」按钮手动粘贴 Token/Cookie"
+            )
 
         # 持久化 storage_state 以便复用登录
         storage_dir = PROJECT_ROOT / "data" / "browser_states"
@@ -354,103 +441,222 @@ class TokenExtractor:
         self.page.on("request", capture_request_info)
 
     async def _navigate_login(self):
-        """导航到登录页面，登录后触发 API 请求以截取 Token"""
+        """导航到登录页面，并设置请求/响应拦截捕获 Token"""
         await self.page.goto(self.cfg["login_url"], wait_until="domcontentloaded")
         await asyncio.sleep(3)
-        
+
         self._start_url = self.page.url
+        self._captured_auth_headers: list[str] = []  # 拦截到的 Authorization header
+        self._captured_cookies: dict[str, str] = {}   # 拦截到的 Set-Cookie
+
+        # ── 模拟 Chat2API 的 onBeforeSendHeaders ──
+        # 用 page.route() 拦截所有请求, 捕获 Authorization header
+        async def intercept_request(route):
+            request = route.request
+            auth = request.headers.get("authorization", "")
+            if auth and auth.startswith("Bearer ") and len(auth) > 20:
+                token = auth[7:]  # 去掉 "Bearer "
+                if token not in self._captured_auth_headers:
+                    self._captured_auth_headers.append(token)
+                    print(f"  [>>] Captured Auth header ({len(token)} chars)")
+            await route.continue_()
+
+        await self.page.route("**/*", intercept_request)
+
+        # ── 模拟 Chat2API 的 onHeadersReceived ──
+        # 捕获 Set-Cookie 响应头
+        def capture_response(response):
+            try:
+                set_cookie = response.headers.get("set-cookie", "")
+                if set_cookie:
+                    for part in set_cookie.split(";"):
+                        part = part.strip()
+                        if "=" in part:
+                            k, v = part.split("=", 1)
+                            if k and v:
+                                self._captured_cookies[k] = v
+            except Exception:
+                pass
+        self.page.on("response", capture_response)
+
         print("  [...] Waiting for login (auto-detect if already logged in)...")
         print("  [i]  Please operate in the browser window. Do not close it.")
 
     async def _wait_and_extract(self) -> Optional[str]:
-        """等待用户登录后提取 Token"""
+        """等待用户登录后提取 Token（复刻 Chat2API 的事件驱动方式）
+
+        不再通过 URL 判断登录，而是直接监控：
+        1. page.route() 拦截的 Authorization headers（onBeforeSendHeaders）
+        2. page.on("response") 捕获的 Set-Cookie（onHeadersReceived）
+        3. localStorage / cookies 轮询（delayedTokenCheck）
+        """
+        auth_type = self.cfg["auth_type"]
+        config_key = self.cfg["config_key"]
         extractors = self.cfg.get("extractors", [])
+
+        # success URL patterns — 登录后跳转到的页面特征
+        success_patterns = self.cfg.get("success_url_patterns", [])
+        if not success_patterns:
+            # 默认：URL 中出现 /chat/ 即可（排除 login_url 本身含 /chat/ 的情况）
+            success_patterns = ["/chat/", "/a/chat/"]
+
         max_wait_seconds = 600  # 最多等 10 分钟
-        poll_interval = 2
+        poll_interval = 1.5    # 轮询间隔
+        min_wait = 5           # 最少等 5 秒再开始判断（避免存储态直接命中）
 
         start = time.time()
-        last_url = ""
         login_detected = False
-        api_triggered = False
-        
-        # 检测当前是否已登录
-        logged_in_keywords = ["/chat/", "/a/chat/"]
-        if any(kw in self.page.url for kw in logged_in_keywords):
-            login_detected = True
-        
-        # 多提取器结果收集
-        extracted_values = {}  # save_as -> value
+        extracted_values: dict[str, Any] = {}
+
+        # ── 检查是否已登录（storage_state 恢复时）──
+        if any(p in self.page.url for p in success_patterns):
+            if self.page.url != self.cfg["login_url"]:
+                login_detected = True
+                print(f"\n  [i]  Already logged in (URL: {self.page.url[:80]}...)")
+
+        last_token_check = 0.0
 
         while time.time() - start < max_wait_seconds:
-            # 检查 URL 是否变化（检测登录跳转）
             current_url = self.page.url
-            if not login_detected and current_url != last_url:
-                last_url = current_url
-                if any(kw in current_url for kw in logged_in_keywords):
+
+            # ── 1. 检测登录成功（URL 跳转）──
+            if not login_detected:
+                if current_url != self._start_url and any(p in current_url for p in success_patterns):
                     login_detected = True
                     print(f"\n  [OK] Login detected! URL: {current_url[:80]}...")
 
-            # 登录后，触发 API 请求以捕获 Authorization header
-            if login_detected and not api_triggered:
-                api_triggered = True
-                print("  [*] Triggering API requests to capture auth token...")
-                await self._trigger_api_requests()
-                print(f"  [i]  Captured {len(self._network_requests)} network requests")
+            # ── 2. 延迟 Token 检查（模拟 delayedTokenCheck）──
+            now = time.time()
+            elapsed = now - start
+            if elapsed > min_wait and now - last_token_check >= 2.0:
+                last_token_check = now
 
-            # 尝试提取
-            for extractor in extractors:
-                save_as = extractor.get("save_as", self.cfg["config_key"])
-                existing = extracted_values.get(save_as)
-                # 已有好的值则跳过（token > 40 字符且不是 JSON 包装的）
-                if existing and len(str(existing)) > 40:
-                    continue
-                
-                value = await self._try_extract(extractor)
-                if value:
-                    # 过滤明显无效的 token（JSON 空值包装）
-                    if extractor["type"] == "localStorage" and save_as == "token":
+                # 2a. 从 localStorage 提取
+                if not login_detected:
+                    # 未登录时也检查（可能之前已登录但 storage_state 没反应过来）
+                    await asyncio.sleep(0.5)
+
+                for extractor in extractors:
+                    save_as = extractor.get("save_as", config_key)
+                    t = extractor["type"]
+
+                    if t == "localStorage":
+                        key = extractor["key"]
                         try:
-                            obj = json.loads(value)
-                            if isinstance(obj, dict) and obj.get("value") is None:
-                                continue  # userToken {"value": null} → 跳过, 等 network_auth
-                        except (json.JSONDecodeError, TypeError):
-                            pass
-                    extracted_values[save_as] = value
-                    src = extractor.get("type")
-                    detail = extractor.get("key", extractor.get("keys", extractor.get("url_pattern", "all")))
-                    print(f"\n  [OK] Extracted: {save_as} (source: {src}.{detail})")
-                    print(f"       Length: {len(str(value))} chars")
+                            raw = await self.page.evaluate(f"localStorage.getItem('{key}')")
+                            if raw:
+                                # JSON 解析（如 userToken → {"value": "xxx"}）
+                                value = raw
+                                try:
+                                    obj = json.loads(raw)
+                                    if isinstance(obj, dict):
+                                        for candidate in ("value", "token", "access_token", "refresh_token"):
+                                            if obj.get(candidate):
+                                                value = str(obj[candidate])
+                                                break
+                                except (json.JSONDecodeError, TypeError):
+                                    pass
 
-            # 判断是否全部提取完毕
-            auth_type = self.cfg["auth_type"]
+                                if value and self._is_valid_token(value):
+                                    extracted_values[save_as] = value
+                                    print(f"\n  [OK] localStorage.{key} → {save_as} ({len(str(value))} chars)")
+
+                                    # 特殊处理：user_detail_agent → realUserID
+                                    if key == "user_detail_agent" and raw:
+                                        try:
+                                            ud = json.loads(raw)
+                                            if isinstance(ud, dict) and ud.get("realUserID"):
+                                                extracted_values["user_id"] = str(ud["realUserID"])
+                                                print(f"       user_id (realUserID): {ud['realUserID']}")
+                                        except Exception:
+                                            pass
+                        except Exception:
+                            pass
+
+                    elif t == "network_auth":
+                        # 从拦截的 Authorization header 中取
+                        for header_val in self._captured_auth_headers:
+                            if header_val and self._is_valid_token(header_val):
+                                extracted_values[save_as] = header_val
+                                print(f"\n  [OK] network_auth → {save_as} ({len(header_val)} chars)")
+                                break
+
+                # 2b. 从 cookies 提取
+                try:
+                    cookies = await self.context.cookies()
+                    for extractor in extractors:
+                        save_as = extractor.get("save_as", config_key)
+                        t = extractor["type"]
+
+                        if t == "all_cookies":
+                            cookie_str = "; ".join(
+                                f"{c['name']}={c['value']}"
+                                for c in cookies if c.get("name") and c.get("value")
+                            )
+                            if len(cookie_str) > 80:
+                                extracted_values[save_as] = cookie_str
+
+                        elif t == "cookie":
+                            for c in cookies:
+                                if c.get("name") in extractor.get("keys", []):
+                                    val = c.get("value", "")
+                                    if val and self._is_valid_token(val):
+                                        extracted_values[save_as] = val
+                                        print(f"\n  [OK] cookie.{c['name']} → {save_as}")
+                                        break
+
+                    # 也合并 Set-Cookie 拦截结果
+                    for cname, cval in self._captured_cookies.items():
+                        for extractor in extractors:
+                            if extractor.get("type") == "cookie":
+                                if cname in extractor.get("keys", []):
+                                    if cval and self._is_valid_token(cval):
+                                        extracted_values[extractor.get("save_as", config_key)] = cval
+                except Exception:
+                    pass
+
+            # ── 3. 判断是否提取完毕 ──
             if auth_type == "both":
-                if extracted_values.get("cookie") and extracted_values.get("token"):
+                # deepseek: 需要 cookie + token
+                has_cookie = bool(extracted_values.get("cookie", ""))
+                has_token = bool(extracted_values.get("token", ""))
+                if has_cookie and has_token and len(str(extracted_values["cookie"])) > 80:
                     self.extracted = extracted_values
                     return extracted_values["cookie"]
             else:
-                config_key = self.cfg["config_key"]
-                if extracted_values.get(config_key):
-                    self.extracted = {
-                        "type": self.cfg["auth_type"],
-                        "value": extracted_values[config_key],
-                        "config_key": config_key,
-                    }
-                    return extracted_values[config_key]
+                val = extracted_values.get(config_key)
+                if val:
+                    # 长度校验
+                    min_len = 80 if config_key == "cookie" else 20
+                    if len(str(val)) >= min_len:
+                        # ── 实际 API 验证 ──
+                        is_valid = await self._validate_extracted_value(val, config_key)
+                        if is_valid:
+                            self.extracted = {
+                                "type": auth_type,
+                                "value": val,
+                                "config_key": config_key,
+                            }
+                            # 附加 user_id
+                            if extracted_values.get("user_id"):
+                                self.extracted["user_id"] = extracted_values["user_id"]
+                            return val
+                        else:
+                            # Token 无效，等待用户重新登录
+                            extracted_values.pop(config_key, None)
+                            if login_detected:
+                                print(f"  [WARN]  Token validation failed, waiting for re-login...")
+                                login_detected = False  # 重新等待登录
 
             await asyncio.sleep(poll_interval)
 
-            # 每 30 秒提示一次
-            elapsed = int(time.time() - start)
-            if elapsed % 30 == 0 and elapsed > 0:
-                missing = []
-                if auth_type == "both":
-                    if not extracted_values.get("cookie"): missing.append("cookie")
-                    if not extracted_values.get("token"): missing.append("token")
+            # 每 30 秒提示
+            et = int(time.time() - start)
+            if et % 30 == 0 and et > 0:
+                if not login_detected:
+                    print(f"  [...] Waiting for login... ({et}s / {max_wait_seconds}s)")
                 else:
-                    if not extracted_values.get(self.cfg["config_key"]):
-                        missing.append(self.cfg["config_key"])
-                if missing:
-                    print(f"  [...] Waiting... ({elapsed}s / {max_wait_seconds}s) missing: {', '.join(missing)}")
+                    print(f"  [...] Waiting for valid token... ({et}s / {max_wait_seconds}s)")
 
         print(f"\n  [WARN]  Timeout after {max_wait_seconds}s")
         return None
@@ -491,6 +697,121 @@ class TokenExtractor:
         except Exception as e:
             print(f"  [i]  API trigger: {e}")
         await asyncio.sleep(2)
+
+    # ── Chat2API 复刻的 Token 有效性判断 ──
+    @staticmethod
+    def _is_valid_token(value: str) -> bool:
+        """判断提取到的 Token 是否看起来有效（复刻 Chat2API isValidToken）"""
+        if not value or len(str(value)) < 5:
+            return False
+
+        v = str(value)
+
+        # JWT / JWE 检测
+        if v.startswith("eyJ"):
+            parts = v.split(".")
+            # JWE (5 parts)
+            if len(parts) == 5 and len(v) >= 100:
+                return True
+            # JWT (3 parts)
+            if len(parts) == 3:
+                import base64 as _b64
+                try:
+                    payload = json.loads(_b64.b64decode(parts[1] + "==").decode())
+                    # 拒绝 guest 账号
+                    if payload.get("email", "").endswith("@guest.com"):
+                        return False
+                    if payload.get("app_id") or payload.get("sub") or payload.get("exp") or \
+                       payload.get("id") or payload.get("user_id") or payload.get("uid") or \
+                       payload.get("email"):
+                        return True
+                except Exception:
+                    return False
+
+        # 长 Token (>=64 chars, base62)
+        if len(v) >= 64 and all(c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+/*" for c in v):
+            return True
+
+        # 中等 Token (32-63 chars, base62)
+        if 32 <= len(v) < 64 and all(c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+/*" for c in v):
+            return True
+
+        # Base64 Token (>=20 chars)
+        if len(v) >= 20 and all(c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+/=" for c in v):
+            return True
+
+        # 通用 Token (>=5 chars, no whitespace)
+        if len(v) >= 5 and not any(c.isspace() for c in v):
+            return True
+
+        return False
+
+    async def _validate_extracted_value(self, value: str, config_key: str) -> bool:
+        """实际 API 调用验证提取到的凭证是否有效"""
+        validate_url = self.cfg.get("validate_url")
+        cookie_validate_url = self.cfg.get("cookie_validate_url")
+        cookie_validate_check = self.cfg.get("cookie_validate_check", "")
+
+        if config_key == "cookie" and cookie_validate_url:
+            # Cookie 类验证：用提取到的 cookie 请求验证 URL，检查响应内容
+            print(f"  [*] Validating cookie: {cookie_validate_url}")
+            try:
+                vp = await self.context.new_page()
+                try:
+                    resp = await vp.goto(cookie_validate_url, timeout=15000)
+                    if resp and resp.ok:
+                        body = (await resp.text()).lower()
+                        if cookie_validate_check and cookie_validate_check in body:
+                            print(f"  [OK] Cookie validated (contains '{cookie_validate_check}')")
+                            return True
+                        elif len(body) > 200:
+                            # body 较长说明有内容，不像是重定向到登录页
+                            print(f"  [OK] Cookie validated (HTTP {resp.status}, body={len(body)} chars)")
+                            return True
+                    print(f"  [WARN] Cookie validation: HTTP {resp.status if resp else 'N/A'}")
+                finally:
+                    await vp.close()
+            except Exception as e:
+                print(f"  [WARN] Cookie validation error: {e}")
+                # 回退：信任提取（因为可能是网络临时故障）
+                if len(str(value)) > 80:
+                    print(f"  [i]  Falling back: trust long cookie value")
+                    return True
+            return False
+
+        if config_key in ("token",) and validate_url:
+            # Token 类验证：用 Authorization header 请求验证 URL
+            print(f"  [*] Validating token: {validate_url}")
+            try:
+                vp = await self.context.new_page()
+                try:
+                    await vp.set_extra_http_headers({
+                        "Authorization": f"Bearer {value}",
+                    })
+                    resp = await vp.goto(validate_url, timeout=15000)
+                    if resp and resp.ok:
+                        body = await resp.text()
+                        validate_field = self.cfg.get("validate_field", "")
+                        if validate_field and validate_field in body:
+                            print(f"  [OK] Token validated (contains '{validate_field}')")
+                            return True
+                        elif len(body) > 50:
+                            print(f"  [OK] Token validated (HTTP {resp.status}, body={len(body)} chars)")
+                            return True
+                    if resp:
+                        print(f"  [WARN] Token validation: HTTP {resp.status}")
+                finally:
+                    await vp.close()
+            except Exception as e:
+                print(f"  [WARN] Token validation error: {e}")
+                # 回退：信任提取
+                if len(str(value)) > 40:
+                    print(f"  [i]  Falling back: trust token value")
+                    return True
+            return False
+
+        # 无验证 URL：信任长度
+        return len(str(value)) >= (80 if config_key == "cookie" else 20)
 
     async def _try_extract(self, extractor: dict) -> Optional[str]:
         """尝试用单个提取器提取"""
@@ -533,7 +854,6 @@ class TokenExtractor:
                             return f"{cookie['name']}={value}"
                         return value
                 return None
-
             elif ext_type == "all_cookies":
                 cookies = await self.context.cookies()
                 fmt = extractor.get("format", "header_string")
@@ -580,6 +900,54 @@ class TokenExtractor:
             pass
 
         return None
+
+    def _post_process(self, value: str, extractor: dict) -> dict:
+        """对提取的 value 进行后处理
+
+        当前支持:
+        - jwt_user_id: 解析 JWT payload，提取 user_id（sub/uid/userId/user_id）
+                     返回 {"token": jwt_str, "user_id": user_id}
+        """
+        proc = extractor.get("post_process")
+        if not proc or not value:
+            return {"value": value}
+
+        if proc == "jwt_user_id":
+            user_id = self._parse_jwt_user_id(value)
+            if user_id:
+                print(f"       [post_process] JWT user_id = {user_id}")
+                return {"value": value, "user_id": user_id}
+        return {"value": value}
+
+    @staticmethod
+    def _parse_jwt_user_id(jwt_str: str) -> Optional[str]:
+        """解析 JWT，提取 user_id（尝试常见字段名）"""
+        import base64
+        if not jwt_str or "." not in jwt_str:
+            return None
+        try:
+            # JWT: header.payload.signature
+            parts = jwt_str.split(".")
+            if len(parts) < 2:
+                return None
+            payload_b64 = parts[1]
+            # base64url decode (补齐 padding)
+            padding = 4 - len(payload_b64) % 4
+            if padding != 4:
+                payload_b64 += "=" * padding
+            payload_bytes = base64.urlsafe_b64decode(payload_b64)
+            payload = json.loads(payload_bytes.decode("utf-8", errors="replace"))
+            # 尝试常见字段
+            for key in (
+                "user_id", "userId", "uid", "sub", "id",
+                "real_user_id", "realUserId", "real_userid",
+            ):
+                v = payload.get(key)
+                if v and isinstance(v, (str, int)):
+                    return str(v)
+            return None
+        except Exception:
+            return None
 
     async def _validate_token(self, token: str):
         """验证提取的凭证是否有效"""
@@ -720,6 +1088,12 @@ class TokenExtractor:
                     del account["cookie"]
             print(f"     字段: {config_key}")
 
+        # post_process 产生的额外字段（如 jwt_user_id → user_id）
+        user_id = self.extracted.get("user_id") if isinstance(self.extracted, dict) else None
+        if user_id:
+            account["user_id"] = user_id
+            print(f"     字段: user_id ({user_id})")
+
         # 自动设置默认模型
         if not account.get("models"):
             default_models = self._get_default_models()
@@ -767,6 +1141,77 @@ class TokenExtractor:
 # CLI Entry Point
 # =============================================================================
 
+async def _validate_and_save_pat(provider: str, token: str, cfg: dict):
+    """验证 PAT 并保存到 config.yaml"""
+    import aiohttp
+
+    print(f"\n  正在验证 Token...")
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(
+                "https://api.coze.cn/v1/user/me",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    user_info = data.get("data", data)
+                    user_name = user_info.get("name", user_info.get("nick_name", "Unknown"))
+                    print(f"  [OK] Token 有效！用户: {user_name}")
+                elif resp.status == 401:
+                    print(f"  [ERR] Token 无效 (401 Unauthorized)，请检查")
+                    sys.exit(1)
+                else:
+                    text = await resp.text()
+                    print(f"  [WARN] 验证返回 HTTP {resp.status}: {text[:200]}")
+                    print(f"  将继续保存 Token，但可能无法正常使用")
+        except aiohttp.ClientError as e:
+            print(f"  [WARN] 网络错误: {e}")
+            print(f"  将继续保存 Token，但请检查网络连接")
+
+    # Save to config.yaml
+    print(f"\n  正在保存到 config.yaml...")
+    try:
+        import yaml as yaml_lib
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            config = yaml_lib.safe_load(f) or {}
+
+        providers = config.setdefault("providers", {})
+        coze_cfg = providers.setdefault("coze", {})
+        accounts = coze_cfg.setdefault("accounts", [])
+
+        # Update or add first account
+        if accounts:
+            accounts[0]["token"] = token
+            accounts[0]["enabled"] = True
+            print(f"  已更新现有账号 token")
+        else:
+            accounts.append({
+                "name": "account-1",
+                "token": token,
+                "models": ["coze-chat"],
+                "max_concurrent": 5,
+                "health_check_interval": 60,
+                "enabled": True,
+            })
+            print(f"  已创建新账号 account-1")
+
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            yaml_lib.dump(config, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+        print(f"\n  {'='*60}")
+        print(f"  [OK] Coze Token 配置完成！")
+        print(f"  请重启 WebAPI 服务以加载新配置")
+        print(f"  {'='*60}")
+    except Exception as e:
+        print(f"  [ERR] 保存配置失败: {e}")
+        sys.exit(1)
+
+
 def main():
     """CLI 入口：python -m src.login <provider>"""
     if len(sys.argv) < 2:
@@ -790,8 +1235,26 @@ def main():
         print(f"   Available: {', '.join(PROVIDER_CONFIGS.keys())}")
         sys.exit(1)
 
-    extractor = TokenExtractor(provider, headless=headless)
-    asyncio.run(extractor.run())
+    cfg = PROVIDER_CONFIGS[provider]
+
+    # Coze / manual_pat providers: prompt for PAT instead of browser login
+    if cfg.get("auth_type") == "manual_pat":
+        print(f"\n{'='*60}")
+        print(f"  {cfg['name']} — 手动配置 Personal Access Token")
+        print(f"{'='*60}")
+        for line in cfg.get("pat_instructions", []):
+            print(f"  {line}")
+        print()
+        token = input(f"  请输入你的 Coze PAT: ").strip()
+        if not token:
+            print("  [ERR] Token 为空，已取消")
+            sys.exit(1)
+
+        # Validate PAT via API
+        asyncio.run(_validate_and_save_pat(provider, token, cfg))
+    else:
+        extractor = TokenExtractor(provider, headless=headless)
+        asyncio.run(extractor.run())
 
 
 if __name__ == "__main__":
