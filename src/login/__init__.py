@@ -205,6 +205,38 @@ PROVIDER_CONFIGS = {
         "cookie_validate_check": "doubao",  # 响应中必须包含这个字串（不重定向到登录）
         "config_key": "cookie",
     },
+    "glm": {
+        "name": "智谱 GLM (ZhipuAI)",
+        "login_url": "https://bigmodel.cn/login",
+        "auth_type": "cookie",
+        "extractors": [
+            # 智谱 GLM 凭证是 chatglm_refresh_token cookie
+            # 优先提取特定 cookie（包装为 "name=value" 格式，GLMProvider 直接用作 Cookie header）
+            {
+                "type": "cookie",
+                "keys": ["chatglm_refresh_token"],
+                "format": "name_value",
+                "save_as": "cookie",
+            },
+            # 兜底 1：从网络请求中截取 chatglm_refresh_token cookie
+            {
+                "type": "network_auth",
+                "url_pattern": "bigmodel.cn",
+                "header_key": "Cookie",
+                "header_prefix": "chatglm_refresh_token=",
+                "save_as": "cookie",
+            },
+            # 兜底 2：全量 cookie（如果上面的都没找到）
+            {
+                "type": "all_cookies",
+                "format": "header_string",
+                "save_as": "cookie",
+            },
+        ],
+        "cookie_validate_url": "https://bigmodel.cn/api/user",
+        "cookie_validate_check": "user",  # 响应中包含 "user" 表示已登录
+        "config_key": "cookie",
+    },
     "yuanbao": {
         "name": "腾讯元宝 (Yuanbao)",
         "login_url": "https://yuanbao.tencent.com/chat/",
@@ -491,10 +523,15 @@ class TokenExtractor:
 
             elif ext_type == "cookie":
                 keys = extractor.get("keys", [])
+                fmt = extractor.get("format", "raw")  # raw | name_value
                 cookies = await self.context.cookies()
                 for cookie in cookies:
                     if cookie["name"] in keys:
-                        return cookie["value"]
+                        value = cookie["value"]
+                        if fmt == "name_value":
+                            # 包装为 "name=value" 格式的 cookie 字符串
+                            return f"{cookie['name']}={value}"
+                        return value
                 return None
 
             elif ext_type == "all_cookies":
