@@ -30,6 +30,8 @@ class ManualCredentialInput(BaseModel):
     - token:  Bearer Token / JWT（kimi/deepseek/minimax/qwen）
     - cookie: Cookie 字符串（yuanbao/doubao/glm/qwen 等）
     - user_id: Real User ID（minimax 等需要 User ID 的 Provider）
+    - service_token: MiMo 专用 serviceToken
+    - xiaomichatbot_ph: MiMo 专用会话标识
     - account_name: 自定义账户名称（不填则自动生成）
     - models:  要暴露的模型列表（不填则使用 provider 自身的默认模型）
     """
@@ -37,6 +39,8 @@ class ManualCredentialInput(BaseModel):
     token: Optional[str] = None
     cookie: Optional[str] = None
     user_id: Optional[str] = None
+    service_token: Optional[str] = None
+    xiaomichatbot_ph: Optional[str] = None
     models: Optional[list[str]] = None
 
 
@@ -430,9 +434,9 @@ PROVIDER_CREDENTIAL_HINTS = {
         ],
     },
     "glm": {
-        "login_url": "https://chatglm.cn/",
+        "login_url": "https://chatglm.cn/main/alltoolsdetail?lang=zh",
         "steps": [
-            "点击下方按钮打开智谱清言 (GLM) 网站",
+            "点击下方按钮打开 GLM 工具页面",
             "登录你的账号（手机/微信）",
             "按 F12 打开开发者工具",
             "切换到 Application → Cookies → chatglm.cn",
@@ -446,6 +450,44 @@ PROVIDER_CREDENTIAL_HINTS = {
                 "label": "chatglm_refresh_token",
                 "placeholder": "粘贴从 Cookie 复制的 chatglm_refresh_token 值",
                 "help": "F12 → Application → Cookies → chatglm.cn → chatglm_refresh_token",
+                "required": True,
+            },
+        ],
+    },
+    "mimo": {
+        "login_url": "https://aistudio.xiaomimimo.com/",
+        "steps": [
+            "点击下方按钮打开 MiMo AI Studio 网站",
+            "登录你的小米账号",
+            "按 F12 打开开发者工具",
+            "切换到 Application（应用程序）标签",
+            "左侧找到 Cookies → https://aistudio.xiaomimimo.com",
+            "找到并复制以下 3 个字段的值：",
+            "  - serviceToken",
+            "  - userId",
+            "  - xiaomichatbot_ph",
+        ],
+        "primary": "service_token",
+        "fields": [
+            {
+                "name": "service_token",
+                "label": "serviceToken",
+                "placeholder": "从浏览器 Cookie 复制的 serviceToken 值",
+                "help": "F12 → Application → Cookies → serviceToken",
+                "required": True,
+            },
+            {
+                "name": "user_id",
+                "label": "userId",
+                "placeholder": "从浏览器 Cookie 复制的 userId 值",
+                "help": "F12 → Application → Cookies → userId",
+                "required": True,
+            },
+            {
+                "name": "xiaomichatbot_ph",
+                "label": "xiaomichatbot_ph",
+                "placeholder": "从浏览器 Cookie 复制的 xiaomichatbot_ph 值",
+                "help": "F12 → Application → Cookies → xiaomichatbot_ph",
                 "required": True,
             },
         ],
@@ -488,12 +530,14 @@ async def set_manual_credentials(
         "token": (body.token or "").strip(),
         "cookie": (body.cookie or "").strip(),
         "user_id": (body.user_id or "").strip(),
+        "service_token": (body.service_token or "").strip(),
+        "xiaomichatbot_ph": (body.xiaomichatbot_ph or "").strip(),
     }
     fields = {k: v for k, v in fields.items() if v}
     if not fields:
         raise HTTPException(
             status_code=400,
-            detail="至少需要提供一个非空字段（token / cookie / user_id）",
+            detail="至少需要提供一个非空字段（token / cookie / user_id / service_token / xiaomichatbot_ph）",
         )
 
     # 读取现有 config.yaml
@@ -790,3 +834,172 @@ async def clear_conversation_history(provider: str, account_name: str):
             else f"⚠️ {provider}/{target_name} 清除失败: {result.get('detail', '')}"
         ),
     }
+
+
+# =============================================================================
+# OAuth 凭证验证端点（参考 Chat2API OAuth Manager）
+# =============================================================================
+
+class OAuthValidateInput(BaseModel):
+    """OAuth 凭证验证请求体"""
+    token: Optional[str] = None
+    cookie: Optional[str] = None
+    user_id: Optional[str] = None
+    real_user_id: Optional[str] = None
+    # MiMo 专用字段
+    service_token: Optional[str] = None
+    xiaomichatbot_ph: Optional[str] = None
+
+
+@router.post("/oauth/validate/{provider}")
+async def oauth_validate_credentials(provider: str, body: OAuthValidateInput):
+    """使用 OAuth 适配器验证凭证
+
+    参考 Chat2API OAuthManager.validateToken:
+    - 调用对应 Provider 的 OAuthAdapter.validateToken()
+    - 返回账户信息（user_id, name 等）
+    """
+    from src.login.adapters import get_adapter
+
+    SUPPORTED = {"deepseek", "kimi", "qwen", "minimax", "doubao", "yuanbao", "glm", "mimo"}
+
+    if provider not in SUPPORTED:
+        raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
+
+    adapter = get_adapter(provider)
+    if not adapter:
+        return {
+            "success": False,
+            "provider": provider,
+            "error": "No OAuth adapter for this provider",
+        }
+
+    # 构建凭证
+    credentials: dict[str, str] = {}
+    if body.token:
+        credentials["token"] = body.token
+    if body.cookie:
+        credentials["cookie"] = body.cookie
+    if body.user_id:
+        credentials["user_id"] = body.user_id
+    if body.real_user_id:
+        credentials["realUserID"] = body.real_user_id
+    # MiMo 专用字段
+    if body.service_token:
+        credentials["service_token"] = body.service_token
+    if body.xiaomichatbot_ph:
+        credentials["xiaomichatbot_ph"] = body.xiaomichatbot_ph
+
+    if not credentials:
+        raise HTTPException(status_code=400, detail="No credentials provided")
+
+    result = await adapter.validate_token(credentials)
+
+    return {
+        "success": result.valid,
+        "provider": provider,
+        "token_type": result.token_type,
+        "account_info": result.account_info,
+        "error": result.error,
+        "message": (
+            f"✅ {provider} 凭证有效 — {result.account_info or ''}"
+            if result.valid
+            else f"❌ {provider} 凭证无效 — {result.error}"
+        ),
+    }
+
+
+@router.post("/oauth/browser-login/{provider}")
+async def oauth_browser_login(provider: str):
+    """启动浏览器 OAuth 登录流程
+
+    参考 Chat2API OAuthManager.startLogin + InAppLoginManager.startLogin:
+    - 启动 Playwright 浏览器
+    - 导航到 Provider 登录页面
+    - 拦截网络请求/响应，捕获 Token/Cookie
+    - 自动提取并验证凭证
+    - 保存到 config.yaml
+
+    这是一个长时间运行的请求（最多 6 分钟）。
+    浏览器窗口会显示在前端，用户在浏览器中完成登录后自动提取凭证。
+    """
+    from src.login.oauth import OAuthManager, TOKEN_EXTRACTION_CONFIGS
+
+    SUPPORTED = {"deepseek", "kimi", "qwen", "minimax", "doubao", "yuanbao", "mimo"}
+
+    if provider not in SUPPORTED:
+        return {
+            "status": "manual_input_required",
+            "provider": provider,
+            "error": f"Provider '{provider}' 不支持浏览器自动登录，请使用手动输入。",
+        }
+
+    # 检查 Playwright
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError:
+        return {
+            "status": "error",
+            "provider": provider,
+            "error": "Playwright 未安装，请运行: pip install playwright && playwright install chromium",
+            "fallback": "manual_input",
+        }
+
+    # 获取 token 提取配置
+    cfg = TOKEN_EXTRACTION_CONFIGS.get(provider)
+    if not cfg or not cfg.token_sources:
+        return {
+            "status": "manual_input_required",
+            "provider": provider,
+            "login_url": cfg.login_url if cfg else "",
+            "error": f"{provider} 需要手动输入凭证，不支持浏览器自动提取。",
+            "fallback": "manual_input",
+        }
+
+    try:
+        oauth_manager = OAuthManager(provider, headless=False)
+        result = await asyncio.wait_for(oauth_manager.login(timeout=360.0), timeout=400.0)
+
+        if result.success:
+            # 重新加载配置
+            from src.core.config import reload_config as _reload_cfg
+            _reload_cfg()
+            account_pool.register_provider(provider, get_config().providers[provider])
+            account_pool.mark_healthy(provider, "account-1")
+
+            return {
+                "status": "ok",
+                "provider": provider,
+                "account_info": result.account_info,
+                "message": f"✅ {provider} 凭证已提取并保存到 config.yaml，请重启服务生效",
+            }
+        else:
+            return {
+                "status": "warning",
+                "provider": provider,
+                "error": result.error or "未提取到有效凭证",
+                "fallback": "manual_input",
+            }
+
+    except asyncio.TimeoutError:
+        return {
+            "status": "timeout",
+            "provider": provider,
+            "error": "登录超时（6分钟），请在浏览器中完成登录后重试",
+            "fallback": "manual_input",
+        }
+    except RuntimeError as e:
+        return {
+            "status": "error",
+            "provider": provider,
+            "error": str(e),
+            "fallback": "manual_input",
+        }
+    except Exception as e:
+        logger.error(f"[Admin] OAuth browser login failed for {provider}: {e}")
+        return {
+            "status": "error",
+            "provider": provider,
+            "error": str(e),
+            "fallback": "manual_input",
+        }

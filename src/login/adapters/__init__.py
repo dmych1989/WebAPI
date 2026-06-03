@@ -14,7 +14,10 @@ import base64
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    pass
 
 
 @dataclass
@@ -80,3 +83,37 @@ class BaseOAuthAdapter(ABC):
             email = payload.get("email", "")
             return "@guest.com" in email
         return False
+
+
+# ----------------------------------------------------------------------
+# 适配器注册表
+# ----------------------------------------------------------------------
+
+from src.login.adapters.deepseek import DeepSeekAdapter
+from src.login.adapters.glm import GLMAdapter
+from src.login.adapters.kimi import KimiAdapter
+from src.login.adapters.minimax import MiniMaxAdapter
+from src.login.adapters.mimo import MiMoAdapter
+from src.login.adapters.qwen import QwenAdapter
+from src.login.adapters.doubao import DoubaoAdapter
+from src.login.adapters.yuanbao import YuanbaoAdapter
+
+ADAPTERS: dict[str, type[BaseOAuthAdapter] | None] = {
+    "deepseek": DeepSeekAdapter,
+    "glm": GLMAdapter,
+    "kimi": KimiAdapter,
+    "minimax": MiniMaxAdapter,
+    "mimo": MiMoAdapter,
+    "qwen": QwenAdapter,
+    "doubao": DoubaoAdapter,
+    "yuanbao": YuanbaoAdapter,
+    "coze": None,  # Coze 使用 PAT，直接 API 验证
+}
+
+
+def get_adapter(provider: str) -> Optional[BaseOAuthAdapter]:
+    """获取指定 Provider 的 OAuth 适配器"""
+    cls = ADAPTERS.get(provider)
+    if cls is None:
+        return None
+    return cls()

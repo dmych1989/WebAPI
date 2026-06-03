@@ -841,12 +841,12 @@ function timeAgo(ts) {
 /* Provider 图标 */
 const PROVIDER_ICONS = {
   deepseek: '🐳', kimi: '🌙', qwen: '☁️', minimax: '🦊',
-  doubao: '🫘', yuanbao: '💎', glm: '🧠', coze: '🤖',
+  doubao: '🫘', yuanbao: '💎', glm: '🧠', coze: '🤖', mimo: '📱',
 };
 function providerIcon(name) { return PROVIDER_ICONS[name] || '🔌'; }
 function providerName(name) {
   const names = { deepseek: 'DeepSeek', kimi: 'Kimi', qwen: '通义千问', minimax: 'MiniMax',
-    doubao: '豆包', yuanbao: '腾讯元宝', glm: '智谱 GLM', coze: 'Coze' };
+    doubao: '豆包', yuanbao: '腾讯元宝', glm: '智谱 GLM', coze: 'Coze', mimo: '小米 MiMo' };
   return names[name] || name;
 }
 
@@ -1271,7 +1271,7 @@ async function submitNewAccount(provider) {
   if (!name) { showToast('请输入账号名称', 'warning'); return; }
   const hint = _providerData.hints[provider] || {};
   const fields = hint.fields || [];
-  const body = { name };
+  const body = { account_name: name };
   fields.forEach(f => {
     const el = document.getElementById('newAcc_' + f.name);
     if (el && el.value.trim()) body[f.name] = el.value.trim();
@@ -1280,10 +1280,31 @@ async function submitNewAccount(provider) {
   if (modelsEl && modelsEl.value.trim()) {
     body.models = modelsEl.value.split(',').map(s => s.trim()).filter(Boolean);
   }
-  if (!body.token && !body.cookie) {
-    showToast('至少需要提供 token 或 cookie', 'warning');
+  if (!body.token && !body.cookie && !body.service_token) {
+    showToast('至少需要提供 token / cookie / service_token', 'warning');
     return;
   }
+
+  // 先用 OAuth 适配器验证凭证
+  showToast(`正在验证 ${provider} 凭证...`, 'info', 3000);
+  try {
+    const validateBody = {};
+    if (body.token) validateBody.token = body.token;
+    if (body.cookie) validateBody.cookie = body.cookie;
+    if (body.user_id) validateBody.user_id = body.user_id;
+    if (body.service_token) validateBody.service_token = body.service_token;
+    if (body.xiaomichatbot_ph) validateBody.xiaomichatbot_ph = body.xiaomichatbot_ph;
+    const validateResult = await API.post(`/admin/oauth/validate/${provider}`, validateBody);
+    if (validateResult.success) {
+      showToast(`✅ ${provider} 凭证有效，正在保存...`, 'success', 2000);
+    } else {
+      showToast(`⚠️ ${provider} 凭证验证失败: ${validateResult.error || '未知错误'}，仍将继续保存`, 'warning', 6000);
+    }
+  } catch (e) {
+    // 验证失败不阻止保存
+    showToast(`⚠️ 验证请求失败，将直接保存: ${e.message}`, 'warning', 4000);
+  }
+
   try {
     await API.post(`/admin/providers/${provider}/accounts`, body);
     showToast(`账号 ${name} 已创建`, 'success');
@@ -1296,20 +1317,21 @@ async function submitNewAccount(provider) {
 }
 
 async function triggerBrowserLogin(provider) {
-  showToast(`正在启动 ${provider} 浏览器登录...`, 'info', 5000);
+  showToast(`正在启动 ${provider} 浏览器自动登录...`, 'info', 5000);
   closeModal();
   try {
-    const data = await API.post(`/admin/login/${provider}`);
+    // 使用新的 OAuth 浏览器登录端点（Playwright 自动提取凭证）
+    const data = await API.post(`/admin/oauth/browser-login/${provider}`);
     if (data.status === 'manual_input_required') {
-      showToast(data.message, 'warning', 8000);
+      showToast(data.error || `${provider} 不支持浏览器自动登录`, 'warning', 8000);
       showAddAccountModal(provider);
-    } else if (data.status === 'warning') {
-      showToast(data.message, 'warning', 8000);
-    } else if (data.status === 'error') {
-      showToast(data.message, 'error', 8000);
+    } else if (data.status === 'warning' || data.status === 'error' || data.status === 'timeout') {
+      showToast(data.error || '登录失败，请重试', 'warning', 8000);
+      showAddAccountModal(provider);
     } else if (data.status === 'ok') {
-      showToast(data.message || `${provider} 登录成功`, 'success', 5000);
+      showToast(data.message || `✅ ${provider} 凭证已提取并保存`, 'success', 5000);
       loadProviders();
+      loadDashboard();
     }
   } catch (e) {
     showToast('登录失败: ' + e.message, 'error', 5000);

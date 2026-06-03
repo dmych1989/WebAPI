@@ -69,7 +69,8 @@ class DeepSeekAdapter(BaseOAuthAdapter):
                     if resp.status != 200 or not body:
                         return TokenValidationResult(valid=False, error="Token is invalid or expired")
 
-                    biz_data = body.get("data", {}).get("biz_data", {})
+                    data_field = body.get("data") or {}
+                    biz_data = data_field.get("biz_data") or {}
                     if not biz_data:
                         return TokenValidationResult(valid=False, error="Token validation failed: Invalid response data")
 

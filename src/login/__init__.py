@@ -42,7 +42,7 @@ PROVIDER_CONFIGS = {
     "deepseek": {
         "name": "DeepSeek",
         "login_url": "https://chat.deepseek.com/",
-        # Chat2API 只需 localStorage.userToken（JWT），不需要 cookie
+        # Chat2API: localStorage.userToken（JWT）
         "auth_type": "token",
         "success_url_patterns": ["chat.deepseek.com"],
         "target_domains": [".deepseek.com", "deepseek.com"],
@@ -74,21 +74,13 @@ PROVIDER_CONFIGS = {
         "success_url_patterns": ["kimi.com"],
         "target_domains": [".kimi.com", "kimi.com"],
         "extractors": [
-            # ★ 用户明确要求：Kimi 访问令牌从浏览器 Cookie 的 kimi-auth 字段值（推荐）
-            # 优先：浏览器 cookie 中的 kimi-auth
+            # 优先：浏览器 cookie 中的 kimi-auth（对齐 Chat2API）
             {
                 "type": "cookie",
                 "keys": ["kimi-auth"],
                 "save_as": "token",
             },
-            # 兜底 1：从网络请求的 Cookie header 中截取 kimi-auth
-            {
-                "type": "network_cookie",
-                "url_pattern": "kimi.com",
-                "cookie_name": "kimi-auth",
-                "save_as": "token",
-            },
-            # 兜底 2：从网络请求截取 Authorization header (JWT Token)
+            # 兜底 1：从网络请求的 Authorization header 截取 JWT
             {
                 "type": "network_auth",
                 "url_pattern": "kimi.com/api",
@@ -96,34 +88,27 @@ PROVIDER_CONFIGS = {
                 "header_prefix": "Bearer ",
                 "save_as": "token",
             },
-            # 兜底 3：localStorage 中的 refresh_token
-            {
-                "type": "localStorage",
-                "key": "refresh_token",
-                "save_as": "token",
-            },
-            # 兜底 4：localStorage 中的 access_token
+            # 兜底 2：localStorage access_token（对齐 Chat2API）
             {
                 "type": "localStorage",
                 "key": "access_token",
                 "save_as": "token",
             },
-            # 兜底 5：localStorage 中的 kimi_at
+            # 兜底 3：localStorage refresh_token
+            {
+                "type": "localStorage",
+                "key": "refresh_token",
+                "save_as": "token",
+            },
+            # 兜底 4：localStorage kimi_at
             {
                 "type": "localStorage",
                 "key": "kimi_at",
                 "save_as": "token",
             },
-            # 兜底 6：localStorage 中的 auth_token
-            {
-                "type": "localStorage",
-                "key": "auth_token",
-                "save_as": "token",
-            },
         ],
-        "validate_url": "https://www.kimi.com/api/user",
+        "validate_url": "https://www.kimi.com/apiv2/kimi.gateway.order.v1.SubscriptionService/GetSubscription",
         "validate_method": "bearer",
-        "validate_field": "name",
         "config_key": "token",
     },
     "qwen": {
@@ -133,14 +118,13 @@ PROVIDER_CONFIGS = {
         "success_url_patterns": ["qianwen.com"],
         "target_domains": [".qianwen.com", "qianwen.com"],
         "extractors": [
-            # Chat2API qwen tokenSource: cookie, key=tongyi_sso_ticket
-            # 优先：从浏览器 cookie 直接取 tongyi_sso_ticket
+            # Chat2API: cookie tongyi_sso_ticket
             {
                 "type": "cookie",
                 "keys": ["tongyi_sso_ticket"],
                 "save_as": "token",
             },
-            # 兜底：从网络请求的 Cookie header 中截取
+            # 兜底：从网络请求的 Cookie header 截取
             {
                 "type": "network_cookie",
                 "url_pattern": "qianwen.com",
@@ -148,7 +132,7 @@ PROVIDER_CONFIGS = {
                 "save_as": "token",
             },
         ],
-        # Chat2API QwenAdapter.validateToken: POST chat2-api.qianwen.com/api/v2/session/page/list
+        # Chat2API QwenAdapter.validateToken: POST /api/v2/session/page/list
         "validate_url": "https://chat2-api.qianwen.com/api/v2/session/page/list",
         "validate_method": "cookie_ticket",
         "validate_field": "success",
@@ -164,7 +148,6 @@ PROVIDER_CONFIGS = {
         "target_domains": [".minimaxi.com", "minimaxi.com"],
         "extractors": [
             # 官方 API Key 需要用户手动从控制台复制
-            # 不支持浏览器自动登录提取（agent.minimaxi.com 是消费版，不是 API 入口）
         ],
         "validate_url": "https://api.minimaxi.com/v1/models",
         "validate_method": "bearer",
@@ -180,7 +163,6 @@ PROVIDER_CONFIGS = {
             "4. 粘贴到 config.yaml 的 providers.minimax.accounts[0].token",
             "",
             "⚠️ 账号配置中如果存在 api_base 字段，请设为 https://api.minimaxi.com/v1",
-            "💡 支持的模型: MiniMax-M3, MiniMax-M2.7, MiniMax-M2.7-highspeed, MiniMax-M2.5, MiniMax-M2.5-highspeed, MiniMax-M2.1, MiniMax-M2.1-highspeed, MiniMax-M2",
         ],
     },
     "doubao": {
@@ -203,15 +185,12 @@ PROVIDER_CONFIGS = {
     "glm": {
         "name": "智谱 GLM (ZhipuAI) — 官方 BigModel API",
         # 官方 API: https://open.bigmodel.cn/api/paas/v4
-        # 用户在 https://open.bigmodel.cn/ 创建 API Key（以 sk- 开头）
-        "login_url": "https://open.bigmodel.cn/usercenter/apikeys",
+        # 用户在 https://chatglm.cn/main/alltoolsdetail?lang=zh 创建 API Key（以 sk- 开头）
+        "login_url": "https://chatglm.cn/main/alltoolsdetail?lang=zh",
         "auth_type": "manual_token",
         "success_url_patterns": ["open.bigmodel.cn"],
         "target_domains": [".bigmodel.cn", "bigmodel.cn"],
-        "extractors": [
-            # 官方 API Key 需要用户手动从控制台复制
-            # 不支持浏览器自动登录提取
-        ],
+        "extractors": [],
         "validate_url": "https://open.bigmodel.cn/api/paas/v4/models",
         "validate_method": "bearer",
         "validate_header_prefix": "Bearer ",
@@ -220,7 +199,7 @@ PROVIDER_CONFIGS = {
             "智谱 GLM 使用官方 BigModel API（OpenAI 兼容）。",
             "",
             "获取 API Key 步骤：",
-            "1. 访问 https://open.bigmodel.cn/ 登录账号",
+            "1. 访问 https://chatglm.cn/main/alltoolsdetail?lang=zh 登录账号",
             "2. 右上角「API 密钥」 → 「创建新的 API Key」",
             "3. 复制 sk-xxx... 格式的 Key",
             "4. 粘贴到 config.yaml 的 providers.glm.accounts[0].token",
@@ -251,6 +230,71 @@ PROVIDER_CONFIGS = {
         "cookie_validate_url": "https://yuanbao.tencent.com/chat/",
         "cookie_validate_check": "yuanbao",
         "config_key": "cookie",
+    },
+    "mimo": {
+        "name": "小米 MiMo (Xiaomi AI Studio)",
+        "login_url": "https://aistudio.xiaomimimo.com/",
+        "auth_type": "cookie",
+        "success_url_patterns": ["aistudio.xiaomimimo.com"],
+        "target_domains": [".xiaomimimo.com", "xiaomimimo.com", ".mi.com"],
+        "extractors": [
+            # MiMo 需要 3 个 Cookie 字段（对齐 Chat2API mimo.ts）
+            {
+                "type": "cookie",
+                "keys": ["serviceToken"],
+                "save_as": "service_token",
+            },
+            {
+                "type": "cookie",
+                "keys": ["userId"],
+                "save_as": "user_id",
+            },
+            {
+                "type": "cookie",
+                "keys": ["xiaomichatbot_ph"],
+                "save_as": "xiaomichatbot_ph",
+            },
+            # 兜底：localStorage
+            {
+                "type": "localStorage",
+                "key": "serviceToken",
+                "save_as": "service_token",
+            },
+            {
+                "type": "localStorage",
+                "key": "userId",
+                "save_as": "user_id",
+            },
+            {
+                "type": "localStorage",
+                "key": "xiaomichatbot_ph",
+                "save_as": "xiaomichatbot_ph",
+            },
+        ],
+        "cookie_validate_url": "https://aistudio.xiaomimimo.com/",
+        "cookie_validate_check": "mimo",
+        "config_key": "cookie",
+        "instructions": [
+            "MiMo 需要 3 个 Cookie 字段（从浏览器提取）：",
+            "",
+            "获取 Cookie 步骤：",
+            "1. 访问 https://aistudio.xiaomimimo.com/ 并登录你的小米账号",
+            "2. 按 F12 打开开发者工具 → Application（应用）→ Cookies",
+            "3. 找到以下 3 个字段的值：",
+            "   - serviceToken",
+            "   - userId",
+            "   - xiaomichatbot_ph",
+            "4. 在 config.yaml 中配置示例：",
+            "   providers:",
+            "     mimo:",
+            "       accounts:",
+            "         - name: account-1",
+            "           service_token: <serviceToken值>",
+            "           user_id: <userId值>",
+            "           xiaomichatbot_ph: <xiaomichatbot_ph值>",
+            "",
+            "💡 或者点击「浏览器自动登录」，Playwright 会帮你提取这些 Cookie。",
+        ],
     },
     "coze": {
         "name": "Coze (扣子)",
@@ -1154,14 +1198,15 @@ class TokenExtractor:
         print(f"     然后访问: http://127.0.0.1:18080/admin/ui/admin.html")
 
     def _get_default_models(self) -> list[str]:
-        """获取 Provider 默认模型列表"""
+        """获取 Provider 默认模型列表（对齐 list_models 返回的模型）"""
         defaults = {
-            "deepseek": ["deepseek-v4-flash", "deepseek-v4-pro"],
-            "kimi": ["Kimi-K2.6"],
+            "deepseek": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash", "deepseek-v4-pro"],
+            "kimi": ["Kimi-K2.6", "Kimi-K2.6-Think", "Kimi-K2.6-Search"],
             "qwen": ["qwen-max", "qwen-plus", "qwen-turbo"],
-            "minimax": ["MiniMax-Text-01", "abab6.5s-chat"],
+            "minimax": ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
             "doubao": ["doubao-pro-32k", "doubao-lite-32k"],
             "yuanbao": ["hunyuan-pro", "hunyuan-turbo"],
+            "glm": ["glm-4-plus", "glm-4-flash", "glm-4-air"],
         }
         return defaults.get(self.provider, ["default"])
 
