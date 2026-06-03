@@ -1,0 +1,151 @@
+server:
+  host: 127.0.0.1
+  port: 18080
+  api_key_enabled: false
+  api_keys: []
+  api_key_objects: []
+proxy:
+  timeout: 120
+  retry_count: 3
+  retry_delay: 5
+load_balance:
+  default_strategy: round_robin
+  rate_limit_cooldown: 60
+providers:
+  deepseek:
+    enabled: true
+    accounts:
+    - name: account-1
+      token: enc:v1:gAAAAABqH2-nVKFRu2C8iOxinYgCbMj1CAFgJnzpOXC_FycXFWliYJ5-4dzj4zsPmkdCEy1x-D2pBTzEC4PfvOaf0Xd63ROeCzsJ1uWL-6mFCXE4h-y2xSKdnUe6Nndz8MLhiXxk0jqv2NHsmND_CLJYapBQYE37ylJu-kpW82RJtPWKhPbqtdg=
+      cookie: enc:v1:gAAAAABqH2-n-9ixCyerEHyOVsPGQrV_soafNeLHOpDGZldB720TABnWoliLG457O6v5ySde1k1j9B-TebId1cHRBwoRpeOrzHx0MEARRZHZHMk4TJkRCj89yGEEoOzMcnGVf07M0pXV6fo3PAAtrrJ0LlOqNPT4qR01WKwej7c8jZ5x_od3z0ItgXvEpVKpknFGCroeXJZtvrb2Rj4TPeJlhbncXqEcCmEUaNv8RcLkj-CzRsnudvPE-m2AvyclsGc75DF9fMABaWNxlhJ0ZNZ02GzDTAPzRiA2-hCU9EFmVWoO4P3-mRLRPt0i5aTf_bJ5Y2Z402D0z3oHEZkYytm-yazKx0Y39XbEb1542O9U2qkHv7BPNRF1SL4lfLpWY8i30WlY4yG7huMi_pTpyxijpUX798XYbmg6MLRSrzOKE204UId-A037uHrMEiqnv1wAPwEVe3cpWKg3JyrTKtkXv-Lpmkmq8cgciWqj8CMgcfdwGpo9SFU=
+      models:
+      - deepseek-v4-flash
+      - deepseek-v4-pro
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  kimi:
+    enabled: true
+    accounts:
+    - name: account-1
+      token: enc:v1:gAAAAABqH2-nRaqRFMIBZz3XwxRqMD2McPnJMknHaECaRiABw0MNTZRmeftv_ngC7LPV2m6zjnDw5ngr85LGwdNkv1ItcTsxrkF5aJe3CcvhlpqaXUdLNn_rFMUGa_se9HuAlpz4V16AIluDHQVqtNfMqOH8yKXxvdIenvmFm5mG_psy1q3vcAWtSCeoawrKx7SnJ6Lxwm8XT5mOYFwPnyTUIjLIM9ldSmYEmHNeE8kMsa_RtYMRp9RyX8rKjuQKh7POQu3inJTa9LXrrcWfm9xz1Pno2J9dvxcmR2TvH6VlSP7IUvk_oj6Cv6UKWzkmS68dhRCXvtnRKuDYW-9fYeo6Nv1OIYHpayY-Anh5Vnugr4liiWio6iUjCQjj7LmoQQtrxRPJrEncKcU6yd_T0vAB8uK8Z4oLv5GLBZ99H1uCT7Pv2DpbOLn_mF_7KMMCsC37A_f8BJ6dkBdnuRs1niJV72QYvg4ETARJycvICkgaFX5m3so004a8iG7pEjOk4pGwCIGKOHBglUzYtAwsXeO115njDJc1SI5i0WR6bNK650z3ffNK9rTJuIp_I1zZ9fFXLYl23DuV7DmB3SMFzqxv7CXSxu5u_4d_UtihetacHg1lQq_qY81geS09ekaKTMMxOwO2Q7rc2Iz_EGPnek6daTKjOUm6rI3BMgHtnggOlvWMUsCmPmkJw-Js_TGic6ZvhDqbd2kn_AepmHtaeskVZt_kbAXjkHjPuKgEm4BiL7CPlUAlLCvnHTbTdFopO0cLBLX9yZiVPpWQ4ASFaziCTwAWAAHkhXwVuwrlIM6jzHiICMvUxoE=
+      cookie: ''
+      models:
+      - Kimi-K2.6
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  qwen:
+    enabled: false
+    accounts:
+    - name: account-1
+      token: enc:v1:gAAAAABqH2-nnXnblClWOohrnYT_X0XYe_H8iaQ1I3ytsBw9zYWv6DZnBkJGLW5Egi_MIkGULGpo4aZZQsFWS-xk3JtF_c-2BbhSbUWbBiaSxAtkKUm1BjI=
+      cookie: ''
+      models:
+      - qwen-max
+      - qwen-plus
+      - qwen-turbo
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  minimax:
+    enabled: false
+    accounts:
+    - name: account-1
+      token: enc:v1:gAAAAABqH2-nO6wwVZCwZgwAVw4mSdI3GpDzkImSlbKGE7-7fG8Gp-gqUJlaTv26YJ2SbJE8uXaWPBDrStc-Z934FYVtFX8yGWxyHCmP6ciwKRHTKpYkVfY=
+      cookie: ''
+      models:
+      - MiniMax-Text-01
+      - abab6.5s-chat
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  doubao:
+    enabled: true
+    accounts:
+    - name: account-1
+      token: ''
+      cookie: enc:v1:gAAAAABqH2-nirr-2j6KZunJuyMnrCrDkLxMOINK2sZsyKwltekOsZeWauN0_xNEO4jWEHI9EPR8Da8Z1MRjLDvYSBWfn1_Ff31lM1Ku0f_rGJftxjlD3Qze-1uypHmYgoqvLgucSsVL_cgxzWE1iIuph_PlZcsNg7uv7ugxx-VY7yWvm2_uEDMn7_-Ij7EB7jjY4_IWPR5BNNkmL9Em8FTJMSW0LLJQFzMzBR-SrVSNuP_-D0xMK4VNSrJRSNJ6pCWaIAhedsDKXVVeAQzbfmfWvNmrkJ7KIIyjIELgBCJ3x8IIrYqxmVYdKaRaJ-NDnwALLfDsckKSWLtNI1lDzQmgmXfyiIZimLhzjTMcHZCguwrYqU6YWb2RNhJ6OMmMAdB2X7bJ-219PCWMWUIdIliaBfaSsFNq4uaRNuOBf_14pVj5sE65fNS7Cvf0Cawz2giRMcBfZmKf66g1uZ3tk-k5vdJJwU9-QtmeTzmWbaQTtr2wP3X8vqC-AHIqnULhD3u8GM8yBJNCZB1v1BSEUbREHheRcmgs_I2I_aywLH4MvV8OYRL-BRGYtGyXxyjqm-mMWZP5kFAHrw53hRc9NqtrcOCxDkAwrWL0fRPMEh4fB8u4iKkePyW04KI_MAMxmZbUL0a12txQqbk6WoBQK8zyaDcceYg0BPBXAjju2EYdLzcsdUFfoyhJhjyg9u_wqb2OkeUJCtclLu3DFIoLrebABg89XV-4tn_byJdUM6lGCTPNER4c05UsSS8U0QuQS0Z9ofmcdkZIjXY01kCWEiHasMm7XYfzXekasL_jwd5d4plGObeyKacsdZ8uIt1An1wVYJk6eoKDfzvMvNMDvfJGKS7oZ0tCvZ7iJaOQkZlUkY8mfSHOkl_2DZSEcELoQypicBv7d6HTPP4y4EOgxgRNcCeCvD5iSw==
+      models:
+      - doubao-pro-32k
+      - doubao-lite-32k
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  yuanbao:
+    enabled: true
+    accounts:
+    - name: account-1
+      cookie: _qimei_uuid42=1a6020e0c201004a3bea60b03f3e66e1e43bd97649; _qimei_fingerprint=1dbff698f586ffa0e1f4e12567c0b712;
+        _qimei_i_3=56f84d85c65252dd9295fa38588070e5f0bff5f0415905d1e0887b5d72c72964626234943989e2a197a7;
+        _qimei_h38=b8856f923bea60b03f3e66e10200000ad1a602; _ga=GA1.1.1756704052.1780380759;
+        ui=A094E9C8-CDF8-4A41-9644-64D05DECB066; __aegis_uid=34ce7f000001b108-36f76ef0f9bb75d1-6253;
+        _qpsvr_localtk=0.21456432643372025; pt_login_sig=r9ua7oMP9Md*k16p2zQpfsMUku-7sVYjY6zAuhMPuG43YMo6QK7RiasY8ydRDUiD;
+        pt_clientip=9db66ef0f9bb01fc; pt_serverip=e78c7f0000014809; pt_local_token=-162216226;
+        uikey=c151d448c9986a4b93fb7e0d56f369d55c08984d6ab3bc403779ee8febf9e549; pt_guid_sig=59c2c11174159570ee41014ab5f1a6cfcace55a5d0fdbd8cd022193590a101b1;
+        olu=c149e3d6ef96122dfda1bd4cbbf46c753e2b119450a5099e; qrsig=2f195b29f4ecb7c04da7bccb69be65c659d6c2915dbfe12cc37f6ea2fa60436f83a265768c6ca951086fd1f137b4bb1f5a1648a8757e576ff9793117f59d7e9c;
+        _qimei_i_1=6fed6bd09d5255dd979efc3309d122e6f7bca4f244585684b2da29582493206c616366c139d8e4dcd4aad5d9;
+        _TDID_CK=1780445546399; 561553b295037d16=fOu4jFT03zzry8nLDQqFeM%2F3O9tr%2BaXme86dXdlXx%2Be%2Flc4zao8gLDseNUgXs1fmFN%2FXs9vOwG32tmDhwmY2zZziaUVCAbHeKK4ZPYtRw96VK%2B5ETZT2ry%2BYnXjUZbsuYyutY4AGeIfeFD0BSho6CQQOLLYqiJubadVprcwquvs6ZQTegMYfIX4nsKJKlJTItNzKraw%2FD5VaA4emDxayyKfD9G0n8NG2foWh4R1LQP86Kgec0jiujnP%2FPV10wFKztPs2ZjZ9yYU44IlTzEtOUJ3PmMXm2OEamkFKVKHFyN54gex6v5HOEA%3D%3D;
+        _ga_6P1G7NCG3R=GS2.1.s1780445547$o3$g0$t1780445547$j60$l0$h1883360415
+      models:
+      - hunyuan-pro
+      - hunyuan-turbo
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  glm:
+    enabled: false
+    accounts:
+    - name: account-1
+      token: ''
+      cookie: ''
+      models:
+      - glm-4-plus
+      - glm-4-flash
+      - glm-4-air
+      - glm-z1-air
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+model_mappings:
+  '*deepseek*':
+    provider: deepseek
+    actual_model: null
+  '*kimi*':
+    provider: kimi
+    actual_model: null
+  '*qwen*':
+    provider: qwen
+    actual_model: null
+  '*minimax*':
+    provider: minimax
+    actual_model: null
+  '*abab*':
+    provider: minimax
+    actual_model: null
+  '*doubao*':
+    provider: doubao
+    actual_model: null
+  '*hunyuan*':
+    provider: yuanbao
+    actual_model: null
+  '*yuanbao*':
+    provider: yuanbao
+    actual_model: null
+  '*glm*':
+    provider: glm
+    actual_model: null
+provider_fallback: {}
+context_management:
+  enabled: true
+  max_messages: 50
+  max_tokens: 128000
+  strategy: sliding_window
+tool_calling:
+  enabled: true
+  mode: prompt_engineering
+logging:
+  level: INFO
+  file: logs/webapi.log
+  max_size: 10MB
+  retention: 7 days
