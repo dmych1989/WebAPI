@@ -846,6 +846,8 @@ class OAuthValidateInput(BaseModel):
     cookie: Optional[str] = None
     user_id: Optional[str] = None
     real_user_id: Optional[str] = None
+    refresh_token: Optional[str] = None
+    chatglm_refresh_token: Optional[str] = None
     # MiMo 专用字段
     service_token: Optional[str] = None
     xiaomichatbot_ph: Optional[str] = None
