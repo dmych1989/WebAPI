@@ -810,13 +810,19 @@ class OAuthManager:
                 account["xiaomichatbot_ph"] = credential_crypto.encrypt(ph_token)
             self._emit_progress("success", "MiMo credentials saved (encrypted)")
         elif self.provider == "glm":
-            # 智谱 GLM：Bearer Token
-            token = credentials.get("token") or credentials.get("refresh_token")
-            if token:
-                account["token"] = credential_crypto.encrypt(token)
-                self._emit_progress("success", f"GLM token saved ({len(token)} chars, encrypted)")
+            # 智谱 GLM：refresh_token（从 localStorage.token 提取，GLM 后续通过 /refresh 换 access_token）
+            refresh_token = (
+                credentials.get("chatglm_refresh_token")
+                or credentials.get("refresh_token")
+                or credentials.get("token")
+            )
+            if refresh_token:
+                account["refresh_token"] = credential_crypto.encrypt(refresh_token)
+                # 兼容字段：同时存到 token
+                account["token"] = credential_crypto.encrypt(refresh_token)
+                self._emit_progress("success", f"GLM refresh_token saved ({len(refresh_token)} chars, encrypted)")
             else:
-                self._emit_progress("error", "No valid token captured for GLM")
+                self._emit_progress("error", "No valid refresh_token captured for GLM")
                 return
         elif self.provider == "coze":
             # Coze: PAT
