@@ -98,23 +98,42 @@ TOKEN_EXTRACTION_CONFIGS: dict[str, TokenExtractionConfig] = {
     ),
     "doubao": TokenExtractionConfig(
         login_url="https://www.doubao.com/chat/",
-        token_sources=[TokenSource(type="cookie", key="")],  # 全量 cookie
+        token_sources=[
+            # Cookie 全量提取（豆包 Cookie 有效期长，无需特定字段）
+            TokenSource(type="cookie", key="_ddq_view"),
+            TokenSource(type="cookie", key="passport_csrf_token"),
+            TokenSource(type="cookie", key="sid_tc"),
+            TokenSource(type="cookie", key="sid_ucp_v2"),
+            TokenSource(type="localStorage", key="BEAKER_SESSION_ID"),
+            TokenSource(type="networkHeader", key="Authorization", url_pattern="*://*.doubao.com/*", extract_pattern="^Bearer\\s+(.+)$"),
+        ],
         target_domains=[".doubao.com", "doubao.com"],
-        success_url_patterns=["doubao.com/chat"],
+        success_url_patterns=["doubao.com/chat", "doubao.com/conversation", "doubao.com/aichat"],
         window_title="Doubao Login",
     ),
     "glm": TokenExtractionConfig(
-        login_url="https://open.bigmodel.cn",
-        token_sources=[],  # 官方 API Key，需手动输入
-        target_domains=[".bigmodel.cn", "bigmodel.cn"],
-        success_url_patterns=["open.bigmodel.cn"],
+        login_url="https://chatglm.cn",
+        token_sources=[
+            TokenSource(type="cookie", key="chatglm_refresh_token"),
+            TokenSource(type="localStorage", key="token"),
+        ],
+        target_domains=[".chatglm.cn", "chatglm.cn", ".bigmodel.cn", "bigmodel.cn"],
+        success_url_patterns=["chatglm.cn", "bigmodel.cn"],
         window_title="GLM Login",
     ),
     "yuanbao": TokenExtractionConfig(
         login_url="https://yuanbao.tencent.com/chat/",
-        token_sources=[TokenSource(type="cookie", key="")],  # 全量 cookie
+        token_sources=[
+            # 腾讯元宝 Cookie 全量提取
+            TokenSource(type="cookie", key="appid"),
+            TokenSource(type="cookie", key="qqhelp_enter_time"),
+            TokenSource(type="cookie", key="sessionid"),
+            TokenSource(type="cookie", key="session_type"),
+            # x_token 从页面 HTML 中提取（对齐 __init__.py）
+            TokenSource(type="localStorage", key="x_token"),
+        ],
         target_domains=[".tencent.com", "yuanbao.tencent.com"],
-        success_url_patterns=["yuanbao.tencent.com/chat"],
+        success_url_patterns=["yuanbao.tencent.com/chat", "yuanbao.tencent.com/conversation"],
         window_title="Yuanbao Login",
     ),
     "mimo": TokenExtractionConfig(
@@ -264,7 +283,17 @@ class OAuthManager:
         try:
             self.browser = await self.playwright.chromium.launch(
                 headless=self.headless,
-                args=["--no-sandbox", "--disable-setuid-sandbox"],
+                args=[
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    # 反自动化检测（对齐 Chat2API）
+                    "--disable-blink-features=AutomationControlled",
+                    "--disable-dev-shm-usage",
+                    "--disable-infobars",
+                    "--disable-popup-blocking",
+                    "--ignore-certificate-errors",
+                    "--disable-web-security",
+                ],
             )
         except Exception as e:
             if self.playwright:
@@ -357,10 +386,12 @@ class OAuthManager:
         """导航到登录页面，等待用户操作"""
         self._emit_progress("pending", "Opening login page...")
 
-        if not self.headless:
-            await self.page.goto(self.cfg.login_url, wait_until="domcontentloaded")
-        else:
-            await self.page.goto(self.cfg.login_url, wait_until="domcontentloaded")
+        await self.page.goto(self.cfg.login_url, wait_until="domcontentloaded")
+        # 移除浏览器自动化特征（对齐 Chat2API: webSecurity + 修改 navigator）
+        await self.page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = { runtime: {} };
+        """)
 
         self._emit_progress(
             "pending",
@@ -371,6 +402,7 @@ class OAuthManager:
         # 等待登录成功（URL 变化或检测到凭证）
         deadline = time.time() + timeout
         last_check = 0.0
+        last_html_check = 0.0
 
         while time.time() < deadline:
             # 检查是否完成
@@ -389,6 +421,11 @@ class OAuthManager:
                     if pattern.lower() in current_url.lower():
                         self._emit_progress("pending", "Login detected! Extracting credentials...")
                         break
+
+            # 每 10 秒检查一次页面 HTML（yuanbao 等通过 HTML 注入 x_token）
+            if now - self._login_start_time >= 5.0 and now - last_html_check >= 10.0:
+                last_html_check = now
+                await self._check_html_for_tokens()
 
             await asyncio.sleep(1.0)
 
@@ -443,6 +480,30 @@ class OAuthManager:
 
         except Exception as e:
             self._emit_progress("pending", f"Token check error: {e}")
+
+    async def _check_html_for_tokens(self):
+        """从页面 HTML 中提取 x_token 等（对齐 Chat2API html extractor）"""
+        if not self.page or self.page.is_closed():
+            return
+        try:
+            html = await self.page.content()
+            if not html:
+                return
+            # yuanbao x_token
+            patterns = [
+                (r'["\']x_token["\']\s*:\s*["\']([^"\']+)["\']', "x_token"),
+                (r'x_token["\s]*[:=]["\s]*([^"\';\s,&]+)', "x_token"),
+            ]
+            for pattern, key in patterns:
+                match = re.search(pattern, html)
+                if match and match.group(1):
+                    val = match.group(1).strip()
+                    if self._is_valid_token(val):
+                        self._emit_progress("pending", f"Found x_token from HTML ({len(val)} chars)")
+                        self._captured_local_storage[key] = val
+                        self._emit_token(key, val)
+        except Exception:
+            pass
 
     def _schedule_token_check(self):
         """安排延迟的 Token 检查（使用 asyncio）"""
@@ -524,8 +585,14 @@ class OAuthManager:
     # ---- 提取和验证 ----
 
     async def _extract_and_validate(self, timeout: float) -> OAuthResult:
-        """等待足够凭证后验证并保存"""
-        deadline = time.time() + min(timeout, 60.0)  # 最多再等 60s 收集凭证
+        """等待足够凭证后验证并保存
+
+        对齐 Chat2API OAuthManager.validateAndComplete():
+        - 持续等待最多 5 分钟收集凭证（用户输入密码等操作）
+        - 捕获到凭证后立即验证
+        - 验证通过后保存到 config.yaml
+        """
+        deadline = time.time() + min(timeout, 300.0)  # 最多等 5 分钟收集凭证
 
         while time.time() < deadline:
             credentials = self._assemble_credentials()
@@ -546,58 +613,81 @@ class OAuthManager:
         )
 
     def _assemble_credentials(self) -> dict[str, str]:
-        """从已捕获的数据组装凭证"""
+        """从已捕获的数据组装凭证
+
+        对齐 Chat2API OAuthManager._assembleCredentials():
+        1. 从 localStorage 组装 token / user_id
+        2. 从 cookies 组装 cookie / ticket
+        3. 从 network headers 组装 token
+        """
         creds: dict[str, str] = {}
 
         # localStorage
         for key, value in self._captured_local_storage.items():
-            if self._is_valid_token(value):
-                if key == "_token":
-                    creds["token"] = value
-                elif key == "user_detail_agent":
-                    # 提取 realUserID
-                    user_detail = self._try_parse_json(value)
-                    if user_detail:
-                        real_user_id = (
-                            user_detail.get("realUserID")
-                            or user_detail.get("id")
-                            or (user_detail.get("user", {}).get("id") if isinstance(user_detail.get("user"), dict) else None)
-                        )
-                        if real_user_id:
-                            creds["user_id"] = str(real_user_id)
-                        token_val = (
-                            user_detail.get("token")
-                            or user_detail.get("value")
-                            or (user_detail.get("user", {}).get("token") if isinstance(user_detail.get("user"), dict) else None)
-                        )
-                        if token_val:
-                            creds["token"] = str(token_val)
-                else:
-                    creds[key] = value
+            if not self._is_valid_token(value):
+                continue
 
-        # cookies
-        for key, value in self._captured_cookies.items():
-            if key == "_all_":
-                creds["cookie"] = value
-            elif self._is_valid_token(value):
-                if key == "tongyi_sso_ticket":
-                    creds["ticket"] = value
-                elif key == "kimi-auth":
-                    creds["kimi_auth"] = value
-                else:
-                    creds[key] = value
-
-        # 从捕获的 auth header
-        for token in self._captured_auth_headers:
-            if self._is_valid_token(token):
+            if key == "_token":
+                creds["token"] = value
+            elif key == "user_detail_agent":
+                user_detail = self._try_parse_json(value)
+                if user_detail:
+                    real_user_id = (
+                        user_detail.get("realUserID")
+                        or user_detail.get("id")
+                        or (user_detail.get("user", {}).get("id") if isinstance(user_detail.get("user"), dict) else None)
+                    )
+                    if real_user_id:
+                        creds["user_id"] = str(real_user_id)
+                    token_val = (
+                        user_detail.get("token")
+                        or user_detail.get("value")
+                        or (user_detail.get("user", {}).get("token") if isinstance(user_detail.get("user"), dict) else None)
+                    )
+                    if token_val:
+                        creds["token"] = str(token_val)
+            elif key == "userToken":
+                creds["token"] = value
+            elif key == "access_token":
+                creds["token"] = value
+            elif key == "refresh_token":
                 if "token" not in creds:
-                    creds["token"] = token
-                    break
+                    creds["refresh_token"] = value
+            elif key == "x_token":
+                creds["x_token"] = value
+            elif key == "serviceToken":
+                creds["serviceToken"] = value
+            elif key == "xiaomichatbot_ph":
+                creds["xiaomichatbot_ph"] = value
+            else:
+                creds[key] = value
+
+        # cookies — 构建完整 cookie 字符串（对齐 Chat2API）
+        captured_cookie_parts = []
+        for key, value in self._captured_cookies.items():
+            if key == "_all_" and self._is_valid_token(value):
+                # 全量 cookie 字符串直接使用
+                if value not in captured_cookie_parts:
+                    captured_cookie_parts.append(value)
+            elif key and value and self._is_valid_token(value):
+                if f"{key}=" not in "; ".join(captured_cookie_parts):
+                    captured_cookie_parts.append(f"{key}={value}")
+
+        if captured_cookie_parts:
+            full_cookie = "; ".join(captured_cookie_parts)
+            if len(full_cookie) > 50:
+                creds["cookie"] = full_cookie
+
+        # network Authorization headers
+        for token in self._captured_auth_headers:
+            if self._is_valid_token(token) and "token" not in creds:
+                creds["token"] = token
+                break
 
         return creds
 
     async def _save_credentials(self, credentials: dict[str, str]):
-        """保存凭证到 config.yaml（对齐 Chat2API 保存逻辑）"""
+        """保存凭证到 config.yaml（对齐 Chat2API 保存逻辑 + 实际 Provider API）"""
         self._emit_progress("pending", "Saving credentials to config...")
 
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -616,16 +706,44 @@ class OAuthManager:
             })
         account = accounts[0]
 
-        # 根据 provider 类型保存字段
-        if self.provider == "doubao" or self.provider == "yuanbao":
-            cookie = credentials.get("cookie") or credentials.get("_all_")
-            if cookie:
+        # 清空旧凭证字段（避免混淆）
+        for f in ("token", "cookie", "user_id", "refresh_token",
+                  "service_token", "xiaomichatbot_ph", "x_token"):
+            account.pop(f, None)
+
+        # 根据 provider 类型保存字段（对齐各 Provider 传输协议）
+        if self.provider == "doubao":
+            # 豆包：完整 Cookie 字符串
+            cookie = credentials.get("cookie")
+            if cookie and len(cookie) > 50:
                 account["cookie"] = cookie
+                self._emit_progress("success", f"Cookie saved ({len(cookie)} chars)")
+            else:
+                self._emit_progress("error", "No valid cookie captured for Doubao")
+                return
+        elif self.provider == "yuanbao":
+            # 腾讯元宝：Cookie + x_token
+            cookie = credentials.get("cookie")
+            x_token = credentials.get("x_token")
+            if cookie and len(cookie) > 50:
+                account["cookie"] = cookie
+                self._emit_progress("success", f"Cookie saved ({len(cookie)} chars)")
+            else:
+                self._emit_progress("error", "No valid cookie captured for Yuanbao")
+                return
+            if x_token:
+                account["x_token"] = x_token
         elif self.provider == "qwen":
-            ticket = credentials.get("ticket") or credentials.get("tongyi_sso_ticket")
+            # 通义千问：tongyi_sso_ticket
+            ticket = credentials.get("ticket") or credentials.get("tongyi_sso_ticket") or credentials.get("token")
             if ticket:
                 account["token"] = ticket
+                self._emit_progress("success", f"Qwen token saved ({len(ticket)} chars)")
+            else:
+                self._emit_progress("error", "No valid ticket captured for Qwen")
+                return
         elif self.provider == "minimax":
+            # MiniMax：user_id:token 拼接
             token = credentials.get("token")
             user_id = credentials.get("user_id")
             if token:
@@ -634,21 +752,56 @@ class OAuthManager:
                     account["user_id"] = user_id
                 else:
                     account["token"] = token
+                self._emit_progress("success", f"MiniMax token saved")
+            else:
+                self._emit_progress("error", "No valid token captured for MiniMax")
+                return
         elif self.provider == "mimo":
-            # MiMo 需要 3 个字段（对齐 Chat2API mimo.ts）
-            service_token = credentials.get("service_token") or credentials.get("serviceToken")
-            user_id = credentials.get("user_id") or credentials.get("userId")
+            # MiMo：3 个必需字段（对齐 Chat2API mimo.ts）
+            service_token = credentials.get("service_token") or credentials.get("serviceToken") or credentials.get("token")
+            user_id = credentials.get("user_id")
             ph_token = credentials.get("xiaomichatbot_ph") or credentials.get("ph_token")
-            if service_token:
-                account["service_token"] = service_token
+            if not service_token:
+                self._emit_progress("error", "MiMo: serviceToken is required")
+                return
+            account["service_token"] = service_token
             if user_id:
                 account["user_id"] = user_id
             if ph_token:
                 account["xiaomichatbot_ph"] = ph_token
-        else:
-            token = credentials.get("token") or credentials.get("userToken") or credentials.get("access_token")
+            self._emit_progress("success", "MiMo credentials saved")
+        elif self.provider == "glm":
+            # 智谱 GLM：Bearer Token
+            token = credentials.get("token") or credentials.get("refresh_token")
             if token:
                 account["token"] = token
+                self._emit_progress("success", f"GLM token saved ({len(token)} chars)")
+            else:
+                self._emit_progress("error", "No valid token captured for GLM")
+                return
+        elif self.provider == "coze":
+            # Coze: PAT
+            token = credentials.get("token")
+            if token:
+                account["token"] = token
+                self._emit_progress("success", "Coze token saved")
+            else:
+                self._emit_progress("error", "No token captured for Coze")
+                return
+        else:
+            # deepseek / kimi 等：直接 Bearer Token
+            token = (
+                credentials.get("token")
+                or credentials.get("userToken")
+                or credentials.get("access_token")
+                or credentials.get("refresh_token")
+            )
+            if token:
+                account["token"] = token
+                self._emit_progress("success", f"Token saved ({len(token)} chars)")
+            else:
+                self._emit_progress("error", f"No valid token captured for {self.provider}")
+                return
 
         # 写回
         with open(CONFIG_PATH, "w", encoding="utf-8") as f:

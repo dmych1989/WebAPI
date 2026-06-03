@@ -26,6 +26,7 @@ WebAPI 是一个**本地部署的 OpenAI 兼容 API 网关**，将各大 AI 厂�
 ### 主要功能模块
 
 #### 📊 概览面板
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ 服务状态: ● 运行中      实时更新: 🟢              │
@@ -37,6 +38,7 @@ WebAPI 是一个**本地部署的 OpenAI 兼容 API 网关**，将各大 AI 厂�
 ```
 
 #### 🔌 Provider管理
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ DeepSeek 🐳    | 健康 | 1个账号 | 并发:0 | 失败:0 │
@@ -51,6 +53,7 @@ WebAPI 是一个**本地部署的 OpenAI 兼容 API 网关**，将各大 AI 厂�
 ```
 
 #### ⚙️ 设置管理
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ 服务器配置:                                     │
@@ -67,25 +70,26 @@ WebAPI 是一个**本地部署的 OpenAI 兼容 API 网关**，将各大 AI 厂�
 
 ### 已实现 Provider
 
-| Provider | 渠道 | 协议 | 认证方式 | 状态 | 特点 |
-|---------|------|------|----------|------|------|
-| **DeepSeek** | chat.deepseek.com | Server-Sent JSON | Cookie / Token | ✅ 已实现 | 稳定，支持多种模型 |
-| **Kimi** | www.kimi.com | gRPC-Web (Connect) | JWT / Refresh Token | ✅ 已实现 | 响应速度快，支持长文本 |
-| **通义千问** | tongyi.aliyun.com | Server-Sent JSON | SSO Ticket | ✅ 已实现 | 阿里出品，稳定性好 |
-| **MiniMax** | chat.minimax.io | WebSocket | Cookie | ✅ 已实现 | 支持多模态 |
-| **豆包** | www.doubao.com | Server-Sent JSON | Cookie / Token | ✅ 已实现 | 字节跳动出品 |
-| **腾讯元宝** | yuanbao.tencent.com | Server-Sent JSON | Cookie | ✅ 已实现 | 腾讯出品，集成微信生态 |
-| **GLM** | chatglm.cn | Server-Sent JSON | Cookie | ✅ 已实现 | 智谱出品，中文优化 |
+| Provider     | 渠道                  | 协议                 | 认证方式                | 状态    | 特点          |
+| ------------ | ------------------- | ------------------ | ------------------- | ----- | ----------- |
+| **DeepSeek** | chat.deepseek.com   | Server-Sent JSON   | Cookie / Token      | ✅ 已实现 | 稳定，支持多种模型   |
+| **Kimi**     | www.kimi.com        | gRPC-Web (Connect) | JWT / Refresh Token | ✅ 已实现 | 响应速度快，支持长文本 |
+| **通义千问**     | tongyi.aliyun.com   | Server-Sent JSON   | SSO Ticket          | ✅ 已实现 | 阿里出品，稳定性好   |
+| **MiniMax**  | chat.minimax.io     | WebSocket          | Cookie              | 未测试 | 支持多模态       |
+| **豆包**       | www.doubao.com      | Server-Sent JSON   | Cookie / Token      | 未测试 | 字节跳动出品      |
+| **腾讯元宝**     | yuanbao.tencent.com | Server-Sent JSON   | Cookie              | 未测试 | 腾讯出品，集成微信生态 |
+| **GLM**      | chatglm.cn          | Server-Sent JSON   | Cookie              | 未测试 | 智谱出品，中文优化   |
 
 ### 计划中 Provider
 
-| Provider | 渠道 | 状态 | 预计时间 |
-|---------|------|------|----------|
+| Provider | 渠道          | 状态     | 预计时间    |
+| -------- | ----------- | ------ | ------- |
 | **Coze** | www.coze.cn | 🚧 计划中 | 2026 Q2 |
 
 ## 🚀 快速开始
 
 ### 1. 环境准备
+
 ```bash
 # 克隆项目
 git clone https://github.com/your-repo/WebAPI.git
@@ -99,6 +103,7 @@ python --version  # 需要 Python 3.8+
 ```
 
 ### 2. 配置 Provider
+
 ```yaml
 # config/config.yaml
 server:
@@ -114,7 +119,7 @@ providers:
         token: "${DEEPSEEK_TOKEN}"
         models: ["deepseek-v4", "deepseek-v4-flash"]
         max_concurrent: 5
-  
+
   kimi:
     accounts:
       - name: "my-kimi-account"
@@ -124,6 +129,7 @@ providers:
 ```
 
 ### 3. 启动服务
+
 ```bash
 # 启动服务
 python -m src.main
@@ -133,10 +139,12 @@ uvicorn src.server.app:app --reload --port 18080
 ```
 
 ### 4. 访问界面
+
 - **管理面板**: http://localhost:18080/
 - **Admin Console**: http://localhost:18080/admin
 
 ### 5. 测试 API
+
 ```bash
 # 测试对话
 curl http://localhost:18080/v1/chat/completions \
@@ -156,6 +164,7 @@ curl http://localhost:18080/v1/models
 ## 🔧 配置详解
 
 ### 环境变量配置
+
 ```bash
 # 创建 .env 文件
 echo "DEEPSEEK_TOKEN=your_token_here" > .env
@@ -170,6 +179,7 @@ export KIMI_TOKEN="your_token_here"
 ### Provider 配置示例
 
 #### DeepSeek 配置
+
 ```yaml
 providers:
   deepseek:
@@ -186,6 +196,7 @@ providers:
 ```
 
 #### Kimi 配置
+
 ```yaml
 providers:
   kimi:
@@ -202,6 +213,7 @@ providers:
 ```
 
 #### 通义千问配置
+
 ```yaml
 providers:
   qwen:
@@ -220,6 +232,7 @@ providers:
 ## 📊 性能监控
 
 ### 实时指标
+
 - **请求数**: 总请求数和错误数
 - **响应时间**: 平均响应时间
 - **并发数**: 当前活跃连接数
@@ -227,6 +240,7 @@ providers:
 - **错误率**: 错误请求比例
 
 ### 监控界面
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ 实时监控                                       │
@@ -245,6 +259,7 @@ providers:
 ## 🔒 安全配置
 
 ### API Key 管理
+
 ```yaml
 server:
   api_key_enabled: true
@@ -258,6 +273,7 @@ server:
 ```
 
 ### 访问控制
+
 ```yaml
 server:
   host: "127.0.0.1"  # 仅本地访问
@@ -271,6 +287,7 @@ server:
 ### 常见问题
 
 #### 1. Provider 账号异常
+
 ```bash
 # 检查账号状态
 curl http://localhost:18080/admin/providers
@@ -280,6 +297,7 @@ curl -X POST http://localhost:18080/admin/providers/deepseek/accounts/account-1/
 ```
 
 #### 2. API Key 认证失败
+
 ```bash
 # 检查 API Key 状态
 curl http://localhost:18080/admin/api-keys
@@ -289,6 +307,7 @@ curl -X POST http://localhost:18080/admin/api-keys/{key-id}/regenerate
 ```
 
 #### 3. 服务启动失败
+
 ```bash
 # 检查端口占用
 netstat -ano | findstr :18080
@@ -298,6 +317,7 @@ python -c "import yaml; yaml.safe_load(open('config/config.yaml'))"
 ```
 
 ### 日志查看
+
 ```bash
 # 查看服务日志
 tail -f logs/uvicorn.log
@@ -309,6 +329,7 @@ tail -f logs/uvicorn_err.log
 ## 🎨 界面定制
 
 ### 主题配置
+
 ```css
 /* 自定义主题颜色 */
 :root {
@@ -321,6 +342,7 @@ tail -f logs/uvicorn_err.log
 ```
 
 ### 界面语言
+
 ```javascript
 // 切换语言
 document.documentElement.lang = "zh-CN";
@@ -329,6 +351,7 @@ document.documentElement.lang = "zh-CN";
 ## 📈 性能优化
 
 ### 配置优化
+
 ```yaml
 server:
   max_concurrent: 200        # 增加并发数
@@ -339,6 +362,7 @@ server:
 ```
 
 ### Provider 优化
+
 ```yaml
 providers:
   deepseek:
@@ -352,6 +376,7 @@ providers:
 ## 🤝 贡献指南
 
 ### 开发环境设置
+
 ```bash
 # 克隆项目
 git clone https://github.com/your-repo/WebAPI.git
@@ -374,6 +399,7 @@ flake8 src/
 ```
 
 ### 添加新 Provider
+
 1. 在 `src/provider/` 目录下创建新的 Provider 类
 2. 在 `config.py` 中注册 Provider
 3. 在 `admin.py` 中添加管理接口
@@ -385,10 +411,9 @@ flake8 src/
 
 ## 📞 支持
 
-- 📧 **邮箱**: your-email@example.com
-- 💬 **讨论**: [GitHub Discussions](https://github.com/your-repo/WebAPI/discussions)
-- 🐛 **问题报告**: [GitHub Issues](https://github.com/your-repo/WebAPI/issues)
-- 📖 **文档**: [项目文档](https://github.com/your-repo/WebAPI/wiki)
+- 💬 **讨论**: [GitHub Discussions](https://github.com/dmych1989/WebAPI/discussions)
+- 🐛 **问题报告**: [GitHub Issues](https://github.com/dmych1989/WebAPI/issues)
+- 📖 **文档**: [项目文档](https://github.com/dmych1989/WebAPI/wiki)
 
 ---
 

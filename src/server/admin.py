@@ -961,11 +961,15 @@ async def oauth_browser_login(provider: str):
         result = await asyncio.wait_for(oauth_manager.login(timeout=360.0), timeout=400.0)
 
         if result.success:
-            # 重新加载配置
+            # 重新加载配置并注册账号池（对齐 accounts.py create_account 流程）
             from src.core.config import reload_config as _reload_cfg
             _reload_cfg()
-            account_pool.register_provider(provider, get_config().providers[provider])
-            account_pool.mark_healthy(provider, "account-1")
+            cfg = get_config()
+            provider_cfg = cfg.providers.get(provider)
+            if provider_cfg:
+                account_pool.register_provider(provider, provider_cfg)
+                # 标记账号健康（对齐 accounts.py）
+                account_pool.mark_healthy(provider, "account-1")
 
             return {
                 "status": "ok",

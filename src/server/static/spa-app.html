@@ -1317,25 +1317,76 @@ async function submitNewAccount(provider) {
 }
 
 async function triggerBrowserLogin(provider) {
-  showToast(`正在启动 ${provider} 浏览器自动登录...`, 'info', 5000);
+  // 显示等待提示（浏览器登录可能需要 1-6 分钟）
+  showLoginWaitingModal(provider);
+}
+
+function showLoginWaitingModal(provider) {
+  const tips = {
+    deepseek: '1. 用浏览器打开 DeepSeek 并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
+    kimi: '1. 用浏览器打开 Kimi 并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
+    qwen: '1. 用浏览器打开通义千问并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取 tongyi_sso_ticket 后关闭浏览器',
+    minimax: '1. 用浏览器打开 MiniMax 并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
+    doubao: '1. 用浏览器打开豆包并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取 Cookie 后关闭浏览器',
+    yuanbao: '1. 用浏览器打开腾讯元宝并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
+    glm: '智谱 GLM 使用官方 API Key，请点击「手动输入」',
+    mimo: '1. 用浏览器打开小米 AI Studio 并登录账号<br>2. 登录成功后请在当前页面等待<br>3. 系统自动提取凭证后关闭浏览器',
+  };
+  const tip = tips[provider] || '请在浏览器中完成登录，系统将自动提取凭证...';
+  showModal(`
+    <div class="modal-header">
+      <div class="modal-title">🔑 ${providerName(provider)} 浏览器登录</div>
+      <button class="modal-close" onclick="closeModal(); cancelLoginWaiting();">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align: center; padding: 10px 0;">
+        <div class="loading" style="width: 40px; height: 40px; margin: 0 auto 16px;"></div>
+        <div style="font-size: 15px; font-weight: 600; margin-bottom: 8px;">正在等待登录...</div>
+        <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.8;">
+          ${tip}
+        </div>
+      </div>
+      <div style="margin-top: 16px; padding: 10px; background: var(--warning-bg); border-radius: 6px; font-size: 12px; color: var(--warning);">
+        💡 提示：浏览器窗口已自动打开，请在其中完成登录。完成后页面将自动更新。
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal(); cancelLoginWaiting();">取消</button>
+    </div>
+  `);
+  // 启动异步登录（不阻塞 UI）
+  executeBrowserLogin(provider);
+  // 定时刷新状态
+  window._loginRefreshTimer = setInterval(() => { loadProviders(); loadDashboard(); }, 15000);
+}
+
+let _loginAbortController = null;
+
+async function executeBrowserLogin(provider) {
   closeModal();
   try {
-    // 使用新的 OAuth 浏览器登录端点（Playwright 自动提取凭证）
+    showToast(`正在启动 ${providerName(provider)} 浏览器登录...`, 'info', 8000);
     const data = await API.post(`/admin/oauth/browser-login/${provider}`);
+    if (window._loginRefreshTimer) { clearInterval(window._loginRefreshTimer); window._loginRefreshTimer = null; }
     if (data.status === 'manual_input_required') {
-      showToast(data.error || `${provider} 不支持浏览器自动登录`, 'warning', 8000);
+      showToast(data.error || `${providerName(provider)} 不支持浏览器自动登录`, 'warning', 8000);
       showAddAccountModal(provider);
     } else if (data.status === 'warning' || data.status === 'error' || data.status === 'timeout') {
-      showToast(data.error || '登录失败，请重试', 'warning', 8000);
+      showToast(data.error || `${providerName(provider)} 登录失败，请重试`, 'warning', 10000);
       showAddAccountModal(provider);
     } else if (data.status === 'ok') {
-      showToast(data.message || `✅ ${provider} 凭证已提取并保存`, 'success', 5000);
+      showToast(data.message || `✅ ${providerName(provider)} 凭证已提取并保存`, 'success', 5000);
       loadProviders();
       loadDashboard();
     }
   } catch (e) {
-    showToast('登录失败: ' + e.message, 'error', 5000);
+    if (window._loginRefreshTimer) { clearInterval(window._loginRefreshTimer); window._loginRefreshTimer = null; }
+    showToast(`${providerName(provider)} 登录失败: ` + e.message, 'error', 8000);
   }
+}
+
+function cancelLoginWaiting() {
+  if (window._loginRefreshTimer) { clearInterval(window._loginRefreshTimer); window._loginRefreshTimer = null; }
 }
 
 async function showEditAccountModal(provider, accountName) {
