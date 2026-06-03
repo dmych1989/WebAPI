@@ -37,7 +37,7 @@ from src.transport.api_reverse import APIReverseTransport
 # 官方 OpenAI 兼容 API base
 DEFAULT_API_BASE = "https://api.minimaxi.com/v1"
 
-# 新一代官方模型
+# 官方模型 + 用户自定义模型
 DEFAULT_MODELS = [
     "MiniMax-M3",
     "MiniMax-M2.7",
@@ -47,6 +47,9 @@ DEFAULT_MODELS = [
     "MiniMax-M2.1",
     "MiniMax-M2.1-highspeed",
     "MiniMax-M2",
+    "MiMo-V2.5-Pro",
+    "MiMo-V2.5",
+    "MiMo-V2-Flash",
 ]
 
 
@@ -239,9 +242,7 @@ class MiniMaxProvider(BaseProvider):
     # ---- Models ----
 
     async def list_models(self) -> list[str]:
-        # 优先使用账号级 models 配置，否则用官方模型列表
-        if self.account.models:
-            return self.account.models
+        # 始终返回 Provider 全量模型（不受 account.models 限制）
         return DEFAULT_MODELS
 
     # ---- Health Check ----

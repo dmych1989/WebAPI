@@ -542,11 +542,21 @@ class DeepSeekProvider(BaseProvider):
     # ---- Models ----
 
     async def list_models(self) -> list[str]:
-        return self.account.models or [
+        # 始终返回 Provider 全量模型（不受 account.models 限制）
+        return [
             "deepseek-chat",
             "deepseek-reasoner",
+            "deepseek-v3.2",
+            "deepseek-v3.2-exp",
+            "deepseek-v3",
             "deepseek-v4-flash",
             "deepseek-v4-pro",
+            "deepseek-v4-flash-think",
+            "deepseek-v4-flash-search",
+            "deepseek-v4-flash-think-search",
+            "deepseek-v4-pro-think",
+            "deepseek-v4-pro-search",
+            "deepseek-v4-pro-think-search",
         ]
 
     # ---- Health Check ----

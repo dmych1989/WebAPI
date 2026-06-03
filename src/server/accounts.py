@@ -351,6 +351,114 @@ async def validate_all_provider_accounts(provider: str):
 # 账号状态重置
 # =============================================================================
 
+# -----------------------------------------------------------------------------
+# 模型清单（合并 config + provider.list_models）
+# -----------------------------------------------------------------------------
+
+@router.get("/providers/{provider}/accounts/{account_name}/models")
+async def list_account_models(provider: str, account_name: str):
+    """获取账号可用的所有模型
+
+    返回三类模型:
+    - configured: 当前 config 中账号已配置的模型
+    - provider_default: provider.list_models() 返回的默认模型
+    - available: configured ∪ provider_default（最终生效）
+    """
+    config = get_config()
+    provider_cfg = config.providers.get(provider)
+    if provider_cfg is None:
+        raise HTTPException(status_code=404, detail=f"渠道 '{provider}' 未配置")
+
+    target: Optional[AccountConfig] = None
+    for acc in provider_cfg.accounts:
+        if acc.name == account_name:
+            target = acc
+            break
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"账号 '{account_name}' 未找到")
+
+    # Provider 默认列表（fallback）
+    provider_default: list[str] = []
+    provider_cls = ProviderRegistry.get(provider)
+    if provider_cls is not None:
+        try:
+            tmp_instance = ProviderRegistry.create(provider, target)
+            provider_default = await tmp_instance.list_models()
+        except Exception as e:
+            logger.debug(f"[Accounts] list_models fallback failed for {provider}: {e}")
+
+    configured = list(target.models)
+    # 合并去重（按出现顺序）
+    available: list[str] = []
+    seen: set[str] = set()
+    for m in configured + provider_default:
+        if m and m not in seen:
+            available.append(m)
+            seen.add(m)
+
+    return {
+        "provider": provider,
+        "account": account_name,
+        "configured": configured,
+        "provider_default": provider_default,
+        "available": available,
+    }
+
+
+class UpdateAccountModelsRequest(BaseModel):
+    """更新账号模型列表"""
+    models: list[str] = Field(default_factory=list)
+
+
+@router.put("/providers/{provider}/accounts/{account_name}/models")
+async def update_account_models(
+    provider: str, account_name: str, body: UpdateAccountModelsRequest
+):
+    """更新账号的 models 列表（覆盖式）。
+
+    传入空数组则清空；非空则替换。保存后立即生效到 config（内存 + 磁盘）。
+    """
+    config = get_config()
+    provider_cfg = config.providers.get(provider)
+    if provider_cfg is None:
+        raise HTTPException(status_code=404, detail=f"渠道 '{provider}' 未配置")
+
+    target: Optional[AccountConfig] = None
+    for acc in provider_cfg.accounts:
+        if acc.name == account_name:
+            target = acc
+            break
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"账号 '{account_name}' 未找到")
+
+    # 去重并保序
+    seen: set[str] = set()
+    new_models: list[str] = []
+    for m in body.models:
+        m = (m or "").strip()
+        if m and m not in seen:
+            new_models.append(m)
+            seen.add(m)
+
+    target.models = new_models
+    try:
+        save_config(config)
+    except Exception as e:
+        logger.warning(f"[Accounts] save_config failed: {e}")
+        # 即便落盘失败也保留内存生效
+
+    logger.info(
+        f"[Accounts] Updated models for {provider}:{account_name} → {len(new_models)} models"
+    )
+    return {
+        "status": "ok",
+        "provider": provider,
+        "account": account_name,
+        "models": new_models,
+        "count": len(new_models),
+    }
+
+
 @router.post("/providers/{provider}/accounts/{account_name}/reset")
 async def reset_account_state(provider: str, account_name: str):
     """强制重置账号状态为 healthy + 清空 cooldown

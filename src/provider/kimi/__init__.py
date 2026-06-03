@@ -619,7 +619,8 @@ class KimiProvider(BaseProvider):
     # ---- Models ----
 
     async def list_models(self) -> list[str]:
-        return self.account.models or [
+        # 始终返回 Provider 全量模型（不受 account.models 限制）
+        return [
             "Kimi-K2.6",
             "Kimi-K2.6-Think",
             "Kimi-K2.6-Search",

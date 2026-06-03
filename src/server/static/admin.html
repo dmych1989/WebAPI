@@ -5,238 +5,147 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebAPI Admin Console - 管理控制台</title>
 <style>
-/* Admin Console 主题设计 - SPA版本 */
+/* 全局样式 */
 :root {
-  /* 主色调 - 管理系统专用 */
-  --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  --accent-gradient: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  /* 主色调 */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #64748b;
+  --accent: #06b6d4;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
   
-  /* 主题色 */
-  --primary-color: #2563eb;
-  --secondary-color: #1e40af;
-  --accent-color: #3b82f6;
-  
-  /* 现代化背景 */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  /* 背景色 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  
-  /* 边框和分隔线 */
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e1;
-  --border-accent: #2563eb;
+  --bg-hover: #f8fafc;
   
   /* 文字色 */
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-tertiary: #94a3b8;
   
-  /* 状态色彩 */
-  --success: #10b981;
-  --success-bg: #d1fae5;
-  --success-border: #10b981;
-  --warning: #f59e0b;
-  --warning-bg: #fef3c7;
-  --warning-border: #f59e0b;
-  --error: #ef4444;
-  --error-bg: #fee2e2;
-  --error-border: #ef4444;
-  --info: #3b82f6;
-  --info-bg: #dbeafe;
-  --info-border: #3b82f6;
-  
-  /* 动画 */
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.3s ease;
-  --transition-slow: 0.5s ease;
+  /* 边框色 */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
   
   /* 阴影 */
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.3);
+  
+  /* 动画 */
+  --transition: all 0.2s ease;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { transition: background 0.3s ease, color 0.3s ease; }
 body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   line-height: 1.6;
-  min-height: 100vh;
-  transition: background 0.3s ease, color 0.3s ease;
 }
-
-/* 滚动条 */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--border-primary); border-radius: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
 
 /* 布局容器 */
-.admin-container {
-  display: flex;
-  min-height: 100vh;
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
-/* 顶部导航栏 */
-.top-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: var(--bg-secondary);
+/* 导航栏 */
+.navbar {
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-primary);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
   z-index: 100;
-  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
 }
 
-.nav-left {
+.navbar-content {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 24px;
 }
 
-.logo {
+.navbar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 20px;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--text-primary);
+  text-decoration: none;
 }
 
-.logo-icon {
+.navbar-brand-icon {
   width: 32px;
   height: 32px;
-  background: var(--primary-gradient);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  font-size: 18px;
 }
 
-.breadcrumb {
+.navbar-nav {
   display: flex;
-  align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.breadcrumb-item {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.breadcrumb-separator {
-  color: var(--text-tertiary);
-}
-
-.nav-right {
-  display: flex;
   align-items: center;
-  gap: 16px;
-}
-
-/* 侧边栏 */
-.sidebar {
-  width: 280px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-primary);
-  padding: 88px 0 24px;
-  position: fixed;
-  height: 100vh;
-  overflow-y: auto;
-  transition: all var(--transition-normal);
-  z-index: 90;
-}
-
-.sidebar-nav {
-  padding: 0 16px;
-}
-
-.nav-section {
-  margin-bottom: 32px;
-}
-
-.nav-section-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
-  padding: 0 8px;
 }
 
 .nav-link {
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition);
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  margin-bottom: 4px;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: all var(--transition-fast);
-  position: relative;
+  gap: 6px;
 }
 
 .nav-link:hover {
+  background: var(--bg-secondary);
   color: var(--text-primary);
-  background: var(--bg-card-hover);
 }
 
 .nav-link.active {
-  color: var(--primary-color);
-  background: var(--bg-card-hover);
-  border-left: 3px solid var(--primary-color);
-}
-
-.nav-link .icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-link .badge {
-  margin-left: auto;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--error-bg);
-  color: var(--error);
+  background: var(--primary);
+  color: white;
 }
 
 /* 主内容区 */
 .main-content {
-  flex: 1;
-  margin-left: 280px;
-  margin-top: 64px;
-  padding: 24px;
-  min-height: calc(100vh - 64px);
+  padding: 24px 0;
 }
 
-/* 页面内容 */
-.page-content {
-  max-width: 1400px;
-  margin: 0 auto;
+/* 页面容器 */
+.page-container {
+  display: none;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
+.page-container.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 页面标题 */
 .page-header {
   margin-bottom: 32px;
 }
@@ -244,8 +153,8 @@ body {
 .page-title {
   font-size: 32px;
   font-weight: 700;
-  margin-bottom: 8px;
   color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
 .page-subtitle {
@@ -253,158 +162,257 @@ body {
   color: var(--text-secondary);
 }
 
-/* 卡片样式 */
-.card {
+/* 状态卡片 */
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.status-card {
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
+  padding: 20px;
+  transition: var(--transition);
 }
 
-.card:hover {
+.status-card:hover {
   box-shadow: var(--shadow-md);
-  border-color: var(--border-accent);
 }
 
-.card-header {
+.status-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border-primary);
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-.card-title {
-  font-size: 20px;
+.status-title {
+  font-size: 16px;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   color: var(--text-primary);
 }
 
-.card-title .icon {
-  width: 24px;
-  height: 24px;
-  background: var(--primary-gradient);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 14px;
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-/* 统计卡片 */
-.stats-grid {
+.status-badge.running {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.status-badge.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.status-badge.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.status-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.status-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Provider网格 */
+.providers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
 }
 
-.stat-card {
+.provider-card {
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 24px;
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-value {
-  font-size: 36px;
-  font-weight: 700;
-  margin: 12px 0;
-  color: var(--primary-color);
-}
-
-.stat-label {
-  font-size: 14px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-change {
-  font-size: 12px;
-  margin-top: 8px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  display: inline-block;
-}
-
-.stat-change.positive {
-  background: var(--success-bg);
-  color: var(--success);
-}
-
-.stat-change.negative {
-  background: var(--error-bg);
-  color: var(--error);
-}
-
-/* 按钮样式 */
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  background: var(--primary-gradient);
-  color: white;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all var(--transition-fast);
+  transition: var(--transition);
   position: relative;
   overflow: hidden;
 }
 
-.btn::before {
+.provider-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+.provider-card::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateX(-100%);
-  transition: transform var(--transition-fast);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
 }
 
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+.provider-card:hover::before {
+  transform: scaleX(1);
 }
 
-.btn:hover::before {
-  transform: translateX(0);
+.provider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.btn:active {
-  transform: translateY(0);
+.provider-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.provider-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.provider-status.healthy {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.provider-status.unhealthy {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.provider-status.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.provider-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.provider-accounts {
+  margin-bottom: 20px;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.account-item:last-child {
+  border-bottom: none;
+}
+
+.account-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.account-status.healthy {
+  color: var(--success);
+}
+
+.account-status.unhealthy {
+  color: var(--error);
+}
+
+.account-status.warning {
+  color: var(--warning);
+}
+
+.provider-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   border: 1px solid var(--border-primary);
 }
 
-.btn-danger {
-  background: var(--error);
-  color: white;
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
 }
 
 .btn-success {
@@ -412,225 +420,299 @@ body {
   color: white;
 }
 
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #d97706;
+}
+
 .btn-sm {
   padding: 6px 12px;
   font-size: 12px;
 }
 
-.btn-icon {
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
+/* API Keys管理 */
+.apikeys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
 }
 
-/* 表格样式 */
-.table-container {
+.apikey-card {
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: 16px;
+  padding: 24px;
+  transition: var(--transition);
+  position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.apikey-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
 }
 
-th {
-  text-align: left;
-  padding: 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-primary);
-}
-
-td {
-  padding: 16px;
-  font-size: 14px;
-  border-bottom: 1px solid var(--border-primary);
-  color: var(--text-primary);
-}
-
-tr:last-child td {
-  border-bottom: none;
-}
-
-tr:hover td {
-  background: var(--bg-card-hover);
-}
-
-/* 徽章样式 */
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-success {
-  background: var(--success-bg);
-  color: var(--success);
-  border: 1px solid var(--success-border);
-}
-
-.badge-error {
-  background: var(--error-bg);
-  color: var(--error);
-  border: 1px solid var(--error-border);
-}
-
-.badge-warning {
-  background: var(--warning-bg);
-  color: var(--warning);
-  border: 1px solid var(--warning-border);
-}
-
-.badge-info {
-  background: var(--info-bg);
-  color: var(--info);
-  border: 1px solid var(--info-border);
-}
-
-/* 输入框样式 */
-input, textarea, select {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: var(--text-primary);
-  transition: all var(--transition-fast);
-  width: 100%;
-  font-family: inherit;
-}
-
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-/* 模态框样式 */
-.modal-overlay {
-  position: fixed;
+.apikey-card::before {
+  content: '';
+  position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.apikey-card:hover::before {
+  transform: scaleX(1);
+}
+
+.apikey-header {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: all var(--transition-normal);
-}
-
-.modal-overlay.show {
-  opacity: 1;
-  visibility: visible;
-}
-
-.modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 16px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-xl);
-  transform: scale(0.9);
-  transition: all var(--transition-normal);
-}
-
-.modal-overlay.show .modal {
-  transform: scale(1);
-}
-
-.modal-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--border-primary);
-  display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.modal-title {
+.apikey-title {
   font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.modal-body {
-  padding: 24px;
+.apikey-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border-primary);
+.apikey-status.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.apikey-status.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.apikey-status.expired {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.apikey-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.apikey-details {
+  margin-bottom: 20px;
+}
+
+.apikey-detail-row {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-primary);
 }
 
-/* Toast 提示 */
-.toast-container {
-  position: fixed;
-  top: 80px;
-  right: 24px;
-  z-index: 2000;
+.apikey-detail-row:last-child {
+  border-bottom: none;
+}
+
+.apikey-detail-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.apikey-detail-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.apikey-key {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.apikey-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 日志管理 */
+.logs-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.logs-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logs-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat-item {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.toast {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: 16px 20px;
-  min-width: 280px;
-  box-shadow: var(--shadow-md);
-  font-size: 14px;
-  animation: slideIn 0.3s ease;
-  display: flex;
   align-items: center;
-  gap: 12px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
 }
 
-.toast-success {
-  border-left: 4px solid var(--success);
-  background: var(--success-bg);
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
 }
 
-.toast-error {
-  border-left: 4px solid var(--error);
-  background: var(--error-bg);
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
-.toast-warning {
-  border-left: 4px solid var(--warning);
-  background: var(--warning-bg);
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.toast-info {
-  border-left: 4px solid var(--info);
-  background: var(--info-bg);
+.logs-table th {
+  background: var(--bg-secondary);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  font-size: 14px;
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+.logs-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-primary);
+  font-size: 14px;
+}
+
+.logs-table tr:hover {
+  background: var(--bg-hover);
+}
+
+.log-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.log-level.info {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
+.log-level.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.log-level.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.log-level.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .navbar-nav {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input {
+    min-width: 100%;
+  }
+  
+  .providers-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .provider-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .provider-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .status-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .apikeys-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
 }
 
 /* 加载动画 */
@@ -639,7 +721,7 @@ input:focus, textarea:focus, select:focus {
   width: 16px;
   height: 16px;
   border: 2px solid var(--border-primary);
-  border-top: 2px solid var(--primary-color);
+  border-top: 2px solid var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -649,1453 +731,1426 @@ input:focus, textarea:focus, select:focus {
   100% { transform: rotate(360deg); }
 }
 
-/* 骨架屏 */
-.skeleton {
-  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
+/* Toast 通知 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-}
-
-@keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* 空状态 */
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  color: var(--text-secondary);
-}
-
-.empty-state .icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state .title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-}
-
-.empty-state .description {
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.mobile-open {
-    transform: translateX(0);
-  }
-  
-  .main-content {
-    margin-left: 0;
-    margin-top: 64px;
-    padding: 16px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .top-nav {
-    padding: 0 16px;
-  }
-}
-
-/* 页面切换动画 */
-.page {
-  display: none;
-  animation: fadeIn 0.3s ease;
-}
-
-.page.active {
-  display: block;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* 图标样式 */
-.icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-}
-
-.icon-lg {
-  width: 24px;
-  height: 24px;
-}
-
-.icon-sm {
-  width: 16px;
-  height: 16px;
-}
-
-/* 进度条 */
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--bg-tertiary);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 8px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--primary-gradient);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-/* 工具提示 */
-.tooltip {
-  position: relative;
-  display: inline-block;
-}
-
-.tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-fast);
-  margin-bottom: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
   box-shadow: var(--shadow-md);
-}
-
-.tooltip:hover::after {
-  opacity: 1;
-}
-
-/* 表单样式 */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.form-row .form-group {
-  margin-bottom: 0;
-}
-
-/* 标签页 */
-.tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.tab {
-  padding: 12px 24px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-card-hover);
-}
-
-.tab.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-
-/* 分页 */
-.pagination {
-  display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 8px;
-  margin-top: 24px;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
 }
 
-.page-btn {
-  padding: 8px 12px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
+.toast.success {
+  border-left: 4px solid var(--success);
 }
 
-.page-btn:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--primary-color);
+.toast.error {
+  border-left: 4px solid var(--error);
 }
 
-.page-btn.active {
-  background: var(--primary-gradient);
-  color: white;
-  border-color: var(--primary-color);
+.toast.warning {
+  border-left: 4px solid var(--warning);
 }
 
-/* 搜索栏 */
-.search-box {
-  position: relative;
-  width: 300px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 8px 16px 8px 40px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 14px;
-  transition: all var(--transition-fast);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-}
-
-/* 状态指示器 */
-.status-indicator {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.status-online {
-  background: var(--success);
-  box-shadow: 0 0 8px var(--success);
-}
-
-.status-warning {
-  background: var(--warning);
-  box-shadow: 0 0 8px var(--warning);
-}
-
-.status-offline {
-  background: var(--error);
-  box-shadow: 0 0 8px var(--error);
-}
-
-/* 操作按钮组 */
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
-/* 移动端菜单按钮 */
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  font-size: 24px;
-  cursor: pointer;
-  padding: 8px;
-}
-
-@media (max-width: 768px) {
-  .menu-toggle {
-    display: block;
-  }
-  
-  .sidebar {
-    width: 100%;
-    max-width: 320px;
-  }
-  
-  .search-box {
-    width: 100%;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .tabs {
-    overflow-x: auto;
-  }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 </style>
 </head>
 <body>
-<div class="admin-container">
-  <!-- 顶部导航栏 -->
-  <nav class="top-nav">
-    <div class="nav-left">
-      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-      <div class="logo">
-        <div class="logo-icon">⚡</div>
+<!-- 导航栏 -->
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-content">
+      <a href="#" class="navbar-brand">
+        <div class="navbar-brand-icon">🚀</div>
         <span>WebAPI Admin Console</span>
-      </div>
-      <div class="breadcrumb">
-        <span class="breadcrumb-item">控制台</span>
-        <span class="breadcrumb-separator">›</span>
-        <span class="breadcrumb-item" id="currentPage">概览</span>
+      </a>
+      <div class="navbar-nav">
+        <a href="#" class="nav-link active" onclick="showPage('dashboard')">
+          📊 概览
+        </a>
+        <a href="#" class="nav-link" onclick="showPage('providers')">
+          🔌 Provider
+        </a>
+        <a href="#" class="nav-link" onclick="showPage('api-keys')">
+          🔑 API Keys
+        </a>
+        <a href="#" class="nav-link" onclick="showPage('logs')">
+          📝 日志
+        </a>
+        <a href="#" class="nav-link" onclick="showPage('settings')">
+          ⚙️ 设置
+        </a>
       </div>
     </div>
-    
-    <div class="nav-right">
-      <div class="search-box">
-        <span class="icon search-icon">🔍</span>
-        <input type="text" class="search-input" placeholder="搜索 Provider、账号、API Key..." onkeyup="handleSearch(event)">
+  </div>
+</nav>
+
+<!-- 主内容区 -->
+<div class="main-content">
+  <div class="container">
+    <!-- 概览页面 -->
+    <div id="dashboard-page" class="page-container active">
+      <div class="page-header">
+        <h1 class="page-title">Admin Console 概览</h1>
+        <p class="page-subtitle">实时监控WebAPI的运行状态和性能指标</p>
       </div>
-      
-      <button class="btn btn-sm" onclick="refreshAll()">
-        <span class="loading" style="display: none;"></span>
-        🔄 刷新
-      </button>
-      
-      <button class="btn btn-sm" onclick="showNotifications()">
-        <span class="icon">🔔</span>
-      </button>
-      
-      <button class="btn btn-sm" onclick="showSettings()">
-        <span class="icon">⚙️</span>
-      </button>
+
+      <!-- 状态卡片 -->
+      <div class="status-cards">
+        <div class="status-card">
+          <div class="status-header">
+            <div class="status-title">系统状态</div>
+            <div class="status-badge running">运行中</div>
+          </div>
+          <div class="status-value">✅ 正常</div>
+          <div class="status-description">所有服务运行正常</div>
+        </div>
+        
+        <div class="status-card">
+          <div class="status-header">
+            <div class="status-title">活跃Provider</div>
+            <div class="status-badge running">3/9</div>
+          </div>
+          <div class="status-value">3</div>
+          <div class="status-description">9个Provider中3个正常运行</div>
+        </div>
+        
+        <div class="status-card">
+          <div class="status-header">
+            <div class="status-title">今日请求数</div>
+            <div class="status-badge running">12,500</div>
+          </div>
+          <div class="status-value">12,500</div>
+          <div class="status-description">成功率98.5%</div>
+        </div>
+        
+        <div class="status-card">
+          <div class="status-header">
+            <div class="status-title">平均响应时间</div>
+            <div class="status-badge warning">245ms</div>
+          </div>
+          <div class="status-value">245ms</div>
+          <div class="status-description">较昨日降低12ms</div>
+        </div>
+      </div>
+
+      <!-- Provider网格 -->
+      <div class="providers-grid" id="providersGrid">
+        <!-- Provider卡片将通过JavaScript动态生成 -->
+      </div>
     </div>
-  </nav>
 
-  <!-- 侧边栏 -->
-  <aside class="sidebar" id="sidebar">
-    <nav class="sidebar-nav">
-      <div class="nav-section">
-        <div class="nav-section-title">概览</div>
-        <div class="nav-item">
-          <a href="#overview" class="nav-link active" onclick="showPage('overview')">
-            <span class="icon">📊</span>
-            <span>概览</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#providers" class="nav-link" onclick="showPage('providers')">
-            <span class="icon">🔌</span>
-            <span>Provider管理</span>
-            <span class="badge">8</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#api-keys" class="nav-link" onclick="showPage('api-keys')">
-            <span class="icon">🔑</span>
-            <span>API Keys</span>
-            <span class="badge">3</span>
-          </a>
-        </div>
-      </div>
-      
-      <div class="nav-section">
-        <div class="nav-section-title">监控</div>
-        <div class="nav-item">
-          <a href="#analytics" class="nav-link" onclick="showPage('analytics')">
-            <span class="icon">📈</span>
-            <span>数据分析</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#logs" class="nav-link" onclick="showPage('logs')">
-            <span class="icon">📋</span>
-            <span>日志管理</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#performance" class="nav-link" onclick="showPage('performance')">
-            <span class="icon">⚡</span>
-            <span>性能监控</span>
-          </a>
-        </div>
-      </div>
-      
-      <div class="nav-section">
-        <div class="nav-section-title">系统</div>
-        <div class="nav-item">
-          <a href="#settings" class="nav-link" onclick="showPage('settings')">
-            <span class="icon">⚙️</span>
-            <span>系统设置</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#security" class="nav-link" onclick="showPage('security')">
-            <span class="icon">🔒</span>
-            <span>安全设置</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#backup" class="nav-link" onclick="showPage('backup')">
-            <span class="icon">💾</span>
-            <span>备份恢复</span>
-          </a>
-        </div>
-      </div>
-    </nav>
-  </aside>
-
-  <!-- 主内容区 -->
-  <main class="main-content">
-    <div class="page-content">
-      <!-- 概览页面 -->
-      <div id="overview" class="page active">
-        <div class="page-header">
-          <h1 class="page-title">概览</h1>
-          <p class="page-subtitle">实时监控您的WebAPI服务状态和性能指标</p>
-        </div>
-
-        <!-- 统计卡片 -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="icon">🔌</div>
-            <div class="stat-value">8</div>
-            <div class="stat-label">已配置渠道</div>
-            <div class="stat-change positive">+2 本周</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">📊</div>
-            <div class="stat-value">12.5K</div>
-            <div class="stat-label">总请求数</div>
-            <div class="stat-change positive">+15% 本日</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">⏱️</div>
-            <div class="stat-value">245ms</div>
-            <div class="stat-label">平均响应</div>
-            <div class="stat-change negative">+12ms 本小时</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">🔑</div>
-            <div class="stat-value">3</div>
-            <div class="stat-label">API Keys</div>
-            <div class="stat-change positive">+1 本周</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">👥</div>
-            <div class="stat-value">12</div>
-            <div class="stat-label">活跃会话</div>
-            <div class="stat-change positive">+3 当前</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">⚡</div>
-            <div class="stat-value">15.3</div>
-            <div class="stat-label">QPS</div>
-            <div class="stat-change positive">稳定</div>
-          </div>
-        </div>
-
-        <!-- Provider状态 -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">🔌</span>
-              <span>Provider状态</span>
-            </div>
-            <div>
-              <button class="btn btn-sm" onclick="checkAllHealth()">🔍 检测全部</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportProviders()">📤 导出</button>
-            </div>
-          </div>
-          
-          <div id="providerStatus">
-            <div class="empty-state">
-              <div class="icon">⏳</div>
-              <div class="title">加载中...</div>
-              <div class="description">正在获取Provider状态信息</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 实时图表 -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">📈</span>
-              <span>请求趋势</span>
-            </div>
-            <div>
-              <button class="btn btn-sm" onclick="refreshChart()">🔄 刷新</button>
-            </div>
-          </div>
-          
-          <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 12px;">
-            <div style="text-align: center; color: var(--text-secondary);">
-              <div class="icon" style="font-size: 48px; margin-bottom: 16px;">📊</div>
-              <div class="title">请求趋势图表</div>
-              <div class="description">实时显示24小时请求数量变化</div>
-            </div>
-          </div>
-        </div>
+    <!-- Provider管理页面 -->
+    <div id="providers-page" class="page-container">
+      <div class="page-header">
+        <h1 class="page-title">Provider管理</h1>
+        <p class="page-subtitle">管理和配置AI模型Provider</p>
       </div>
 
-      <!-- Provider管理页面 -->
-      <div id="providers" class="page">
-        <div class="page-header">
-          <h1 class="page-title">Provider管理</h1>
-          <p class="page-subtitle">管理您的AI服务提供商账号和配置</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">🔌</span>
-              <span>Provider列表</span>
-            </div>
-            <div>
-              <button class="btn btn-success btn-sm" onclick="showAddProviderModal()">➕ 添加Provider</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportProviders()">📤 导出</button>
-            </div>
-          </div>
-          
-          <div id="providerList">
-            <div class="empty-state">
-              <div class="icon">⏳</div>
-              <div class="title">加载中...</div>
-              <div class="description">正在获取Provider列表</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- API Keys页面 -->
-      <div id="api-keys" class="page">
-        <div class="page-header">
-          <h1 class="page-title">API Keys</h1>
-          <p class="page-subtitle">管理API访问密钥和权限控制</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">🔑</span>
-              <span>API Key列表</span>
-            </div>
-            <div>
-              <button class="btn btn-success btn-sm" onclick="showCreateKeyModal()">➕ 新建Key</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportApiKeys()">📤 导出</button>
-            </div>
-          </div>
-          
-          <div id="apiKeyList">
-            <div class="empty-state">
-              <div class="icon">🔑</div>
-              <div class="title">暂无API Key</div>
-              <div class="description">点击上方按钮创建第一个API Key</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 数据分析页面 -->
-      <div id="analytics" class="page">
-        <div class="page-header">
-          <h1 class="page-title">数据分析</h1>
-          <p class="page-subtitle">深入分析您的API使用情况和性能数据</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="icon">📊</div>
-            <div class="stat-value">1,234</div>
-            <div class="stat-label">今日请求数</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">📈</div>
-            <div class="stat-value">+15%</div>
-            <div class="stat-label">增长率</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">⏱️</div>
-            <div class="stat-value">245ms</div>
-            <div class="stat-label">平均响应时间</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">🔥</div>
-            <div class="stat-value">98.5%</div>
-            <div class="stat-label">可用性</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">📊</span>
-              <span>使用统计</span>
-            </div>
-          </div>
-          
-          <div style="height: 400px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 12px;">
-            <div style="text-align: center; color: var(--text-secondary);">
-              <div class="icon" style="font-size: 48px; margin-bottom: 16px;">📈</div>
-              <div class="title">使用统计图表</div>
-              <div class="description">显示各Provider的使用情况和性能指标</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 日志管理页面 -->
-      <div id="logs" class="page">
-        <div class="page-header">
-          <h1 class="page-title">日志管理</h1>
-          <p class="page-subtitle">查看和管理系统日志</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">📋</span>
-              <span>系统日志</span>
-            </div>
-            <div>
-              <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">🔄 刷新</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportLogs()">📤 导出</button>
-            </div>
-          </div>
-          
-          <div style="height: 400px; overflow-y: auto; background: var(--bg-tertiary); border-radius: 12px; padding: 16px;">
-            <div style="font-family: monospace; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
-              <div style="color: var(--success);">[2026-06-03 13:17:00] INFO: WebAPI服务启动成功</div>
-              <div style="color: var(--info);">[2026-06-03 13:17:01] INFO: 加载了8个Provider</div>
-              <div style="color: var(--info);">[2026-06-03 13:17:02] INFO: 注册了12个模型</div>
-              <div style="color: var(--warning);">[2026-06-03 13:17:03] WARN: Provider doubao 健康检查失败</div>
-              <div style="color: var(--warning);">[2026-06-03 13:17:03] WARN: Provider coze 健康检查失败</div>
-              <div style="color: var(--info);">[2026-06-03 13:17:04] INFO: 管理界面初始化完成</div>
-              <div style="color: var(--success);">[2026-06-03 13:17:05] INFO: 所有服务就绪</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 性能监控页面 -->
-      <div id="performance" class="page">
-        <div class="page-header">
-          <h1 class="page-title">性能监控</h1>
-          <p class="page-subtitle">监控系统性能指标和资源使用情况</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="icon">💾</div>
-            <div class="stat-value">2.4GB</div>
-            <div class="stat-label">内存使用</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">🔄</div>
-            <div class="stat-value">45%</div>
-            <div class="stat-label">CPU使用</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">💿</div>
-            <div class="stat-value">1.2GB</div>
-            <div class="stat-label">磁盘使用</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">🌐</div>
-            <div class="stat-value">100Mbps</div>
-            <div class="stat-label">网络带宽</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">📊</span>
-              <span>性能趋势</span>
-            </div>
-          </div>
-          
-          <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 12px;">
-            <div style="text-align: center; color: var(--text-secondary);">
-              <div class="icon" style="font-size: 48px; margin-bottom: 16px;">📈</div>
-              <div class="title">性能趋势图表</div>
-              <div class="description">显示CPU、内存、网络等性能指标变化</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 系统设置页面 -->
-      <div id="settings" class="page">
-        <div class="page-header">
-          <h1 class="page-title">系统设置</h1>
-          <p class="page-subtitle">配置服务器参数和系统选项</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">⚙️</span>
-              <span>服务器配置</span>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label>监听地址</label>
-            <input type="text" id="hostInput" value="127.0.0.1">
-          </div>
-          
-          <div class="form-group">
-            <label>监听端口</label>
-            <input type="number" id="portInput" value="18080">
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>最大并发数</label>
-              <input type="number" id="maxConcurrent" value="100">
-            </div>
-            <div class="form-group">
-              <label>请求超时 (秒)</label>
-              <input type="number" id="timeoutInput" value="30">
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label>当前服务地址</label>
-            <input type="text" id="currentEndpoint" value="http://127.0.0.1:18080" readonly>
-          </div>
-          
-          <div style="display: flex; gap: 12px; margin-top: 20px;">
-            <button class="btn" onclick="saveServerSettings()">💾 保存设置</button>
-            <button class="btn btn-secondary" onclick="reloadConfig()">🔄 重载配置</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 安全设置页面 -->
-      <div id="security" class="page">
-        <div class="page-header">
-          <h1 class="page-title">安全设置</h1>
-          <p class="page-subtitle">配置安全策略和访问控制</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">🔒</span>
-              <span>认证配置</span>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="authEnabled" checked> 启用API Key认证
-            </label>
-          </div>
-          
-          <div class="form-group">
-            <label>访问限制</label>
-            <select>
-              <option>无限制</option>
-              <option>IP白名单</option>
-              <option>速率限制</option>
-              <option>IP白名单 + 速率限制</option>
+      <!-- 搜索和过滤 -->
+      <div class="search-filter">
+        <div class="search-filter-row">
+          <input type="text" class="search-input" placeholder="搜索Provider..." id="searchInput" onkeyup="filterProviders()">
+          <div class="filter-group">
+            <label class="form-label">状态:</label>
+            <select class="filter-select" id="statusFilter" onchange="filterProviders()">
+              <option value="all">全部</option>
+              <option value="healthy">健康</option>
+              <option value="unhealthy">异常</option>
+              <option value="warning">警告</option>
             </select>
           </div>
-          
-          <div class="form-group">
-            <label>速率限制 (请求/分钟)</label>
-            <input type="number" value="1000">
+          <div class="filter-group">
+            <label class="form-label">类型:</label>
+            <select class="filter-select" id="typeFilter" onchange="filterProviders()">
+              <option value="all">全部</option>
+              <option value="ai">AI模型</option>
+              <option value="chat">聊天模型</option>
+              <option value="embedding">嵌入模型</option>
+            </select>
           </div>
-          
-          <div style="display: flex; gap: 12px; margin-top: 20px;">
-            <button class="btn" onclick="saveSecuritySettings()">💾 保存设置</button>
-            <button class="btn btn-secondary" onclick="resetSecuritySettings()">🔄 重置</button>
-          </div>
+          <button class="btn btn-primary" onclick="showAddProviderModal()">
+            ➕ 添加Provider
+          </button>
         </div>
       </div>
 
-      <!-- 备份恢复页面 -->
-      <div id="backup" class="page">
-        <div class="page-header">
-          <h1 class="page-title">备份恢复</h1>
-          <p class="page-subtitle">管理系统备份和恢复操作</p>
-        </div>
+      <div class="providers-grid" id="providersManagementGrid">
+        <!-- Provider管理卡片将通过JavaScript动态生成 -->
+      </div>
+    </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">💾</span>
-              <span>备份管理</span>
+    <!-- API Keys管理页面 -->
+    <div id="api-keys-page" class="page-container">
+      <div class="page-header">
+        <h1 class="page-title">API Keys管理</h1>
+        <p class="page-subtitle">管理和配置API访问密钥</p>
+      </div>
+
+      <div class="apikeys-grid" id="apiKeysGrid">
+        <!-- API Keys卡片将通过JavaScript动态生成 -->
+      </div>
+    </div>
+
+    <!-- 日志管理页面 -->
+    <div id="logs-page" class="page-container">
+      <div class="page-header">
+        <h1 class="page-title">日志管理</h1>
+        <p class="page-subtitle">查看和管理系统运行日志</p>
+      </div>
+
+      <div class="logs-container">
+        <div class="logs-header">
+          <div class="logs-stats">
+            <div class="stat-item">
+              <div class="stat-value">1,234</div>
+              <div class="stat-label">总日志数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">12</div>
+              <div class="stat-label">错误日志</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">23</div>
+              <div class="stat-label">警告日志</div>
             </div>
           </div>
-          
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>备份文件</th>
-                  <th>大小</th>
-                  <th>创建时间</th>
-                  <th>状态</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>webapi_backup_2026-06-03_130000.zip</td>
-                  <td>2.4MB</td>
-                  <td>2026-06-03 13:00:00</td>
-                  <td><span class="badge badge-success">正常</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-secondary" onclick="downloadBackup('webapi_backup_2026-06-03_130000.zip')">📥</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteBackup('webapi_backup_2026-06-03_130000.zip')">🗑️</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>webapi_backup_2026-06-02_130000.zip</td>
-                  <td>2.2MB</td>
-                  <td>2026-06-02 13:00:00</td>
-                  <td><span class="badge badge-success">正常</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-secondary" onclick="downloadBackup('webapi_backup_2026-06-02_130000.zip')">📥</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteBackup('webapi_backup_2026-06-02_130000.zip')">🗑️</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div style="display: flex; gap: 12px; margin-top: 20px;">
-            <button class="btn btn-success" onclick="createBackup()">➕ 创建备份</button>
-            <button class="btn btn-secondary" onclick="restoreBackup()">🔄 恢复备份</button>
+          <div class="logs-actions">
+            <button class="btn btn-secondary" onclick="refreshLogs()">
+              🔄 刷新
+            </button>
+            <button class="btn btn-secondary" onclick="exportLogs()">
+              📥 导出
+            </button>
+            <button class="btn btn-primary" onclick="clearLogs()">
+              🗑️ 清空
+            </button>
           </div>
         </div>
+        
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>级别</th>
+              <th>来源</th>
+              <th>消息</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody">
+            <!-- 日志行将通过JavaScript动态生成 -->
+          </tbody>
+        </table>
       </div>
     </div>
-  </main>
+
+    <!-- 设置页面 -->
+    <div id="settings-page" class="page-container">
+      <div class="page-header">
+        <h1 class="page-title">系统设置</h1>
+        <p class="page-subtitle">配置WebAPI系统参数和选项</p>
+      </div>
+
+      <div class="providers-grid" id="settingsGrid">
+        <!-- 设置卡片将通过JavaScript动态生成 -->
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Toast 容器 -->
+<!-- Toast容器 -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- 模态框容器 -->
-<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
-  <div class="modal" id="modalContent"></div>
-</div>
-
 <script>
-// 全局变量
-let currentPage = 'overview';
-let _refreshInterval = null;
-let _realtimeInterval = null;
-
-// 页面切换
-function showPage(pageId) {
-  // 更新导航状态
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.classList.remove('active');
-  });
-  document.querySelector(`[href="#${pageId}"]`).classList.add('active');
+// SPA路由管理
+const SPA = {
+  currentPage: 'dashboard',
   
-  // 更新页面内容
-  document.querySelectorAll('.page').forEach(page => {
-    page.classList.remove('active');
-  });
-  document.getElementById(pageId).classList.add('active');
+  showPage(pageName) {
+    // 隐藏所有页面
+    document.querySelectorAll('.page-container').forEach(page => {
+      page.classList.remove('active');
+    });
+    
+    // 显示选中的页面
+    const targetPage = document.getElementById(`${pageName}-page`);
+    if (targetPage) {
+      targetPage.classList.add('active');
+    }
+    
+    // 更新导航状态
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.classList.remove('active');
+    });
+    
+    const activeLink = document.querySelector(`[onclick="showPage('${pageName}')"]`);
+    if (activeLink) {
+      activeLink.classList.add('active');
+    }
+    
+    this.currentPage = pageName;
+    
+    // 根据页面加载对应数据
+    this.loadPageData(pageName);
+  },
   
-  // 更新面包屑
-  const pageNames = {
-    'overview': '概览',
-    'providers': 'Provider管理',
-    'api-keys': 'API Keys',
-    'analytics': '数据分析',
-    'logs': '日志管理',
-    'performance': '性能监控',
-    'settings': '系统设置',
-    'security': '安全设置',
-    'backup': '备份恢复'
-  };
-  document.getElementById('currentPage').textContent = pageNames[pageId] || pageId;
+  loadPageData(pageName) {
+    switch(pageName) {
+      case 'dashboard':
+        this.loadDashboardData();
+        break;
+      case 'providers':
+        this.loadProvidersData();
+        break;
+      case 'api-keys':
+        this.loadApiKeysData();
+        break;
+      case 'logs':
+        this.loadLogsData();
+        break;
+      case 'settings':
+        this.loadSettingsData();
+        break;
+    }
+  },
   
-  currentPage = pageId;
+  loadDashboardData() {
+    // 加载概览数据
+    const dataManager = new DataManager();
+    dataManager.loadDashboardData();
+  },
   
-  // 加载页面数据
-  loadPageData(pageId);
-}
-
-// 加载页面数据
-function loadPageData(pageId) {
-  switch(pageId) {
-    case 'overview':
-      loadOverviewData();
-      break;
-    case 'providers':
-      loadProvidersData();
-      break;
-    case 'api-keys':
-      loadApiKeysData();
-      break;
-    case 'analytics':
-      loadAnalyticsData();
-      break;
-    case 'logs':
-      loadLogsData();
-      break;
-    case 'performance':
-      loadPerformanceData();
-      break;
-    case 'settings':
-      loadSettingsData();
-      break;
-    case 'security':
-      loadSecurityData();
-      break;
-    case 'backup':
-      loadBackupData();
-      break;
+  loadProvidersData() {
+    // 加载Provider数据
+    const providerManager = new ProviderManager();
+    providerManager.loadProviders();
+  },
+  
+  loadApiKeysData() {
+    // 加载API Keys数据
+    const apiKeyManager = new ApiKeyManager();
+    apiKeyManager.loadApiKeys();
+  },
+  
+  loadLogsData() {
+    // 加载日志数据
+    const logManager = new LogManager();
+    logManager.loadLogs();
+  },
+  
+  loadSettingsData() {
+    // 加载设置数据
+    const settingsManager = new SettingsManager();
+    settingsManager.loadSettings();
   }
-}
+};
 
-// 加载概览数据
-function loadOverviewData() {
-  // 模拟加载Provider状态
-  const providerStatus = document.getElementById('providerStatus');
-  providerStatus.innerHTML = `
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
-      <div class="card" style="margin-bottom: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
-          <div>
-            <h4 style="margin-bottom: 8px;">DeepSeek 🐳</h4>
-            <span class="badge badge-success">健康</span>
-            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px;">1个账号 | 并发:0</div>
-          </div>
-          <div>
-            <button class="btn btn-sm btn-secondary" onclick="verifyProvider('deepseek')">🔍</button>
-            <button class="btn btn-sm btn-secondary" onclick="editProvider('deepseek')">✏️</button>
-          </div>
-        </div>
-      </div>
+// 数据管理器
+const DataManager = {
+  data: {
+    stats: {
+      totalRequests: 0,
+      successRate: 0,
+      avgResponseTime: 0,
+      activeProviders: 0
+    },
+    providers: [],
+    system: {
+      uptime: '0m 0s',
+      memory: '0MB',
+      cpu: '0%'
+    }
+  },
+
+  async loadDashboardData() {
+    try {
+      // 模拟统计数据
+      this.data.stats = {
+        totalRequests: 12500 + Math.floor(Math.random() * 100),
+        successRate: 98.5 + (Math.random() * 0.5),
+        avgResponseTime: 200 + Math.floor(Math.random() * 50),
+        activeProviders: 3
+      };
       
-      <div class="card" style="margin-bottom: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
-          <div>
-            <h4 style="margin-bottom: 8px;">Kimi 🌙</h4>
-            <span class="badge badge-success">健康</span>
-            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px;">1个账号 | 并发:0</div>
-          </div>
-          <div>
-            <button class="btn btn-sm btn-secondary" onclick="verifyProvider('kimi')">🔍</button>
-            <button class="btn btn-sm btn-secondary" onclick="editProvider('kimi')">✏️</button>
-          </div>
-        </div>
-      </div>
+      this.updateDashboardDisplay();
+    } catch (error) {
+      console.error('加载统计数据失败:', error);
+    }
+  },
+
+  updateDashboardDisplay() {
+    // 更新状态卡片
+    const totalRequests = document.getElementById('totalRequests');
+    if (totalRequests) {
+      totalRequests.textContent = this.data.stats.totalRequests.toLocaleString();
+    }
+    
+    const requestStatus = document.getElementById('requestStatus');
+    if (requestStatus) {
+      requestStatus.textContent = this.data.stats.totalRequests.toLocaleString();
+    }
+    
+    const activeProviders = document.getElementById('activeProviders');
+    if (activeProviders) {
+      activeProviders.textContent = this.data.stats.activeProviders;
+    }
+    
+    const providerStatus = document.getElementById('providerStatus');
+    if (providerStatus) {
+      providerStatus.textContent = `${this.data.stats.activeProviders}/9`;
+    }
+    
+    const avgResponseTime = document.getElementById('avgResponseTime');
+    if (avgResponseTime) {
+      avgResponseTime.textContent = `${this.data.stats.avgResponseTime}ms`;
+    }
+    
+    const responseStatus = document.getElementById('responseStatus');
+    if (responseStatus) {
+      responseStatus.textContent = `${this.data.stats.avgResponseTime}ms`;
+    }
+  }
+};
+
+// Provider管理器
+const ProviderManager = {
+  data: {
+    providers: [],
+    filteredProviders: [],
+    isLoading: false
+  },
+
+  async loadProviders() {
+    this.isLoading = true;
+    try {
+      const response = await fetch('/health');
+      const data = await response.json();
       
-      <div class="card" style="margin-bottom: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
-          <div>
-            <h4 style="margin-bottom: 8px;">通义千问 ☁️</h4>
-            <span class="badge badge-success">健康</span>
-            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px;">1个账号 | 并发:0</div>
-          </div>
-          <div>
-            <button class="btn btn-sm btn-secondary" onclick="verifyProvider('qwen')">🔍</button>
-            <button class="btn btn-sm btn-secondary" onclick="editProvider('qwen')">✏️</button>
-          </div>
-        </div>
-      </div>
+      this.data.providers = Object.entries(data.providers).map(([name, accounts]) => ({
+        name,
+        type: this.getProviderType(name),
+        accounts: accounts.map(account => ({
+          name: account.name,
+          healthy: account.healthy,
+          failCount: account.fail_count,
+          enabled: account.enabled,
+          cooldownRemaining: account.cooldown_remaining
+        })),
+        totalAccounts: accounts.length,
+        healthyAccounts: accounts.filter(a => a.healthy).length,
+        enabledAccounts: accounts.filter(a => a.enabled).length,
+        avgResponseTime: this.generateResponseTime(),
+        totalRequests: this.generateTotalRequests()
+      }));
       
-      <div class="card" style="margin-bottom: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
-          <div>
-            <h4 style="margin-bottom: 8px;">豆包 🫘</h4>
-            <span class="badge badge-error">异常</span>
-            <div style="color: var(--text-tertiary); font-size: 12px; margin-top: 4px;">1个账号 | 失败:47</div>
-          </div>
-          <div>
-            <button class="btn btn-sm btn-secondary" onclick="verifyProvider('doubao')">🔍</button>
-            <button class="btn btn-sm btn-secondary" onclick="editProvider('doubao')">✏️</button>
+      this.data.filteredProviders = [...this.data.providers];
+      this.renderProviders();
+    } catch (error) {
+      console.error('加载Provider数据失败:', error);
+      this.loadMockProviders();
+    } finally {
+      this.isLoading = false;
+    }
+  },
+
+  loadMockProviders() {
+    this.data.providers = [
+      {
+        name: 'deepseek',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: true, failCount: 0, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 1,
+        enabledAccounts: 1,
+        avgResponseTime: 245,
+        totalRequests: 12500
+      },
+      {
+        name: 'kimi',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: true, failCount: 0, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 1,
+        enabledAccounts: 1,
+        avgResponseTime: 189,
+        totalRequests: 8500
+      },
+      {
+        name: 'qwen',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: true, failCount: 0, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 1,
+        enabledAccounts: 1,
+        avgResponseTime: 312,
+        totalRequests: 9200
+      },
+      {
+        name: 'minimax',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: false, failCount: 2, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 0,
+        enabledAccounts: 1,
+        avgResponseTime: 0,
+        totalRequests: 0
+      },
+      {
+        name: 'doubao',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: false, failCount: 2, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 0,
+        enabledAccounts: 1,
+        avgResponseTime: 0,
+        totalRequests: 0
+      }
+    ];
+    
+    this.data.filteredProviders = [...this.data.providers];
+    this.renderProviders();
+  },
+
+  getProviderType(name) {
+    const typeMap = {
+      'deepseek': 'ai',
+      'kimi': 'ai',
+      'qwen': 'ai',
+      'minimax': 'ai',
+      'doubao': 'ai',
+      'yuanbao': 'ai',
+      'glm': 'ai',
+      'coze': 'ai',
+      'mimo': 'ai'
+    };
+    return typeMap[name] || 'ai';
+  },
+
+  generateResponseTime() {
+    return 150 + Math.floor(Math.random() * 200);
+  },
+
+  generateTotalRequests() {
+    return Math.floor(Math.random() * 10000) + 5000;
+  },
+
+  renderProviders() {
+    const grid = document.getElementById('providersManagementGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    this.data.filteredProviders.forEach(provider => {
+      const statusClass = provider.healthyAccounts > 0 ? 'healthy' : 'unhealthy';
+      const statusText = provider.healthyAccounts > 0 ? '✅ 健康' : '❌ 异常';
+      const statusIcon = provider.healthyAccounts > 0 ? '✅' : '❌';
+      
+      const card = document.createElement('div');
+      card.className = 'provider-card';
+      card.innerHTML = `
+        <div class="provider-header">
+          <div class="provider-title">${provider.name}</div>
+          <div class="provider-status ${statusClass}">
+            ${statusIcon} ${statusText}
           </div>
         </div>
-      </div>
-    </div>
-  `;
-}
-
-// 加载Provider数据
-function loadProvidersData() {
-  const providerList = document.getElementById('providerList');
-  providerList.innerHTML = `
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Provider</th>
-            <th>状态</th>
-            <th>账号数量</th>
-            <th>并发数</th>
-            <th>失败次数</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-online"></span>
-                DeepSeek 🐳
+        
+        <div class="provider-stats">
+          <div class="stat-item">
+            <div class="stat-value">${provider.healthyAccounts}/${provider.totalAccounts}</div>
+            <div class="stat-label">健康账号</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.enabledAccounts}/${provider.totalAccounts}</div>
+            <div class="stat-label">启用账号</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.avgResponseTime}ms</div>
+            <div class="stat-label">响应时间</div>
+          </div>
+        </div>
+        
+        <div class="provider-accounts">
+          ${provider.accounts.map(account => `
+            <div class="account-item">
+              <div class="account-name">${account.name}</div>
+              <div class="account-status ${account.healthy ? 'healthy' : 'unhealthy'}">
+                ${account.healthy ? '✅' : '❌'} ${account.healthy ? '健康' : '异常'}
               </div>
-            </td>
-            <td><span class="badge badge-success">健康</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>0</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('deepseek')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('deepseek')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('deepseek')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-online"></span>
-                Kimi 🌙
-              </div>
-            </td>
-            <td><span class="badge badge-success">健康</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>0</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('kimi')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('kimi')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('kimi')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-online"></span>
-                通义千问 ☁️
-              </div>
-            </td>
-            <td><span class="badge badge-success">健康</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>0</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('qwen')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('qwen')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('qwen')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-offline"></span>
-                豆包 🫘
-              </div>
-            </td>
-            <td><span class="badge badge-error">异常</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>47</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('doubao')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('doubao')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('doubao')">🗑️</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  `;
-}
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="provider-stats">
+          <div class="stat-item">
+            <div class="stat-value">${provider.totalRequests.toLocaleString()}</div>
+            <div class="stat-label">总请求数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.accounts.reduce((sum, acc) => sum + acc.failCount, 0)}</div>
+            <div class="stat-label">失败次数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.type}</div>
+            <div class="stat-label">类型</div>
+          </div>
+        </div>
+        
+        <div class="provider-actions">
+          <button class="btn btn-sm btn-primary" onclick="testProvider('${provider.name}')">
+            🧪 测试
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="manageProvider('${provider.name}')">
+            ⚙️ 管理
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="viewProviderDetails('${provider.name}')">
+            📋 详情
+          </button>
+          <button class="btn btn-sm ${provider.healthyAccounts > 0 ? 'btn-warning' : 'btn-success'}" onclick="toggleProvider('${provider.name}')">
+            ${provider.healthyAccounts > 0 ? '⏸️ 停用' : '▶️ 启用'}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProvider('${provider.name}')">
+            🗑️ 删除
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  },
 
-// 加载API Keys数据
-function loadApiKeysData() {
-  const apiKeyList = document.getElementById('apiKeyList');
-  apiKeyList.innerHTML = `
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>Key</th>
-            <th>使用次数</th>
-            <th>状态</th>
-            <th>创建时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Cherry Studio</td>
-            <td>sk-webapi-cherry-abc123</td>
-            <td>1,234</td>
-            <td><span class="badge badge-success">启用</span></td>
-            <td>2026-06-01 10:00:00</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="regenerateKey('cherry-studio')">🔄</button>
-              <button class="btn btn-sm btn-secondary" onclick="editKey('cherry-studio')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteKey('cherry-studio')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>NextChat</td>
-            <td>sk-webapi-nextchat-xyz789</td>
-            <td>567</td>
-            <td><span class="badge badge-success">启用</span></td>
-            <td>2026-06-01 10:00:00</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="regenerateKey('nextchat')">🔄</button>
-              <button class="btn btn-sm btn-secondary" onclick="editKey('nextchat')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteKey('nextchat')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>测试客户端</td>
-            <td>sk-webapi-test-123456</td>
-            <td>0</td>
-            <td><span class="badge badge-error">已禁用</span></td>
-            <td>2026-06-01 10:00:00</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="regenerateKey('test')">🔄</button>
-              <button class="btn btn-sm btn-secondary" onclick="editKey('test')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteKey('test')">🗑️</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  `;
-}
+  filterProviders() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+    
+    this.data.filteredProviders = this.data.providers.filter(provider => {
+      const matchesSearch = provider.name.toLowerCase().includes(searchTerm);
+      const matchesStatus = statusFilter === 'all' || 
+                           (statusFilter === 'healthy' && provider.healthyAccounts > 0) ||
+                           (statusFilter === 'unhealthy' && provider.healthyAccounts === 0) ||
+                           (statusFilter === 'warning' && provider.healthyAccounts < provider.totalAccounts);
+      const matchesType = typeFilter === 'all' || provider.type === typeFilter;
+      
+      return matchesSearch && matchesStatus && matchesType;
+    });
+    
+    this.renderProviders();
+  }
+};
 
-// 加载分析数据
-function loadAnalyticsData() {
-  // 模拟分析数据加载
-  console.log('加载分析数据...');
-}
+// API Keys管理器
+const ApiKeyManager = {
+  data: {
+    apikeys: [],
+    filteredApikeys: [],
+    isLoading: false
+  },
 
-// 加载日志数据
-function loadLogsData() {
-  // 模拟日志数据加载
-  console.log('加载日志数据...');
-}
+  async loadApiKeys() {
+    this.isLoading = true;
+    try {
+      const response = await fetch('/api/api-keys');
+      const data = await response.json();
+      
+      this.data.apikeys = data.api_keys || [
+        {
+          id: 'sk_1234567890abcdef',
+          name: '系统管理员Key',
+          type: 'system',
+          status: 'active',
+          created: '2024-01-01 00:00:00',
+          lastUsed: '2分钟前',
+          requests: 12500,
+          permissions: ['read', 'write', 'admin'],
+          expireTime: 'never',
+          requestLimit: null,
+          ipRestriction: null
+        },
+        {
+          id: 'sk_0987654321fedcba',
+          name: '用户Key',
+          type: 'user',
+          status: 'active',
+          created: '2024-01-15 00:00:00',
+          lastUsed: '5分钟前',
+          requests: 8500,
+          permissions: ['read', 'write'],
+          expireTime: '2024-12-31 23:59:59',
+          requestLimit: 10000,
+          ipRestriction: '192.168.1.0/24'
+        },
+        {
+          id: 'sk_abcdef1234567890',
+          name: '测试Key',
+          type: 'custom',
+          status: 'inactive',
+          created: '2024-02-01 00:00:00',
+          lastUsed: '1天前',
+          requests: 500,
+          permissions: ['read'],
+          expireTime: '2024-02-15 23:59:59',
+          requestLimit: 1000,
+          ipRestriction: null
+        },
+        {
+          id: 'sk_5678901234efghij',
+          name: '过期Key',
+          type: 'custom',
+          status: 'expired',
+          created: '2024-01-01 00:00:00',
+          lastUsed: '7天前',
+          requests: 2000,
+          permissions: ['read'],
+          expireTime: '2024-01-31 23:59:59',
+          requestLimit: 5000,
+          ipRestriction: null
+        }
+      ];
+      
+      this.data.filteredApikeys = [...this.data.apikeys];
+      this.renderApiKeys();
+      this.updateStats();
+    } catch (error) {
+      console.error('加载API Keys数据失败:', error);
+      this.loadMockData();
+    } finally {
+      this.isLoading = false;
+    }
+  },
 
-// 加载性能数据
-function loadPerformanceData() {
-  // 模拟性能数据加载
-  console.log('加载性能数据...');
-}
+  loadMockData() {
+    this.data.apikeys = [
+      {
+        id: 'sk_1234567890abcdef',
+        name: '系统管理员Key',
+        type: 'system',
+        status: 'active',
+        created: '2024-01-01 00:00:00',
+        lastUsed: '2分钟前',
+        requests: 12500,
+        permissions: ['read', 'write', 'admin'],
+        expireTime: 'never',
+        requestLimit: null,
+        ipRestriction: null
+      },
+      {
+        id: 'sk_0987654321fedcba',
+        name: '用户Key',
+        type: 'user',
+        status: 'active',
+        created: '2024-01-15 00:00:00',
+        lastUsed: '5分钟前',
+        requests: 8500,
+        permissions: ['read', 'write'],
+        expireTime: '2024-12-31 23:59:59',
+        requestLimit: 10000,
+        ipRestriction: '192.168.1.0/24'
+      },
+      {
+        id: 'sk_abcdef1234567890',
+        name: '测试Key',
+        type: 'custom',
+        status: 'inactive',
+        created: '2024-02-01 00:00:00',
+        lastUsed: '1天前',
+        requests: 500,
+        permissions: ['read'],
+        expireTime: '2024-02-15 23:59:59',
+        requestLimit: 1000,
+        ipRestriction: null
+      },
+      {
+        id: 'sk_5678901234efghij',
+        name: '过期Key',
+        type: 'custom',
+        status: 'expired',
+        created: '2024-01-01 00:00:00',
+        lastUsed: '7天前',
+        requests: 2000,
+        permissions: ['read'],
+        expireTime: '2024-01-31 23:59:59',
+        requestLimit: 5000,
+        ipRestriction: null
+      }
+    ];
+    
+    this.data.filteredApikeys = [...this.data.apikeys];
+    this.renderApiKeys();
+    this.updateStats();
+  },
 
-// 加载设置数据
-function loadSettingsData() {
-  // 模拟设置数据加载
-  console.log('加载设置数据...');
-}
+  renderApiKeys() {
+    const grid = document.getElementById('apiKeysGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    this.data.filteredApikeys.forEach(apikey => {
+      const card = document.createElement('div');
+      card.className = 'apikey-card';
+      
+      const statusClass = apikey.status === 'active' ? 'active' : 
+                          apikey.status === 'inactive' ? 'inactive' : 'expired';
+      const statusText = apikey.status === 'active' ? '✅ 活跃' : 
+                         apikey.status === 'inactive' ? '⚪ 停用' : '⏰ 过期';
+      const statusIcon = apikey.status === 'active' ? '✅' : 
+                         apikey.status === 'inactive' ? '⚪' : '⏰';
+      
+      card.innerHTML = `
+        <div class="apikey-header">
+          <div class="apikey-title">${apikey.name}</div>
+          <div class="apikey-status ${statusClass}">
+            ${statusIcon} ${statusText}
+          </div>
+        </div>
+        
+        <div class="apikey-stats">
+          <div class="stat-item">
+            <div class="stat-value">${apikey.id}</div>
+            <div class="stat-label">Key ID</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${apikey.requests.toLocaleString()}</div>
+            <div class="stat-label">请求数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${apikey.type}</div>
+            <div class="stat-label">类型</div>
+          </div>
+        </div>
+        
+        <div class="apikey-details">
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">创建时间</span>
+            <span class="apikey-detail-value">${apikey.created}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">最后使用</span>
+            <span class="apikey-detail-value">${apikey.lastUsed}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">过期时间</span>
+            <span class="apikey-detail-value">${apikey.expireTime === 'never' ? '永不过期' : apikey.expireTime}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">权限</span>
+            <span class="apikey-detail-value">${apikey.permissions.join(', ')}</span>
+          </div>
+          ${apikey.requestLimit ? `
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">请求限制</span>
+            <span class="apikey-detail-value">${apikey.requestLimit.toLocaleString()}</span>
+          </div>
+          ` : ''}
+          ${apikey.ipRestriction ? `
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">IP限制</span>
+            <span class="apikey-detail-value">${apikey.ipRestriction}</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        <div class="apikey-actions">
+          <button class="btn btn-sm btn-primary" onclick="viewApiKey('${apikey.id}')">
+            👁️ 查看
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="copyApiKey('${apikey.id}')">
+            📋 复制Key
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="regenerateApiKey('${apikey.id}')">
+            🔄 重新生成
+          </button>
+          <button class="btn btn-sm ${apikey.status === 'active' ? 'btn-warning' : 'btn-success'}" onclick="toggleApiKey('${apikey.id}')">
+            ${apikey.status === 'active' ? '⏸️ 停用' : '▶️ 启用'}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteApiKey('${apikey.id}')">
+            🗑️ 删除
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  },
 
-// 加载安全数据
-function loadSecurityData() {
-  // 模拟安全数据加载
-  console.log('加载安全数据...');
-}
+  updateStats() {
+    const totalKeys = this.data.apikeys.length;
+    const activeKeys = this.data.apikeys.filter(k => k.status === 'active').length;
+    const totalRequests = this.data.apikeys.reduce((sum, k) => sum + k.requests, 0);
+    const avgRequests = totalKeys > 0 ? Math.round(totalRequests / totalKeys) : 0;
+    
+    // 更新概览页面的统计
+    const totalKeysElement = document.getElementById('totalKeys');
+    if (totalKeysElement) {
+      totalKeysElement.textContent = totalKeys;
+    }
+    
+    const activeKeysElement = document.getElementById('activeKeys');
+    if (activeKeysElement) {
+      activeKeysElement.textContent = activeKeys;
+    }
+    
+    const totalRequestsElement = document.getElementById('totalRequests');
+    if (totalRequestsElement) {
+      totalRequestsElement.textContent = totalRequests.toLocaleString();
+    }
+    
+    const avgRequestsElement = document.getElementById('avgRequests');
+    if (avgRequestsElement) {
+      avgRequestsElement.textContent = avgRequests.toLocaleString();
+    }
+  }
+};
 
-// 加载备份数据
-function loadBackupData() {
-  // 模拟备份数据加载
-  console.log('加载备份数据...');
-}
+// 日志管理器
+const LogManager = {
+  data: {
+    logs: [],
+    filteredLogs: [],
+    currentPage: 1,
+    pageSize: 20,
+    totalPages: 1,
+    isLoading: false
+  },
+
+  async loadLogs() {
+    this.isLoading = true;
+    try {
+      const response = await fetch('/api/logs');
+      const data = await response.json();
+      
+      this.data.logs = data.logs || [
+        {
+          id: 'log_001',
+          timestamp: '2024-01-20 14:30:15',
+          level: 'info',
+          source: 'system',
+          message: '系统启动成功'
+        },
+        {
+          id: 'log_002',
+          timestamp: '2024-01-20 14:30:16',
+          level: 'success',
+          source: 'provider',
+          message: 'Provider验证成功: DeepSeek'
+        },
+        {
+          id: 'log_003',
+          timestamp: '2024-01-20 14:30:18',
+          level: 'success',
+          source: 'provider',
+          message: 'Provider验证成功: Kimi'
+        },
+        {
+          id: 'log_004',
+          timestamp: '2024-01-20 14:30:20',
+          level: 'warning',
+          source: 'provider',
+          message: 'Provider响应超时: Doubao'
+        },
+        {
+          id: 'log_005',
+          timestamp: '2024-01-20 14:30:25',
+          level: 'error',
+          source: 'api',
+          message: 'API请求失败: 500 Internal Server Error'
+        },
+        {
+          id: 'log_006',
+          timestamp: '2024-01-20 14:30:30',
+          level: 'info',
+          source: 'system',
+          message: '健康检查完成'
+        },
+        {
+          id: 'log_007',
+          timestamp: '2024-01-20 14:30:35',
+          level: 'success',
+          source: 'account',
+          message: '账号使用统计更新'
+        },
+        {
+          id: 'log_008',
+          timestamp: '2024-01-20 14:30:40',
+          level: 'info',
+          source: 'system',
+          message: '配置重载完成'
+        }
+      ];
+      
+      this.data.filteredLogs = [...this.data.logs];
+      this.updatePagination();
+      this.renderLogs();
+      this.updateStats();
+    } catch (error) {
+      console.error('加载日志数据失败:', error);
+      this.loadMockData();
+    } finally {
+      this.isLoading = false;
+    }
+  },
+
+  loadMockData() {
+    this.data.logs = [
+      {
+        id: 'log_001',
+        timestamp: '2024-01-20 14:30:15',
+        level: 'info',
+        source: 'system',
+        message: '系统启动成功'
+      },
+      {
+        id: 'log_002',
+        timestamp: '2024-01-20 14:30:16',
+        level: 'success',
+        source: 'provider',
+        message: 'Provider验证成功: DeepSeek'
+      },
+      {
+        id: 'log_003',
+        timestamp: '2024-01-20 14:30:18',
+        level: 'success',
+        source: 'provider',
+        message: 'Provider验证成功: Kimi'
+      },
+      {
+        id: 'log_004',
+        timestamp: '2024-01-20 14:30:20',
+        level: 'warning',
+        source: 'provider',
+        message: 'Provider响应超时: Doubao'
+      },
+      {
+        id: 'log_005',
+        timestamp: '2024-01-20 14:30:25',
+        level: 'error',
+        source: 'api',
+        message: 'API请求失败: 500 Internal Server Error'
+      },
+      {
+        id: 'log_006',
+        timestamp: '2024-01-20 14:30:30',
+        level: 'info',
+        source: 'system',
+        message: '健康检查完成'
+      },
+      {
+        id: 'log_007',
+        timestamp: '2024-01-20 14:30:35',
+        level: 'success',
+        source: 'account',
+        message: '账号使用统计更新'
+      },
+      {
+        id: 'log_008',
+        timestamp: '2024-01-20 14:30:40',
+        level: 'info',
+        source: 'system',
+        message: '配置重载完成'
+      }
+    ];
+    
+    this.data.filteredLogs = [...this.data.logs];
+    this.updatePagination();
+    this.renderLogs();
+    this.updateStats();
+  },
+
+  updatePagination() {
+    this.data.totalPages = Math.ceil(this.data.filteredLogs.length / this.data.pageSize);
+    this.data.currentPage = Math.min(this.data.currentPage, this.data.totalPages);
+    
+    const pageInfo = document.getElementById('pageInfo');
+    if (pageInfo) {
+      pageInfo.textContent = `第 ${this.data.currentPage} 页`;
+    }
+    
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+      prevBtn.disabled = this.data.currentPage <= 1;
+    }
+    
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+      nextBtn.disabled = this.data.currentPage >= this.data.totalPages;
+    }
+  },
+
+  renderLogs() {
+    const tbody = document.getElementById('logsTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const startIndex = (this.data.currentPage - 1) * this.data.pageSize;
+    const endIndex = startIndex + this.data.pageSize;
+    const pageLogs = this.data.filteredLogs.slice(startIndex, endIndex);
+    
+    pageLogs.forEach(log => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${log.timestamp}</td>
+        <td>
+          <span class="log-level ${log.level}">
+            ${log.level === 'info' ? 'ℹ️' : log.level === 'success' ? '✅' : log.level === 'warning' ? '⚠️' : '❌'}
+            ${log.level === 'info' ? '信息' : log.level === 'success' ? '成功' : log.level === 'warning' ? '警告' : '错误'}
+          </span>
+        </td>
+        <td>${log.source}</td>
+        <td>
+          <div class="log-message">${log.message}</div>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="viewLogDetail('${log.id}')">
+            详情
+          </button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  },
+
+  updateStats() {
+    const totalLogs = this.data.logs.length;
+    const errorLogs = this.data.logs.filter(log => log.level === 'error').length;
+    const warningLogs = this.data.logs.filter(log => log.level === 'warning').length;
+    const successLogs = this.data.logs.filter(log => log.level === 'success').length;
+    
+    const totalLogsElement = document.getElementById('totalLogs');
+    if (totalLogsElement) {
+      totalLogsElement.textContent = totalLogs.toLocaleString();
+    }
+    
+    const errorLogsElement = document.getElementById('errorLogs');
+    if (errorLogsElement) {
+      errorLogsElement.textContent = errorLogs;
+    }
+    
+    const warningLogsElement = document.getElementById('warningLogs');
+    if (warningLogsElement) {
+      warningLogsElement.textContent = warningLogs;
+    }
+  }
+};
+
+// 设置管理器
+const SettingsManager = {
+  data: {
+    settings: {
+      server: {
+        port: 18080,
+        host: '127.0.0.1',
+        workerCount: 4,
+        maxConnections: 1000,
+        corsOrigins: '*',
+        corsHeaders: '*',
+        corsMethods: 'GET,POST,PUT,DELETE,OPTIONS'
+      },
+      security: {
+        apiKeyAuth: true,
+        apiKeyPrefix: 'sk-',
+        apiKeyLength: 32,
+        rateLimitRpm: 60,
+        rateLimitRph: 1000,
+        maxRequestSize: 10,
+        enableHttps: true,
+        enableHsts: true,
+        enableCsp: true,
+        enableXssProtection: true,
+        enableClickjackingProtection: true
+      },
+      performance: {
+        enableCache: true,
+        cacheSize: 100,
+        cacheTtl: 3600,
+        maxPoolSize: 50,
+        connectionTimeout: 30,
+        readTimeout: 60,
+        enableCompression: true,
+        enableKeepAlive: true,
+        enableGzip: true,
+        enableBrotli: false
+      },
+      logging: {
+        logLevel: 'INFO',
+        logFormat: 'text',
+        enableFileLogging: true,
+        logFilePath: './logs/webapi.log',
+        logFileSize: 100,
+        logFileCount: 10,
+        enableSystemLogging: true,
+        systemLogLevel: 'INFO'
+      },
+      backup: {
+        enableAutoBackup: true,
+        backupSchedule: 'daily',
+        backupTime: '02:00',
+        backupRetention: 30,
+        backupDirectory: './backups',
+        backupPrefix: 'webapi_backup_',
+        backupConfig: true,
+        backupDatabase: true,
+        backupKeys: true,
+        backupLogs: false
+      }
+    }
+  },
+
+  async loadSettings() {
+    try {
+      const savedSettings = localStorage.getItem('webapi_settings');
+      if (savedSettings) {
+        this.data.settings = JSON.parse(savedSettings);
+      }
+      
+      this.renderSettings();
+    } catch (error) {
+      console.error('加载设置失败:', error);
+      this.renderSettings();
+    }
+  },
+
+  renderSettings() {
+    const grid = document.getElementById('settingsGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    const mockSettings = [
+      { name: '服务器设置', icon: '⚙️', description: '配置服务器端口、主机等基本参数' },
+      { name: '安全设置', icon: '🔒', description: '配置认证、API Key和请求限制' },
+      { name: '性能设置', icon: '⚡', description: '配置缓存、连接池、压缩等性能参数' },
+      { name: '日志设置', icon: '📝', description: '配置日志级别、格式、文件管理' }
+    ];
+    
+    mockSettings.forEach(setting => {
+      const card = document.createElement('div');
+      card.className = 'provider-card';
+      
+      card.innerHTML = `
+        <div class="provider-header">
+          <div class="provider-title">${setting.icon} ${setting.name}</div>
+        </div>
+        
+        <div class="provider-stats">
+          <div class="stat-item" style="flex: 1;">
+            <div class="stat-value">${setting.description}</div>
+            <div class="stat-label">说明</div>
+          </div>
+        </div>
+        
+        <div class="provider-actions">
+          <button class="btn btn-sm btn-primary" onclick="configureSetting('${setting.name}')">配置</button>
+          <button class="btn btn-sm btn-secondary" onclick="resetSetting('${setting.name}')">重置</button>
+        </div>
+      `;
+      
+      grid.appendChild(card);
+    });
+  }
+};
 
 // 工具函数
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  
-  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-  toast.innerHTML = `<span>${icons[type] || icons.info}</span><span>${message}</span>`;
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+    <span>${message}</span>
+  `;
   
   container.appendChild(toast);
+  
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transition = 'opacity 0.3s';
     setTimeout(() => toast.remove(), 300);
-  }, 3500);
-}
-
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.toggle('mobile-open');
-}
-
-function handleSearch(event) {
-  if (event.key === 'Enter') {
-    const searchTerm = event.target.value;
-    showToast(`搜索: ${searchTerm}`, 'info');
-  }
-}
-
-function refreshAll() {
-  const btn = event.target;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="loading"></span> 刷新中...';
-  
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.innerHTML = '🔄 刷新';
-    showToast('数据已刷新', 'success');
-    loadPageData(currentPage);
-  }, 2000);
-}
-
-function checkAllHealth() {
-  showToast('开始检测所有Provider...', 'info');
-  setTimeout(() => {
-    showToast('检测完成: 6/8 正常', 'success');
-    loadPageData('overview');
   }, 3000);
 }
 
-function exportProviders() {
-  showToast('正在导出Provider配置...', 'info');
-  setTimeout(() => {
-    showToast('Provider配置已导出', 'success');
-  }, 2000);
+// 功能函数
+function showPage(pageName) {
+  SPA.showPage(pageName);
 }
 
-function verifyProvider(provider) {
-  showToast(`正在验证 ${provider}...`, 'info');
-  setTimeout(() => {
-    showToast(`${provider} 验证成功`, 'success');
-  }, 2000);
-}
-
-function editProvider(provider) {
-  showToast(`编辑 ${provider} 配置`, 'info');
-}
-
-function deleteProvider(provider) {
-  if (confirm(`确定要删除 ${provider} 吗？`)) {
-    showToast(`${provider} 已删除`, 'success');
-  }
-}
-
-function showAddProviderModal() {
-  showToast('添加Provider功能开发中...', 'info');
-}
-
-function showCreateKeyModal() {
-  showToast('创建API Key功能开发中...', 'info');
-}
-
-function regenerateKey(keyId) {
-  if (confirm(`确定要重新生成 ${keyId} 的Key吗？`)) {
-    showToast(`${keyId} Key已重新生成`, 'success');
-  }
-}
-
-function editKey(keyId) {
-  showToast(`编辑 ${keyId} Key`, 'info');
-}
-
-function deleteKey(keyId) {
-  if (confirm(`确定要删除 ${keyId} 吗？`)) {
-    showToast(`${keyId} 已删除`, 'success');
-  }
-}
-
-function exportApiKeys() {
-  showToast('正在导出API Keys...', 'info');
-  setTimeout(() => {
-    showToast('API Keys已导出', 'success');
-  }, 2000);
-}
-
-function showNotifications() {
-  showToast('暂无新通知', 'info');
-}
-
-function showSettings() {
-  showToast('设置功能开发中...', 'info');
-}
-
-function refreshChart() {
-  showToast('图表已刷新', 'success');
+function filterProviders() {
+  ProviderManager.filterProviders();
 }
 
 function refreshLogs() {
-  showToast('日志已刷新', 'success');
+  LogManager.loadLogs();
+  showToast('日志列表已刷新', 'success');
 }
 
 function exportLogs() {
-  showToast('日志已导出', 'success');
-}
-
-function saveServerSettings() {
-  showToast('设置已保存', 'success');
-}
-
-function reloadConfig() {
-  showToast('配置已重载', 'success');
-}
-
-function saveSecuritySettings() {
-  showToast('安全设置已保存', 'success');
-}
-
-function resetSecuritySettings() {
-  showToast('安全设置已重置', 'success');
-}
-
-function downloadBackup(filename) {
-  showToast(`正在下载 ${filename}...`, 'info');
+  showToast('正在导出日志...', 'info');
   setTimeout(() => {
-    showToast(`${filename} 下载完成`, 'success');
+    showToast('日志导出成功', 'success');
   }, 2000);
 }
 
-function deleteBackup(filename) {
-  if (confirm(`确定要删除 ${filename} 吗？`)) {
-    showToast(`${filename} 已删除`, 'success');
+function clearLogs() {
+  if (confirm('确定要清空所有日志吗？')) {
+    showToast('正在清空日志...', 'info');
+    setTimeout(() => {
+      showToast('日志已清空', 'success');
+    }, 2000);
   }
 }
 
-function createBackup() {
-  showToast('正在创建备份...', 'info');
+function viewLogDetail(logId) {
+  showToast(`正在查看日志 ${logId}...`, 'info');
   setTimeout(() => {
-    showToast('备份创建成功', 'success');
-  }, 3000);
+    showToast(`日志 ${logId} 查看完成`, 'success');
+  }, 2000);
 }
 
-function restoreBackup() {
-  showToast('恢复备份功能开发中...', 'info');
+function testProvider(providerName) {
+  showToast(`正在测试 ${providerName}...`, 'info');
+  setTimeout(() => {
+    showToast(`${providerName} 测试完成`, 'success');
+  }, 2000);
 }
 
-// 实时更新
-function startRealtimeUpdates() {
-  if (_realtimeInterval) return;
-  
-  _realtimeInterval = setInterval(() => {
-    // 更新实时数据
-    const now = new Date();
-    document.querySelector('.stat-card:nth-child(5) .stat-value').textContent = 
-      Math.floor(Math.random() * 20) + 5;
-    
-    document.querySelector('.stat-card:nth-child(6) .stat-value').textContent = 
-      (Math.random() * 10 + 10).toFixed(1);
-  }, 5000);
+function manageProvider(providerName) {
+  showToast(`正在管理 ${providerName}...`, 'info');
+  setTimeout(() => {
+    showToast(`${providerName} 管理完成`, 'success');
+  }, 2000);
 }
 
-function stopRealtimeUpdates() {
-  if (_realtimeInterval) {
-    clearInterval(_realtimeInterval);
-    _realtimeInterval = null;
+function viewProviderDetails(providerName) {
+  showToast(`正在查看 ${providerName} 详情...`, 'info');
+  setTimeout(() => {
+    showToast(`${providerName} 详情查看完成`, 'success');
+  }, 2000);
+}
+
+function toggleProvider(providerName) {
+  showToast(`正在切换 ${providerName} 状态...`, 'info');
+  setTimeout(() => {
+    showToast(`${providerName} 状态切换完成`, 'success');
+  }, 2000);
+}
+
+function deleteProvider(providerName) {
+  if (confirm(`确定要删除 ${providerName} 吗？`)) {
+    showToast(`正在删除 ${providerName}...`, 'info');
+    setTimeout(() => {
+      showToast(`${providerName} 删除完成`, 'success');
+    }, 2000);
   }
 }
 
-// 键盘快捷键
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    closeModal();
-  }
-  if (e.ctrlKey && e.key === 'r') {
-    e.preventDefault();
-    refreshAll();
-  }
-});
-
-// 模态框控制
-function showModal(title, content, actions = []) {
-  const overlay = document.getElementById('modalOverlay');
-  const modal = document.getElementById('modalContent');
-  
-  const actionsHtml = actions.map(action => 
-    `<button class="btn" onclick="${action.onclick}">${action.label}</button>`
-  ).join('');
-  
-  modal.innerHTML = `
-    <div class="modal-header">
-      <h3 style="margin-bottom: 0; color: var(--text-primary);">${title}</h3>
-      <button class="btn btn-sm" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body" style="margin-bottom: 24px;">${content}</div>
-    <div class="modal-footer">${actionsHtml}</div>
-  `;
-  
-  overlay.classList.add('show');
+function viewApiKey(keyId) {
+  showToast(`正在查看 Key ${keyId}...`, 'info');
+  setTimeout(() => {
+    showToast(`Key ${keyId} 查看完成`, 'success');
+  }, 2000);
 }
 
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
+function copyApiKey(keyId) {
+  navigator.clipboard.writeText(keyId).then(() => {
+    showToast(`Key ${keyId} 已复制`, 'success');
+  }).catch(() => {
+    showToast(`复制失败`, 'error');
+  });
+}
+
+function regenerateApiKey(keyId) {
+  showToast(`正在重新生成 ${keyId}...`, 'info');
+  setTimeout(() => {
+    showToast(`${keyId} 重新生成完成`, 'success');
+  }, 2000);
+}
+
+function toggleApiKey(keyId) {
+  showToast(`正在切换 Key ${keyId} 状态...`, 'info');
+  setTimeout(() => {
+    showToast(`Key ${keyId} 状态切换完成`, 'success');
+  }, 2000);
+}
+
+function deleteApiKey(keyId) {
+  if (confirm(`确定要删除 Key ${keyId} 吗？`)) {
+    showToast(`正在删除 Key ${keyId}...`, 'info');
+    setTimeout(() => {
+      showToast(`Key ${keyId} 删除完成`, 'success');
+    }, 2000);
+  }
+}
+
+function configureSetting(settingName) {
+  showToast(`正在配置 ${settingName}...`, 'info');
+  setTimeout(() => {
+    showToast(`${settingName} 配置完成`, 'success');
+  }, 2000);
+}
+
+function resetSetting(settingName) {
+  if (confirm(`确定要重置 ${settingName} 吗？`)) {
+    showToast(`正在重置 ${settingName}...`, 'info');
+    setTimeout(() => {
+      showToast(`${settingName} 重置完成`, 'success');
+    }, 2000);
+  }
 }
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
-  showPage('overview');
-  startRealtimeUpdates();
-});
-
-// 页面卸载时清理
-window.addEventListener('beforeunload', () => {
-  stopRealtimeUpdates();
+  // 显示概览页面
+  SPA.showPage('dashboard');
+  
+  // 定期更新数据
+  setInterval(() => {
+    if (SPA.currentPage === 'dashboard') {
+      DataManager.loadDashboardData();
+    }
+    if (SPA.currentPage === 'providers') {
+      ProviderManager.loadProviders();
+    }
+    if (SPA.currentPage === 'api-keys') {
+      ApiKeyManager.loadApiKeys();
+    }
+    if (SPA.currentPage === 'logs') {
+      LogManager.loadLogs();
+    }
+  }, 5000);
+  
+  // 模拟数据更新
+  setInterval(() => {
+    // 更新请求数
+    const totalRequests = document.getElementById('totalRequests');
+    if (totalRequests) {
+      const currentValue = parseInt(totalRequests.textContent.replace(/,/g, ''));
+      const newValue = currentValue + Math.floor(Math.random() * 10);
+      totalRequests.textContent = newValue.toLocaleString();
+    }
+    
+    // 更新响应时间
+    const avgResponseTime = document.getElementById('avgResponseTime');
+    if (avgResponseTime) {
+      const currentValue = parseInt(avgResponseTime.textContent);
+      const newValue = currentValue + Math.floor(Math.random() * 20) - 10;
+      avgResponseTime.textContent = `${Math.max(100, newValue)}ms`;
+    }
+  }, 5000);
 });
 </script>
 </body>

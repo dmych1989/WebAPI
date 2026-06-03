@@ -492,7 +492,8 @@ class YuanbaoProvider(BaseProvider):
     # ---- Models ----
 
     async def list_models(self) -> list[str]:
-        return self.account.models or DEFAULT_MODELS
+        # 始终返回 Provider 全量模型（不受 account.models 限制）
+        return DEFAULT_MODELS
 
     # ---- Health Check ----
 

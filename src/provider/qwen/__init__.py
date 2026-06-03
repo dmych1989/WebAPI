@@ -508,14 +508,19 @@ class QwenProvider(BaseProvider):
     # ---- Models ----
 
     async def list_models(self) -> list[str]:
-        return self.account.models or [
+        # 始终返回 Provider 全量模型（不受 account.models 限制）
+        return [
             "qwen-max",
             "qwen-plus",
             "qwen-turbo",
-            "Qwen3-Max",
-            "Qwen3.5-Flash",
-            "Qwen3-Max-Thinking-Preview",
-            "Qwen3-Coder",
+            "qwen3-max",
+            "qwen3-max-preview",
+            "qwen3-max-thinking-preview",
+            "qwen3.5-flash",
+            "qwen3.6",
+            "qwen3.7-max",
+            "qwen3-coder",
+            "qwen3-vl-plus",
         ]
 
     # ---- Session Management ----

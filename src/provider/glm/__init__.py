@@ -229,6 +229,11 @@ class GLMProvider(BaseProvider):
             "glm-4-airx",
             "glm-z1-air",
             "glm-zero-preview",
+            "glm-4.7",
+            "glm-5",
+            "glm-5-turbo",
+            "glm-5v-turbo",
+            "glm-5.1",
         ]
 
     # ---- Health Check ----

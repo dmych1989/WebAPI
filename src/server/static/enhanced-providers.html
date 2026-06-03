@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Provider管理 - WebAPI</title>
+<style>
+/* 全局样式 */
+:root {
+  /* 主色调 */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #64748b;
+  --accent: #06b6d4;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  /* 背景色 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f8fafc;
+  
+  /* 文字色 */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  
+  /* 边框色 */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  
+  /* 动画 */
+  --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* 布局容器 */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 导航栏 */
+.navbar {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.navbar-brand-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+}
+
+.navbar-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nav-link {
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-link:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.nav-link.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* 主内容区 */
+.main-content {
+  padding: 24px 0;
+}
+
+/* 页面标题 */
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+/* 搜索和过滤 */
+.search-filter {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.search-filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 300px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-primary);
+  cursor: pointer;
+}
+
+/* Provider网格 */
+.providers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.provider-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  padding: 24px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.provider-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+.provider-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.provider-card:hover::before {
+  transform: scaleX(1);
+}
+
+.provider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.provider-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.provider-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.provider-status.healthy {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.provider-status.unhealthy {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.provider-status.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.provider-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.provider-accounts {
+  margin-bottom: 20px;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.account-item:last-child {
+  border-bottom: none;
+}
+
+.account-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.account-status.healthy {
+  color: var(--success);
+}
+
+.account-status.unhealthy {
+  color: var(--error);
+}
+
+.account-status.warning {
+  color: var(--warning);
+}
+
+.provider-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #d97706;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* 添加Provider模态框 */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-primary);
+  cursor: pointer;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* 加载动画 */
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-primary);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast 通知 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--error);
+}
+
+.toast.warning {
+  border-left: 4px solid var(--warning);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .navbar-nav {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input {
+    min-width: 100%;
+  }
+  
+  .providers-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .provider-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .provider-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-content">
+      <a href="#" class="navbar-brand">
+        <div class="navbar-brand-icon">🚀</div>
+        <span>WebAPI</span>
+      </a>
+      <div class="navbar-nav">
+        <a href="#" class="nav-link" onclick="navigateTo('dashboard')">
+          📊 概览
+        </a>
+        <a href="#" class="nav-link active" onclick="navigateTo('providers')">
+          🔌 Provider
+        </a>
+        <a href="#" class="nav-link" onclick="navigateTo('api-keys')">
+          🔑 API Keys
+        </a>
+        <a href="#" class="nav-link" onclick="navigateTo('logs')">
+          📝 日志
+        </a>
+        <a href="#" class="nav-link" onclick="navigateTo('settings')">
+          ⚙️ 设置
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- 主内容区 -->
+<div class="main-content">
+  <div class="container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">Provider管理</h1>
+      <p class="page-subtitle">管理和配置AI模型Provider</p>
+    </div>
+
+    <!-- 搜索和过滤 -->
+    <div class="search-filter">
+      <div class="search-filter-row">
+        <input type="text" class="search-input" placeholder="搜索Provider..." id="searchInput" onkeyup="filterProviders()">
+        <div class="filter-group">
+          <label class="form-label">状态:</label>
+          <select class="filter-select" id="statusFilter" onchange="filterProviders()">
+            <option value="all">全部</option>
+            <option value="healthy">健康</option>
+            <option value="unhealthy">异常</option>
+            <option value="warning">警告</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="form-label">类型:</label>
+          <select class="filter-select" id="typeFilter" onchange="filterProviders()">
+            <option value="all">全部</option>
+            <option value="ai">AI模型</option>
+            <option value="chat">聊天模型</option>
+            <option value="embedding">嵌入模型</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="showAddProviderModal()">
+          ➕ 添加Provider
+        </button>
+      </div>
+    </div>
+
+    <!-- Provider网格 -->
+    <div class="providers-grid" id="providersGrid">
+      <!-- Provider卡片将通过JavaScript动态生成 -->
+    </div>
+  </div>
+</div>
+
+<!-- 添加Provider模态框 -->
+<div class="modal" id="addProviderModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">添加Provider</h2>
+      <button class="modal-close" onclick="closeModal('addProviderModal')">&times;</button>
+    </div>
+    <form id="addProviderForm">
+      <div class="form-group">
+        <label class="form-label">Provider名称</label>
+        <input type="text" class="form-input" id="providerName" required placeholder="例如: deepseek">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Provider类型</label>
+        <select class="form-select" id="providerType" required>
+          <option value="">选择Provider类型</option>
+          <option value="ai">AI模型</option>
+          <option value="chat">聊天模型</option>
+          <option value="embedding">嵌入模型</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">API端点</label>
+        <input type="text" class="form-input" id="providerEndpoint" required placeholder="https://api.example.com/v1">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">API Key</label>
+        <input type="text" class="form-input" id="providerApiKey" required placeholder="输入API密钥">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">模型列表</label>
+        <textarea class="form-textarea" id="providerModels" placeholder="输入模型列表，每行一个" rows="4"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">配置</label>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <label class="form-checkbox">
+            <input type="checkbox" id="providerEnabled" checked>
+            <span>启用Provider</span>
+          </label>
+          <label class="form-checkbox">
+            <input type="checkbox" id="providerAutoRetry" checked>
+            <span>自动重试</span>
+          </label>
+          <label class="form-checkbox">
+            <input type="checkbox" id="providerAutoSwitch" checked>
+            <span>自动切换</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">添加Provider</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addProviderModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// Provider管理器
+const ProviderManager = {
+  data: {
+    providers: [],
+    filteredProviders: [],
+    isLoading: false
+  },
+
+  async loadProviders() {
+    this.isLoading = true;
+    try {
+      const response = await fetch('/health');
+      const data = await response.json();
+      
+      this.data.providers = Object.entries(data.providers).map(([name, accounts]) => ({
+        name,
+        type: this.getProviderType(name),
+        accounts: accounts.map(account => ({
+          name: account.name,
+          healthy: account.healthy,
+          failCount: account.fail_count,
+          enabled: account.enabled,
+          cooldownRemaining: account.cooldown_remaining
+        })),
+        totalAccounts: accounts.length,
+        healthyAccounts: accounts.filter(a => a.healthy).length,
+        enabledAccounts: accounts.filter(a => a.enabled).length,
+        avgResponseTime: this.generateResponseTime(),
+        totalRequests: this.generateTotalRequests()
+      }));
+      
+      this.data.filteredProviders = [...this.data.providers];
+      this.renderProviders();
+    } catch (error) {
+      console.error('加载Provider数据失败:', error);
+      this.loadMockProviders();
+    } finally {
+      this.isLoading = false;
+    }
+  },
+
+  loadMockProviders() {
+    this.data.providers = [
+      {
+        name: 'deepseek',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: true, failCount: 0, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 1,
+        enabledAccounts: 1,
+        avgResponseTime: 245,
+        totalRequests: 12500
+      },
+      {
+        name: 'kimi',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: true, failCount: 0, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 1,
+        enabledAccounts: 1,
+        avgResponseTime: 189,
+        totalRequests: 8500
+      },
+      {
+        name: 'qwen',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: true, failCount: 0, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 1,
+        enabledAccounts: 1,
+        avgResponseTime: 312,
+        totalRequests: 9200
+      },
+      {
+        name: 'minimax',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: false, failCount: 2, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 0,
+        enabledAccounts: 1,
+        avgResponseTime: 0,
+        totalRequests: 0
+      },
+      {
+        name: 'doubao',
+        type: 'ai',
+        accounts: [{ name: 'account-1', healthy: false, failCount: 2, enabled: true, cooldownRemaining: 0 }],
+        totalAccounts: 1,
+        healthyAccounts: 0,
+        enabledAccounts: 1,
+        avgResponseTime: 0,
+        totalRequests: 0
+      }
+    ];
+    
+    this.data.filteredProviders = [...this.data.providers];
+    this.renderProviders();
+  },
+
+  getProviderType(name) {
+    const typeMap = {
+      'deepseek': 'ai',
+      'kimi': 'ai',
+      'qwen': 'ai',
+      'minimax': 'ai',
+      'doubao': 'ai',
+      'yuanbao': 'ai',
+      'glm': 'ai',
+      'coze': 'ai',
+      'mimo': 'ai'
+    };
+    return typeMap[name] || 'ai';
+  },
+
+  generateResponseTime() {
+    return 150 + Math.floor(Math.random() * 200);
+  },
+
+  generateTotalRequests() {
+    return Math.floor(Math.random() * 10000) + 5000;
+  },
+
+  renderProviders() {
+    const grid = document.getElementById('providersGrid');
+    grid.innerHTML = '';
+    
+    this.data.filteredProviders.forEach(provider => {
+      const statusClass = provider.healthyAccounts > 0 ? 'healthy' : 'unhealthy';
+      const statusText = provider.healthyAccounts > 0 ? '✅ 健康' : '❌ 异常';
+      const statusIcon = provider.healthyAccounts > 0 ? '✅' : '❌';
+      
+      const card = document.createElement('div');
+      card.className = 'provider-card';
+      card.innerHTML = `
+        <div class="provider-header">
+          <div class="provider-title">${provider.name}</div>
+          <div class="provider-status ${statusClass}">
+            ${statusIcon} ${statusText}
+          </div>
+        </div>
+        
+        <div class="provider-stats">
+          <div class="stat-item">
+            <div class="stat-value">${provider.healthyAccounts}/${provider.totalAccounts}</div>
+            <div class="stat-label">健康账号</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.enabledAccounts}/${provider.totalAccounts}</div>
+            <div class="stat-label">启用账号</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.avgResponseTime}ms</div>
+            <div class="stat-label">响应时间</div>
+          </div>
+        </div>
+        
+        <div class="provider-accounts">
+          ${provider.accounts.map(account => `
+            <div class="account-item">
+              <div class="account-name">${account.name}</div>
+              <div class="account-status ${account.healthy ? 'healthy' : 'unhealthy'}">
+                ${account.healthy ? '✅' : '❌'} ${account.healthy ? '健康' : '异常'}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="provider-stats">
+          <div class="stat-item">
+            <div class="stat-value">${provider.totalRequests.toLocaleString()}</div>
+            <div class="stat-label">总请求数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.accounts.reduce((sum, acc) => sum + acc.failCount, 0)}</div>
+            <div class="stat-label">失败次数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${provider.type}</div>
+            <div class="stat-label">类型</div>
+          </div>
+        </div>
+        
+        <div class="provider-actions">
+          <button class="btn btn-sm btn-primary" onclick="testProvider('${provider.name}')">
+            🧪 测试
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="manageProvider('${provider.name}')">
+            ⚙️ 管理
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="viewProviderDetails('${provider.name}')">
+            📋 详情
+          </button>
+          <button class="btn btn-sm ${provider.healthyAccounts > 0 ? 'btn-warning' : 'btn-success'}" onclick="toggleProvider('${provider.name}')">
+            ${provider.healthyAccounts > 0 ? '⏸️ 停用' : '▶️ 启用'}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProvider('${provider.name}')">
+            🗑️ 删除
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  },
+
+  filterProviders() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+    
+    this.data.filteredProviders = this.data.providers.filter(provider => {
+      const matchesSearch = provider.name.toLowerCase().includes(searchTerm);
+      const matchesStatus = statusFilter === 'all' || 
+                           (statusFilter === 'healthy' && provider.healthyAccounts > 0) ||
+                           (statusFilter === 'unhealthy' && provider.healthyAccounts === 0) ||
+                           (statusFilter === 'warning' && provider.healthyAccounts < provider.totalAccounts);
+      const matchesType = typeFilter === 'all' || provider.type === typeFilter;
+      
+      return matchesSearch && matchesStatus && matchesType;
+    });
+    
+    this.renderProviders();
+  },
+
+  async addProvider(formData) {
+    try {
+      showToast(`正在添加Provider ${formData.name}...`, 'info');
+      
+      // 模拟添加Provider
+      setTimeout(() => {
+        showToast(`Provider ${formData.name} 添加成功`, 'success');
+        this.loadProviders();
+        closeModal('addProviderModal');
+      }, 2000);
+    } catch (error) {
+      showToast(`Provider ${formData.name} 添加失败`, 'error');
+    }
+  }
+};
+
+// 工具函数
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
+}
+
+function navigateTo(page) {
+  window.location.href = `/${page}.html`;
+}
+
+function showAddProviderModal() {
+  document.getElementById('addProviderModal').classList.add('active');
+}
+
+function filterProviders() {
+  ProviderManager.filterProviders();
+}
+
+function testProvider(providerName) {
+  showToast(`正在测试 ${providerName}...`, 'info');
+  // 模拟测试
+  setTimeout(() => {
+    showToast(`${providerName} 测试完成`, 'success');
+  }, 2000);
+}
+
+function manageProvider(providerName) {
+  showToast(`正在管理 ${providerName}...`, 'info');
+  // 模拟管理
+  setTimeout(() => {
+    showToast(`${providerName} 管理完成`, 'success');
+  }, 2000);
+}
+
+function viewProviderDetails(providerName) {
+  showToast(`正在查看 ${providerName} 详情...`, 'info');
+  // 模拟查看详情
+  setTimeout(() => {
+    showToast(`${providerName} 详情查看完成`, 'success');
+  }, 2000);
+}
+
+function toggleProvider(providerName) {
+  showToast(`正在切换 ${providerName} 状态...`, 'info');
+  // 模拟切换
+  setTimeout(() => {
+    showToast(`${providerName} 状态切换完成`, 'success');
+  }, 2000);
+}
+
+function deleteProvider(providerName) {
+  if (confirm(`确定要删除 ${providerName} 吗？`)) {
+    showToast(`正在删除 ${providerName}...`, 'info');
+    // 模拟删除
+    setTimeout(() => {
+      showToast(`${providerName} 删除完成`, 'success');
+      ProviderManager.loadProviders();
+    }, 2000);
+  }
+}
+
+// 表单提交
+document.getElementById('addProviderForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = {
+    name: document.getElementById('providerName').value,
+    type: document.getElementById('providerType').value,
+    endpoint: document.getElementById('providerEndpoint').value,
+    apiKey: document.getElementById('providerApiKey').value,
+    models: document.getElementById('providerModels').value,
+    enabled: document.getElementById('providerEnabled').checked,
+    autoRetry: document.getElementById('providerAutoRetry').checked,
+    autoSwitch: document.getElementById('providerAutoSwitch').checked
+  };
+  
+  ProviderManager.addProvider(formData);
+});
+
+// 点击模态框外部关闭
+document.getElementById('addProviderModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeModal('addProviderModal');
+  }
+});
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  ProviderManager.loadProviders();
+  
+  // 定期更新数据
+  setInterval(() => {
+    ProviderManager.loadProviders();
+  }, 5000);
+});
+</script>
+</body>
+</html>
