@@ -867,6 +867,8 @@ async function loadProviders() {
     const d = await r.json();
     const pool = d.pool || {};
     const registered = d.registered || [];
+    // 暴露到全局供 openCredentialModal 编辑模式预填使用
+    window.currentPool = pool;
     let html = '';
 
     // 始终展示已注册的 6 个 Provider（含 enabled=False）
@@ -1178,6 +1180,41 @@ async function openCredentialModal(provider, btn, existingAccount) {
     ? `<a href="${escapeHtml(loginUrl)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);font-size:13px;margin-bottom:14px;">🔗 在浏览器中打开 ${escapeHtml(meta.name)}</a>`
     : '';
 
+  // ── 编辑模式：预填当前账户名 + models ──
+  let accountNameVal = '';
+  let modelsVal = '';
+  if (isEdit) {
+    const poolSnapshot = window.currentPool || {};
+    const acc = (poolSnapshot[provider] || []).find(a => a.name === existingAccount);
+    if (acc) {
+      accountNameVal = acc.name || '';
+      modelsVal = (acc.models || []).join(', ');
+    }
+  }
+
+  // ── 账户名 + 模型列表 输入 ──
+  const accountNameRow = `
+    <div class="form-row">
+      <label>📛 账户名称 ${isEdit ? '（改名会迁移凭证到新账户）' : '（自定义名称，留空则用 account-1）'}</label>
+      <input type="text" id="cred_account_name_${provider}"
+             value="${escapeHtml(accountNameVal)}"
+             placeholder="例如：主账号 / 备用1"
+             autocomplete="off" spellcheck="false"
+             style="font-family:'JetBrains Mono',monospace;font-size:13px;">
+    </div>
+  `;
+  const modelsRow = `
+    <div class="form-row">
+      <label>🤖 暴露的模型 <span style="color:var(--text-muted);font-weight:normal;">（逗号分隔，留空使用 Provider 默认）</span></label>
+      <input type="text" id="cred_models_${provider}"
+             value="${escapeHtml(modelsVal)}"
+             placeholder="例如：deepseek-chat, deepseek-reasoner"
+             autocomplete="off" spellcheck="false"
+             style="font-family:'JetBrains Mono',monospace;font-size:13px;">
+      <div class="hint">不填则使用 Provider 自带的默认模型列表（如 deepseek-chat / deepseek-reasoner / deepseek-v4-flash / deepseek-v4-pro）</div>
+    </div>
+  `;
+
   const body = `
     ${openBtn}
     ${stepsHtml}
@@ -1185,6 +1222,8 @@ async function openCredentialModal(provider, btn, existingAccount) {
       ${isEdit ? '✏️ 编辑' : '🆕 新增'} <strong>${escapeHtml(meta.icon)} ${escapeHtml(meta.name)}</strong> 凭证。
       凭证加密后写入 <code>config.yaml</code>。保存后即刻生效，无需重启。
     </p>
+    ${accountNameRow}
+    ${modelsRow}
     ${fieldsHtml || '<div class="error-msg">该 Provider 暂无凭证字段定义</div>'}
   `;
 
@@ -1255,6 +1294,22 @@ async function submitCredentials(provider) {
     if (el) {
       const v = el.value.trim();
       if (v) payload[f.key] = v;
+    }
+  }
+
+  // 账户名（可选）
+  const accNameEl = document.getElementById(`cred_account_name_${provider}`);
+  if (accNameEl) {
+    const accName = accNameEl.value.trim();
+    if (accName) payload.account_name = accName;
+  }
+
+  // models 列表（可选，逗号分隔）
+  const modelsEl = document.getElementById(`cred_models_${provider}`);
+  if (modelsEl) {
+    const raw = modelsEl.value.trim();
+    if (raw) {
+      payload.models = raw.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean);
     }
   }
 

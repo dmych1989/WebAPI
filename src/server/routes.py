@@ -228,18 +228,36 @@ def _chunk_to_openai(
 async def list_models():
     """OpenAI 兼容的 /v1/models 端点
 
-    遍历配置中所有 6 个 Provider 的所有账号，合并可用模型列表返回。
+    遍历配置中所有 Provider 的所有账号，合并可用模型列表返回。
+    优先使用 account.models 配置；若为空则回退到 provider.list_models()。
     即使 enabled=False 也会返回，让用户能完整看到所有已配置的模型。
     """
     from src.core.config import get_config
+    from src.provider.base import ProviderRegistry
 
     config = get_config()
     seen: set[str] = set()  # 去重 (model_id, owned_by)
     models: list[ModelInfo] = []
 
     for provider_type, provider_config in config.providers.items():
+        provider_cls = ProviderRegistry.get(provider_type)
+        # 先确定 fallback 模型列表（来自 Provider 自身）
+        fallback_models: list[str] = []
+        if provider_cls is not None:
+            try:
+                tmp_account = provider_config.accounts[0] if provider_config.accounts else None
+                if tmp_account is not None:
+                    tmp_instance = ProviderRegistry.create(provider_type, tmp_account)
+                    fallback_models = await tmp_instance.list_models()
+            except Exception:
+                pass
+
         for account in provider_config.accounts:
-            for model_name in account.models or []:
+            # 优先使用 account.models 配置；为空时使用 provider.list_models()
+            account_models = account.models or []
+            if not account_models and fallback_models:
+                account_models = fallback_models
+            for model_name in account_models:
                 key = (model_name, provider_type)
                 if key in seen:
                     continue

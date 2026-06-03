@@ -31,11 +31,13 @@ class ManualCredentialInput(BaseModel):
     - cookie: Cookie 字符串（yuanbao/doubao/glm/qwen 等）
     - user_id: Real User ID（minimax 等需要 User ID 的 Provider）
     - account_name: 自定义账户名称（不填则自动生成）
+    - models:  要暴露的模型列表（不填则使用 provider 自身的默认模型）
     """
     account_name: Optional[str] = None
     token: Optional[str] = None
     cookie: Optional[str] = None
     user_id: Optional[str] = None
+    models: Optional[list[str]] = None
 
 
 @router.get("/config")
@@ -427,6 +429,27 @@ PROVIDER_CREDENTIAL_HINTS = {
             },
         ],
     },
+    "glm": {
+        "login_url": "https://chatglm.cn/",
+        "steps": [
+            "点击下方按钮打开智谱清言 (GLM) 网站",
+            "登录你的账号（手机/微信）",
+            "按 F12 打开开发者工具",
+            "切换到 Application → Cookies → chatglm.cn",
+            "找到 chatglm_refresh_token 字段",
+            "复制其值",
+        ],
+        "primary": "cookie",
+        "fields": [
+            {
+                "name": "cookie",
+                "label": "chatglm_refresh_token",
+                "placeholder": "粘贴从 Cookie 复制的 chatglm_refresh_token 值",
+                "help": "F12 → Application → Cookies → chatglm.cn → chatglm_refresh_token",
+                "required": True,
+            },
+        ],
+    },
 }
 
 
@@ -492,14 +515,39 @@ async def set_manual_credentials(
     provider_entry = providers.setdefault(provider, {})
     provider_entry["enabled"] = True
     accounts = provider_entry.setdefault("accounts", [])
-    if not accounts:
-        accounts.append({
-            "name": "account-1",
-            "models": [],
-            "max_concurrent": 5,
-            "health_check_interval": 60,
-        })
-    account = accounts[0]  # 始终使用第一个账户
+
+    # 解析账户名（自定义 or 复用 or 自动生成）
+    custom_name = (body.account_name or "").strip()
+    account = None
+    if custom_name:
+        # 查找同名账户
+        for acc in accounts:
+            if acc.get("name") == custom_name:
+                account = acc
+                break
+    if account is None:
+        if not accounts:
+            # 首次配置 → 用自定义名或默认 account-1
+            default_name = custom_name or "account-1"
+            accounts.append({
+                "name": default_name,
+                "models": [],
+                "max_concurrent": 5,
+                "health_check_interval": 60,
+            })
+            account = accounts[0]
+        elif custom_name:
+            # 用户指定了不存在的账户名 → 新建
+            accounts.append({
+                "name": custom_name,
+                "models": [],
+                "max_concurrent": 5,
+                "health_check_interval": 60,
+            })
+            account = accounts[-1]
+        else:
+            # 用户未指定 → 使用第一个
+            account = accounts[0]
 
     # 写入字段（保留加密由 save_config 完成）
     # 这里我们临时不加密：直接写明文，下次 load_config() 会自动加密保存
@@ -513,6 +561,22 @@ async def set_manual_credentials(
         logger.info(
             f"[Admin] Set {provider}.{account.get('name', 'account-1')}.{key} "
             f"({len(value)} chars, encrypted to {len(encrypted)} chars)"
+        )
+
+    # models 字段（如指定）直接覆盖
+    if body.models is not None:
+        # 清洗：去空白、去空项、去重保序
+        seen_m: set[str] = set()
+        cleaned: list[str] = []
+        for m in body.models:
+            m = (m or "").strip()
+            if not m or m in seen_m:
+                continue
+            seen_m.add(m)
+            cleaned.append(m)
+        account["models"] = cleaned
+        logger.info(
+            f"[Admin] Set {provider}.{account.get('name', 'account-1')}.models = {cleaned}"
         )
 
     # 写回 config.yaml
