@@ -10,7 +10,7 @@ import aiohttp
 
 
 async def test(model: str, stream: bool = False):
-    url = "http://127.0.0.1:8080/v1/chat/completions"
+    url = "http://127.0.0.1:18080/v1/chat/completions"
     payload = {
         "model": model,
         "messages": [{"role": "user", "content": "回复1个字符OK"}],

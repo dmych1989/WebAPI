@@ -76,6 +76,8 @@ class ModelMapper:
             return "yuanbao"
         if "coze" in model_lower:
             return "coze"
+        if "mimo" in model_lower:
+            return "mimo"
         # 默认使用模型名第一个横线前的部分
         return model_lower.split("-")[0]
 

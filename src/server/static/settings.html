@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>系统设置 - WebAPI</title>
+<style>
+/* 设置页面全局样式 */
+:root {
+  /* 主色调 */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #64748b;
+  --accent: #06b6d4;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  /* 背景色 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f8fafc;
+  
+  /* 文字色 */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  
+  /* 边框色 */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  
+  /* 动画 */
+  --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* 布局容器 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 头部 */
+.header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 20px 0;
+  margin-bottom: 24px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 设置布局 */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+/* 侧边栏 */
+.settings-sidebar {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.settings-nav {
+  list-style: none;
+}
+
+.settings-nav-item {
+  margin-bottom: 4px;
+}
+
+.settings-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settings-nav-link:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.settings-nav-link.active {
+  background: var(--primary);
+  color: white;
+}
+
+.settings-nav-icon {
+  font-size: 18px;
+}
+
+/* 主内容区 */
+.settings-main {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.settings-section {
+  margin-bottom: 32px;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-section-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+/* 设置组 */
+.settings-group {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.settings-group:last-child {
+  margin-bottom: 0;
+}
+
+.settings-group-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+/* 表单元素 */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.form-label .required {
+  color: var(--error);
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-primary);
+  cursor: pointer;
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.form-checkbox:last-child {
+  margin-bottom: 0;
+}
+
+.form-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.form-checkbox label {
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* 开关按钮 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-primary);
+  transition: var(--transition);
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: var(--transition);
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--primary);
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 输入组 */
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input-group .form-input {
+  flex: 1;
+}
+
+.input-group .btn {
+  flex-shrink: 0;
+}
+
+/* 卡片样式 */
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.card:last-child {
+  margin-bottom: 0;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.card-content {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 状态指示器 */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-indicator.running {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.status-indicator.stopped {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.status-indicator.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+/* 加载动画 */
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-primary);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast 通知 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--error);
+}
+
+.toast.warning {
+  border-left: 4px solid var(--warning);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .settings-sidebar {
+    position: static;
+    margin-bottom: 20px;
+  }
+  
+  .settings-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+  }
+  
+  .settings-nav-item {
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+  
+  .settings-nav-link {
+    flex-shrink: 0;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+  }
+  
+  .input-group {
+    flex-direction: column;
+  }
+  
+  .input-group .form-input {
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <div class="header-content">
+      <div class="header-title">系统设置</div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="resetSettings()">
+          🔄 重置设置
+        </button>
+        <button class="btn btn-primary" onclick="saveSettings()">
+          💾 保存设置
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="settings-layout">
+    <!-- 侧边栏 -->
+    <div class="settings-sidebar">
+      <nav>
+        <ul class="settings-nav">
+          <li class="settings-nav-item">
+            <a href="#server" class="settings-nav-link active" onclick="switchTab('server')">
+              <span class="settings-nav-icon">⚙️</span>
+              <span>服务器设置</span>
+            </a>
+          </li>
+          <li class="settings-nav-item">
+            <a href="#security" class="settings-nav-link" onclick="switchTab('security')">
+              <span class="settings-nav-icon">🔒</span>
+              <span>安全设置</span>
+            </a>
+          </li>
+          <li class="settings-nav-item">
+            <a href="#performance" class="settings-nav-link" onclick="switchTab('performance')">
+              <span class="settings-nav-icon">⚡</span>
+              <span>性能设置</span>
+            </a>
+          </li>
+          <li class="settings-nav-item">
+            <a href="#logging" class="settings-nav-link" onclick="switchTab('logging')">
+              <span class="settings-nav-icon">📝</span>
+              <span>日志设置</span>
+            </a>
+          </li>
+          <li class="settings-nav-item">
+            <a href="#backup" class="settings-nav-link" onclick="switchTab('backup')">
+              <span class="settings-nav-icon">💾</span>
+              <span>备份设置</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="settings-main">
+      <!-- 服务器设置 -->
+      <div id="server-tab" class="settings-section">
+        <h2 class="settings-section-title">
+          <span>⚙️</span>
+          <span>服务器设置</span>
+        </h2>
+        <p class="settings-section-description">配置WebAPI服务器的基本参数</p>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">基本配置</h3>
+          
+          <div class="form-group">
+            <label class="form-label">服务器端口</label>
+            <input type="number" class="form-input" id="serverPort" value="18080">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">主机地址</label>
+            <input type="text" class="form-input" id="serverHost" value="127.0.0.1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">工作线程数</label>
+            <input type="number" class="form-input" id="workerCount" value="4" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">最大连接数</label>
+            <input type="number" class="form-input" id="maxConnections" value="1000" min="1">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">CORS设置</h3>
+          
+          <div class="form-group">
+            <label class="form-label">允许的源</label>
+            <input type="text" class="form-input" id="corsOrigins" value="*" placeholder="用逗号分隔多个域名">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">允许的请求头</label>
+            <input type="text" class="form-input" id="corsHeaders" value="*" placeholder="用逗号分隔多个请求头">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">允许的请求方法</label>
+            <input type="text" class="form-input" id="corsMethods" value="GET,POST,PUT,DELETE,OPTIONS" placeholder="用逗号分隔多个方法">
+          </div>
+        </div>
+      </div>
+
+      <!-- 安全设置 -->
+      <div id="security-tab" class="settings-section" style="display: none;">
+        <h2 class="settings-section-title">
+          <span>🔒</span>
+          <span>安全设置</span>
+        </h2>
+        <p class="settings-section-description">配置WebAPI的安全相关参数</p>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">认证设置</h3>
+          
+          <div class="form-group">
+            <label class="form-label">
+              <span>启用API Key认证</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="apiKeyAuth" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">API Key前缀</label>
+            <input type="text" class="form-input" id="apiKeyPrefix" value="sk-" placeholder="API Key的前缀">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">API Key长度</label>
+            <input type="number" class="form-input" id="apiKeyLength" value="32" min="16" max="64">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">请求限制</h3>
+          
+          <div class="form-group">
+            <label class="form-label">请求速率限制 (RPM)</label>
+            <input type="number" class="form-input" id="rateLimitRpm" value="60" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">请求速率限制 (RPH)</label>
+            <input type="number" class="form-input" id="rateLimitRph" value="1000" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">最大请求大小 (MB)</label>
+            <input type="number" class="form-input" id="maxRequestSize" value="10" min="1" step="0.1">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">安全选项</h3>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableHttps" checked>
+            <label for="enableHttps">启用HTTPS</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableHsts" checked>
+            <label for="enableHsts">启用HSTS</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableCsp" checked>
+            <label for="enableCsp">启用内容安全策略(CSP)</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableXssProtection" checked>
+            <label for="enableXssProtection">启用XSS保护</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableClickjackingProtection" checked>
+            <label for="enableClickjackingProtection">启用点击劫持保护</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 性能设置 -->
+      <div id="performance-tab" class="settings-section" style="display: none;">
+        <h2 class="settings-section-title">
+          <span>⚡</span>
+          <span>性能设置</span>
+        </h2>
+        <p class="settings-section-description">配置WebAPI的性能相关参数</p>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">缓存设置</h3>
+          
+          <div class="form-group">
+            <label class="form-label">启用响应缓存</label>
+            <label class="switch">
+              <input type="checkbox" id="enableCache" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">缓存大小 (MB)</label>
+            <input type="number" class="form-input" id="cacheSize" value="100" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">缓存过期时间 (秒)</label>
+            <input type="number" class="form-input" id="cacheTtl" value="3600" min="60">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">连接池设置</h3>
+          
+          <div class="form-group">
+            <label class="form-label">最大连接池大小</label>
+            <input type="number" class="form-input" id="maxPoolSize" value="50" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">连接超时 (秒)</label>
+            <input type="number" class="form-input" id="connectionTimeout" value="30" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">读取超时 (秒)</label>
+            <input type="number" class="form-input" id="readTimeout" value="60" min="1">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">性能优化</h3>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableCompression" checked>
+            <label for="enableCompression">启用压缩</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableKeepAlive" checked>
+            <label for="enableKeepAlive">启用Keep-Alive</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableGzip" checked>
+            <label for="enableGzip">启用Gzip压缩</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="enableBrotli">
+            <label for="enableBrotli">启用Brotli压缩</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 日志设置 -->
+      <div id="logging-tab" class="settings-section" style="display: none;">
+        <h2 class="settings-section-title">
+          <span>📝</span>
+          <span>日志设置</span>
+        </h2>
+        <p class="settings-section-description">配置WebAPI的日志记录参数</p>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">日志级别</h3>
+          
+          <div class="form-group">
+            <label class="form-label">日志级别</label>
+            <select class="form-select" id="logLevel">
+              <option value="DEBUG">DEBUG</option>
+              <option value="INFO" selected>INFO</option>
+              <option value="WARNING">WARNING</option>
+              <option value="ERROR">ERROR</option>
+              <option value="CRITICAL">CRITICAL</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">日志格式</label>
+            <select class="form-select" id="logFormat">
+              <option value="text">文本格式</option>
+              <option value="json">JSON格式</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">文件日志</h3>
+          
+          <div class="form-group">
+            <label class="form-label">
+              <span>启用文件日志</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="enableFileLogging" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">日志文件路径</label>
+            <input type="text" class="form-input" id="logFilePath" value="./logs/webapi.log">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">日志文件大小限制 (MB)</label>
+            <input type="number" class="form-input" id="logFileSize" value="100" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">日志文件保留数量</label>
+            <input type="number" class="form-input" id="logFileCount" value="10" min="1">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">系统日志</h3>
+          
+          <div class="form-group">
+            <label class="form-label">
+              <span>启用系统日志</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="enableSystemLogging" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">系统日志级别</label>
+            <select class="form-select" id="systemLogLevel">
+              <option value="INFO">INFO</option>
+              <option value="WARNING">WARNING</option>
+              <option value="ERROR">ERROR</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 备份设置 -->
+      <div id="backup-tab" class="settings-section" style="display: none;">
+        <h2 class="settings-section-title">
+          <span>💾</span>
+          <span>备份设置</span>
+        </h2>
+        <p class="settings-section-description">配置WebAPI的备份和恢复参数</p>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">自动备份</h3>
+          
+          <div class="form-group">
+            <label class="form-label">
+              <span>启用自动备份</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="enableAutoBackup" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">备份周期</label>
+            <select class="form-select" id="backupSchedule">
+              <option value="daily">每天</option>
+              <option value="weekly">每周</option>
+              <option value="monthly">每月</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">备份时间</label>
+            <input type="time" class="form-input" id="backupTime" value="02:00">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">备份保留天数</label>
+            <input type="number" class="form-input" id="backupRetention" value="30" min="1">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">备份位置</h3>
+          
+          <div class="form-group">
+            <label class="form-label">备份目录</label>
+            <input type="text" class="form-input" id="backupDirectory" value="./backups">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">备份文件前缀</label>
+            <input type="text" class="form-input" id="backupPrefix" value="webapi_backup_">
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">备份内容</h3>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="backupConfig" checked>
+            <label for="backupConfig">备份配置文件</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="backupDatabase" checked>
+            <label for="backupDatabase">备份数据库</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="backupKeys" checked>
+            <label for="backupKeys">备份API Keys</label>
+          </div>
+          
+          <div class="form-checkbox">
+            <input type="checkbox" id="backupLogs">
+            <label for="backupLogs">备份日志文件</label>
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3 class="settings-group-title">备份操作</h3>
+          
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="createBackup()">
+              🔄 创建备份
+            </button>
+            <button class="btn btn-secondary" onclick="restoreBackup()">
+              🔄 恢复备份
+            </button>
+            <button class="btn btn-danger" onclick="deleteBackup()">
+              🗑️ 删除备份
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// 设置管理器
+const SettingsManager = {
+  data: {
+    settings: {
+      server: {
+        port: 18080,
+        host: '127.0.0.1',
+        workerCount: 4,
+        maxConnections: 1000,
+        corsOrigins: '*',
+        corsHeaders: '*',
+        corsMethods: 'GET,POST,PUT,DELETE,OPTIONS'
+      },
+      security: {
+        apiKeyAuth: true,
+        apiKeyPrefix: 'sk-',
+        apiKeyLength: 32,
+        rateLimitRpm: 60,
+        rateLimitRph: 1000,
+        maxRequestSize: 10,
+        enableHttps: true,
+        enableHsts: true,
+        enableCsp: true,
+        enableXssProtection: true,
+        enableClickjackingProtection: true
+      },
+      performance: {
+        enableCache: true,
+        cacheSize: 100,
+        cacheTtl: 3600,
+        maxPoolSize: 50,
+        connectionTimeout: 30,
+        readTimeout: 60,
+        enableCompression: true,
+        enableKeepAlive: true,
+        enableGzip: true,
+        enableBrotli: false
+      },
+      logging: {
+        logLevel: 'INFO',
+        logFormat: 'text',
+        enableFileLogging: true,
+        logFilePath: './logs/webapi.log',
+        logFileSize: 100,
+        logFileCount: 10,
+        enableSystemLogging: true,
+        systemLogLevel: 'INFO'
+      },
+      backup: {
+        enableAutoBackup: true,
+        backupSchedule: 'daily',
+        backupTime: '02:00',
+        backupRetention: 30,
+        backupDirectory: './backups',
+        backupPrefix: 'webapi_backup_',
+        backupConfig: true,
+        backupDatabase: true,
+        backupKeys: true,
+        backupLogs: false
+      }
+    }
+  },
+
+  init() {
+    this.loadSettings();
+  },
+
+  loadSettings() {
+    // 从本地存储加载设置
+    const savedSettings = localStorage.getItem('webapi_settings');
+    if (savedSettings) {
+      this.data.settings = JSON.parse(savedSettings);
+    }
+    
+    this.populateForm();
+  },
+
+  populateForm() {
+    // 填充表单
+    Object.keys(this.data.settings).forEach(section => {
+      Object.keys(this.data.settings[section]).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+          const value = this.data.settings[section][key];
+          if (element.type === 'checkbox') {
+            element.checked = value;
+          } else {
+            element.value = value;
+          }
+        }
+      });
+    });
+  },
+
+  saveSettings() {
+    // 收集表单数据
+    Object.keys(this.data.settings).forEach(section => {
+      Object.keys(this.data.settings[section]).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+          const value = element.type === 'checkbox' ? element.checked : element.value;
+          this.data.settings[section][key] = value;
+        }
+      });
+    });
+    
+    // 保存到本地存储
+    localStorage.setItem('webapi_settings', JSON.stringify(this.data.settings));
+    
+    // 显示保存成功消息
+    showToast('设置已保存', 'success');
+    
+    // 模拟保存到服务器
+    setTimeout(() => {
+      console.log('设置已保存到服务器:', this.data.settings);
+    }, 1000);
+  },
+
+  resetSettings() {
+    if (confirm('确定要重置所有设置吗？')) {
+      // 重置为默认设置
+      this.data.settings = {
+        server: {
+          port: 18080,
+          host: '127.0.0.1',
+          workerCount: 4,
+          maxConnections: 1000,
+          corsOrigins: '*',
+          corsHeaders: '*',
+          corsMethods: 'GET,POST,PUT,DELETE,OPTIONS'
+        },
+        security: {
+          apiKeyAuth: true,
+          apiKeyPrefix: 'sk-',
+          apiKeyLength: 32,
+          rateLimitRpm: 60,
+          rateLimitRph: 1000,
+          maxRequestSize: 10,
+          enableHttps: true,
+          enableHsts: true,
+          enableCsp: true,
+          enableXssProtection: true,
+          enableClickjackingProtection: true
+        },
+        performance: {
+          enableCache: true,
+          cacheSize: 100,
+          cacheTtl: 3600,
+          maxPoolSize: 50,
+          connectionTimeout: 30,
+          readTimeout: 60,
+          enableCompression: true,
+          enableKeepAlive: true,
+          enableGzip: true,
+          enableBrotli: false
+        },
+        logging: {
+          logLevel: 'INFO',
+          logFormat: 'text',
+          enableFileLogging: true,
+          logFilePath: './logs/webapi.log',
+          logFileSize: 100,
+          logFileCount: 10,
+          enableSystemLogging: true,
+          systemLogLevel: 'INFO'
+        },
+        backup: {
+          enableAutoBackup: true,
+          backupSchedule: 'daily',
+          backupTime: '02:00',
+          backupRetention: 30,
+          backupDirectory: './backups',
+          backupPrefix: 'webapi_backup_',
+          backupConfig: true,
+          backupDatabase: true,
+          backupKeys: true,
+          backupLogs: false
+        }
+      };
+      
+      this.populateForm();
+      showToast('设置已重置', 'success');
+    }
+  },
+
+  async createBackup() {
+    try {
+      showToast('正在创建备份...', 'info');
+      
+      // 模拟备份创建
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      showToast('备份创建成功', 'success');
+    } catch (error) {
+      showToast('备份创建失败', 'error');
+    }
+  },
+
+  async restoreBackup() {
+    try {
+      showToast('正在恢复备份...', 'info');
+      
+      // 模拟备份恢复
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      showToast('备份恢复成功', 'success');
+    } catch (error) {
+      showToast('备份恢复失败', 'error');
+    }
+  },
+
+  async deleteBackup() {
+    if (confirm('确定要删除备份吗？')) {
+      try {
+        showToast('正在删除备份...', 'info');
+        
+        // 模拟备份删除
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        showToast('备份删除成功', 'success');
+      } catch (error) {
+        showToast('备份删除失败', 'error');
+      }
+    }
+  }
+};
+
+// 工具函数
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function switchTab(tabName) {
+  // 隐藏所有标签页
+  const tabs = document.querySelectorAll('.settings-section');
+  tabs.forEach(tab => tab.style.display = 'none');
+  
+  // 显示选中的标签页
+  document.getElementById(`${tabName}-tab`).style.display = 'block';
+  
+  // 更新导航状态
+  const navLinks = document.querySelectorAll('.settings-nav-link');
+  navLinks.forEach(link => link.classList.remove('active'));
+  
+  const activeLink = document.querySelector(`[href="#${tabName}"]`);
+  if (activeLink) {
+    activeLink.classList.add('active');
+  }
+}
+
+function saveSettings() {
+  SettingsManager.saveSettings();
+}
+
+function resetSettings() {
+  SettingsManager.resetSettings();
+}
+
+function createBackup() {
+  SettingsManager.createBackup();
+}
+
+function restoreBackup() {
+  SettingsManager.restoreBackup();
+}
+
+function deleteBackup() {
+  SettingsManager.deleteBackup();
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  SettingsManager.init();
+});
+</script>
+</body>
+</html>

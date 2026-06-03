@@ -16,6 +16,9 @@ providers:
     enabled: true
     accounts:
     - name: account-1
+      token: enc:v1:gAAAAABqH6rt7f6lW2jBy400ZG4WDi3QK3aFmK4MpcWVcayADM5ahsfXlZ3rtzDp65e9b7qJPdCD04_yQKyRusZwXeBRqkTDGUrjOc7Km0l4gpP06LF6iT1-DVkZ8FltW9dHz1dRAlJyQ71yufyDqMk-lfQLKnHKs9_fHvIPWA2uMuNK3YyNFDc=
+      cookie: enc:v1:gAAAAABqH6rt-3FJedSXi2eu6RaeHqEu3qJRwHgJTwBlbWAuDLgbsnGcyAucjhCo3I5OxWVCZIvZHqgGM_Y0SmwHZzuwBc-b-mYk2VZcbZPYyuYKIklxbzslLCtsdmAw-WWTmUbRxZq_m-Fl_53Mi2NdCpgFZ283XIlD069gjznSHdG1WA3ElcerPE7sAgE14-IVUU6txSduMW35-iloRINJjm47oyBVE4w_pZ1nBlkQ3J-95021AOwfF0pV1TCaQC6QqfV8uRcqq-d9doLlcXQAtHNt4vmMa51dc2HVZcJamdpKMvKY7qPucPbKTsdw3PQeRClDD9nnEpPU3AaeHWF0zb9B5Zk5fA0YnessBEPmEnx_XIXnfZzMMOCecJypsT_WfcCIbwPaqM9bEnxsK_cbT71cAGOkQZ2d9depGVEL2M3nhMreVQQzLqhKuZyymEs0PIt7dgAO0C6VQGOjb_eyIO8rbyx7dDcMR3s89QG8O7815NJ3UfI=
+      user_id: ''
       models:
       - deepseek-chat
       - deepseek-reasoner
@@ -23,14 +26,14 @@ providers:
       - deepseek-v4-pro
       max_concurrent: 5
       health_check_interval: 60
-      token: enc:v1:gAAAAABqH5gTeWKXleRlEVn7zNQ4C7IsiBsoF5uQAN3A0n_eskdXHsZMFs_llUHupSVxHTsDf385KNmrltvis5B8ZK0_pSNpwisGhXxH6rQJ4ASkbNSRYMkKw-QVzl1NDNqSji483stKz1qOiLYIKxaU9lK1dJmN6FhemjxRpDYOVjzKqOexN5w=
-      cookie: enc:v1:gAAAAABqH5PjDiroSL7nc9cbbOzhEaCjeMXFBcPRmhjOV3mcJKwYtCVYHaA3E1W1lDSnp37V0X3kTKm5Mmom3gMEQ4znJVkXKe6Orj7RSaDC8XOCHOUcuwad2vXdy_gsCIzmZEZyaGpEyz9orzEicRzmgEjbM48uKexK7rUuQ39soyABaCOKXc8WYbrsS7SWxD9A5ykCpjZUIArl68nnVCGNx9aP83Pv9X97u0vckYB0NzPjJhHVvvMndphAe4N42WfifIIQtP9QoBTrusoN4slx9LHqdaUqs4mrGuxQGOVf0Yq0JuwlsbRNXMueJ4HI-01EBec5xSRG88Y6c66-kwzBnaw5hi4uMPwDfBIVgNymlVth5YbHYyyVOgFDsQLjXUbE4JNb95bwsF2gjnA6hYa2aqY5RyJPM3OTvAVG9vPRk_keXjtJrSIicYTBSpxLhP7H8xeDXLUT7NN5MxCh9p1HLX0vS-l-wfVD6XDVHgPdrwnozPtri7o=
+      enabled: true
   kimi:
     enabled: true
     accounts:
     - name: account-1
-      token: enc:v1:gAAAAABqH2-nRaqRFMIBZz3XwxRqMD2McPnJMknHaECaRiABw0MNTZRmeftv_ngC7LPV2m6zjnDw5ngr85LGwdNkv1ItcTsxrkF5aJe3CcvhlpqaXUdLNn_rFMUGa_se9HuAlpz4V16AIluDHQVqtNfMqOH8yKXxvdIenvmFm5mG_psy1q3vcAWtSCeoawrKx7SnJ6Lxwm8XT5mOYFwPnyTUIjLIM9ldSmYEmHNeE8kMsa_RtYMRp9RyX8rKjuQKh7POQu3inJTa9LXrrcWfm9xz1Pno2J9dvxcmR2TvH6VlSP7IUvk_oj6Cv6UKWzkmS68dhRCXvtnRKuDYW-9fYeo6Nv1OIYHpayY-Anh5Vnugr4liiWio6iUjCQjj7LmoQQtrxRPJrEncKcU6yd_T0vAB8uK8Z4oLv5GLBZ99H1uCT7Pv2DpbOLn_mF_7KMMCsC37A_f8BJ6dkBdnuRs1niJV72QYvg4ETARJycvICkgaFX5m3so004a8iG7pEjOk4pGwCIGKOHBglUzYtAwsXeO115njDJc1SI5i0WR6bNK650z3ffNK9rTJuIp_I1zZ9fFXLYl23DuV7DmB3SMFzqxv7CXSxu5u_4d_UtihetacHg1lQq_qY81geS09ekaKTMMxOwO2Q7rc2Iz_EGPnek6daTKjOUm6rI3BMgHtnggOlvWMUsCmPmkJw-Js_TGic6ZvhDqbd2kn_AepmHtaeskVZt_kbAXjkHjPuKgEm4BiL7CPlUAlLCvnHTbTdFopO0cLBLX9yZiVPpWQ4ASFaziCTwAWAAHkhXwVuwrlIM6jzHiICMvUxoE=
+      token: enc:v1:gAAAAABqH6rtz3CyzdZzk2h5skFCx8aJL_s0hDJFbz2X-9YjyAXLacbdDieLKrIvMKgXGJ0U0ANDdtmlyLmFDbMcF7rnG6lDmHJmJxK_GGvjSrsNfsVjmte9GzbYbcyYT9DbeAT0URujbZRT3jk6o7WD7f_qvyfHcw5xo4RGEa_HSQj0redhiIbRfyHLc1SNc0aF1JHk9ES8axpD8tswOkRmndQAKvki-8I1QZVnvqYTbHghTu9sqFrj1H9i0kbDrULD3Hjqq3LAbfTjKvE8ZRoXmfA-jAjM7CWwSILaYdnJ7pyIoS-C91ShO9c__6Q-5vPB-6fXBJJyyUiNhtTiRb4xp6Cw1Fh5YXwrHPwqPk9oiGtOcyWp-bQctKRXvmky1CliZxMUE7aprnuT5yf0bMM_9q-hq8LcOdmckzJWYd1XeL6zLtb_dL2XTeygDKeY3atjRDHa0MKi5_AbfO-HWIsW9K4URes2DPwYNXE_RaoZDj1zEc7P792wWDDOGmlKSoXF6u4mXpvI_eawp4k1_TiZAWhKLk1nMu_AtYQnMbbf0Gh1MalFX8WVzTlQWXJWa6YmjGVwtjmzlMoC37wtAw89o7UMThDZaJAQNLfjSFh1PyLEZrns98t_eEW0Dd1lEownP5GFQPfwMiqf0GGZkc_VtF-AmdWy_TDdCiHKrLjILANUeISMqEgBX3C_69zWVY0YVHA4VtKKJtKoYLZQFGl_9v96XooQEpwVnnT8YIJvSa8hxrjvx0qD3DZPAQf6YyXoHHubWaMVngP7XNO-m_rNrC1jS90JZnPBnAxnbqWiIMF9vjhmolM=
       cookie: ''
+      user_id: ''
       models:
       - Kimi-K2.6
       max_concurrent: 5
@@ -40,8 +43,9 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      token: enc:v1:gAAAAABqH5iPSp_T1PGyGLXfUIrPoaWjrdsae216mvk8iMIWqww5onQhOdC61QHHzHLImFiFOAeDaJFfgN5KCUeDSkaIDeO9NYGXc5ve54JcCgV11ZRYd9is3v9D3ynp680l5LL_PCG0ZkkOEsrV5vBGn4tURxChgPMzSqc30c0hiwSfl_m3V-k=
+      token: enc:v1:gAAAAABqH6rtPqEX4OAlsjhu_TsA_rnjL004GvmcxJiyW73_AgWGXRHUHGWUOmHDpEz4X5JU8frYO_52_Jgo1dTLM-gJgTv9G-Pb4t4m9Ci8O8MXy7KCYIHh2A0GZcxe6dhClQBoR-0NQ3NtO3Xg0ScqbSPgmJUrVql8ac7F3g9UR41ljjiL2pE=
       cookie: ''
+      user_id: ''
       models:
       - qwen-max
       - qwen-plus
@@ -53,24 +57,29 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      token: enc:v1:gAAAAABqH5ixa_2RNqdJn2RFtKBBp-JGB6wnUFjDfZwn14vKLpQ9FnoHdSnx0icv0maNQuzd2LVD8lNVH-XYx6wQI9GGBhYMRtZ5awQupKJL_iTCIoqJ4gjSvvz25MFyDYQzDyIbiU0ZA_ihGaM5yjphozoPuCRZgvSo32uWs30e6bSYU-khY8zfUBMm3oMUDl9djYEfstM0Xk0TeOpb13CLYo4Amnh6TJFlWgTo7zDDtaFk-qfLRAtAYC-8sRwYi2v6H7NMkpx5B4niOR_ios_gzK9lKX8rRjE4xm-mPxWyQ2u6BbUQdDDdST5yP-mfhqu-huy9KellM49E6UUKCoNnfLuyMyw2-rOO5PxAenNmIsCK-YjIgyty1cazvwOkrC6lUK4uKJ7XBxvx39z5jpqbD5kpY3UPaDXeuD8mlRvaEPEV3oBpzVnWSTUIGzJNWd1cxN0ZIcEuTiE6eIklsCPmdoSrIda9ZJ4-BHmvs81ChZK4Bxs5Vkcw1SRzN_TFLJGESwohutKnawF0Jssh0ZVuwWHD3NbsWKlA744ucxBhAoceJFcfum8odcgqr_dPBvu9kRgJFKYNHpMhkbt7pgmrY_86vodouhRhBQYkywhNdBAgA5JWRx95Rw6WiixFpBVYP1F7xG7t
+      token: enc:v1:gAAAAABqH6rtf17ZtPaSSTL21tGm_d8XuOGBXoHrjJ_lkZ3yhepX3n9YjNgFsussdV9ZovljEq4_j8eolfQzJHFZ-mTFtbWh2KlLCft10HD_3MMKPo9VXGf1-KjFJBla15R_-ct7TgfHSWKZU4I8KD5ar8_zKsSQWth3H5Wwzh4k6HQwYBlDnf3LhIUidk_Oe3oUhyZ_gcXhUtPYFYpQ3JGZtdPmIyGNK_aGsxCsZ4Ogx5hb13WoPVxSYCoLbkK9IabJjYMTF3Ntsd3CAKEnlqJM7z-S7jUs0yKQRoUCBwSaidP4SdrIm5o1XYbh8Getzq9Fqd05IYNOux9xrAw9yxsYlxeJ5vceRCRS_DzXrjbK4mqMfLBJsIMv14ckHgrQwvJsijzPyPuoGyf9Lbi0b1M-FaxulqptrmOVxV2YBnFvvB2EMmqI0vLRrbyB86rcZL83llm6OngN_Uvy8sB7E97z_1J1TwmhRynTeTGaZ0g9HSZa9dttE9_7nwTTM8vHGtGLuQpzQRjOpcz_PZ4bvQuF8UJaJ5KEON5hBVlVt-C7wo__TvPXOcieWyibnzdA7KJCqLGtyNV3r5H0CM5Lj95FXW7J-LIKudFc3gRxuV8McVbMkDAoQkUwv8tbO9lOu1CVibVl0AF7
       cookie: ''
+      user_id: enc:v1:gAAAAABqH5ixlpCPU6Hb-4YtlZWrSyQa0ypo7GIMyMvpkPQfw_ZYwXe9SKcJAaqrrIvj42NlpH0nS9KCwsB_K3sC8K3xL3jCeQJfC0JfX5rq4ZplTRSFZ-s=
       models:
-      - MiniMax-Text-01
-      - abab6.5s-chat
+      - MiniMax-M3
+      - MiniMax-M2.7
+      - MiniMax-M2.7-highspeed
+      - MiniMax-M2.5
+      - MiniMax-M2.5-highspeed
+      - MiniMax-M2.1
+      - MiniMax-M2.1-highspeed
+      - MiniMax-M2
       max_concurrent: 5
       health_check_interval: 60
       enabled: true
-      user_id: enc:v1:gAAAAABqH5ixlpCPU6Hb-4YtlZWrSyQa0ypo7GIMyMvpkPQfw_ZYwXe9SKcJAaqrrIvj42NlpH0nS9KCwsB_K3sC8K3xL3jCeQJfC0JfX5rq4ZplTRSFZ-s=
+      api_base: https://api.minimaxi.com/v1
   doubao:
     enabled: true
     accounts:
     - name: account-1
-      cookie: hook_slardar_session_id=202606030945451D6017C187761DD6CAA2; i18next=zh;
-        flow_ssr_sidebar_expand=1; flow_user_country=CN; passport_csrf_token=2f7032c9b2ec1a8580223c1a5786064e;
-        passport_csrf_token_default=2f7032c9b2ec1a8580223c1a5786064e; odin_tt=44311746a55f9051bf11053d6c7f574ed42029e373f8a5b88d38cc8d5bc073860f631bed161c8981d5115e6f7094b19028fb2de88af046c182de7f37580a57d9428d8d1a8ecb904895d0a1b9aa9456d9;
-        s_v_web_id=verify_mpwc1xkw_klen98Hp_dhJO_41vJ_903z_8V8s5ZufNncG; ttwid=1%7CqLB147q1dEocY-E-v0a9u_lBHOJM7Pmex_wF5XnXyYY%7C1780451145%7C91d0b439cfeb22a20783bc96ea40e2d96d2a64f84919a0a567bbf1bcf99d3aa4;
-        biz_trace_id=6ea98cfc
+      token: ''
+      cookie: enc:v1:gAAAAABqH6rtA7jMnGGlf1R7AmheQFHqzXxh3l6RDXgq1BbHTg-l_TUaLty3E8XV_dnpRFnWFy5Np8gpXfFtWOOcpPK3uaccLX1YTeggcesRHCPS-ESGWeMWfq5urGIaHxQMhIPnfXSv
+      user_id: ''
       models:
       - doubao-pro-32k
       - doubao-lite-32k
@@ -81,7 +90,9 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      cookie: ''
+      token: ''
+      cookie: enc:v1:gAAAAABqH6rtVF9vki_p23Suh6ihsTwxBXAKzV-OZPHZ1EbwcCMMtsLbXS5ueKkQtQTz-OItfWYf-IYeF8QyZOI_MYbtwg1Gd6-v1fRWwg_c6mS6lIjM_pzt4kkl9v4e4B-F4i2rNZd0
+      user_id: ''
       models:
       - hunyuan-pro
       - hunyuan-turbo
@@ -92,7 +103,9 @@ providers:
     enabled: true
     accounts:
     - name: account-1
-      cookie: enc:v1:gAAAAABqH5P4nk7xZ518NTCRDPv9oCY9TxM8poxLfZPEor5rfFxF86Jxpzs1Dyyq_pkLnlOYnQPOuqmHy6B2emb9uUjxD5_NpIqJxhRTeoUDwRIB3LYSUYesUcTvkPb4uPb0xghA4XjRBBFEob4Jk7ylLMgvF5B5coOHAnbqNQarvHcrumQnCTlEm8iM_IBqtGOrrVnvX6QG86xEUlRAj7Nf64c0aFhVKb3FH0c-lBSwGPj9QiU5ZZQVgxqwG47Z3L6TIfuPOQtYfWi-NbOTiXipZqbmv5lveu-0BH6_Raoa27my2q2ObAkXq6kvdXtmEVg0SHnSHfZNlBBrbVcm-7Cls7TnIubFle5ITGOoumMCsagOH_0VMizXDTunRklXopO7CgFdbqHHD59Xt6ZEsz6TsHfkrbNgjMtGKm3iMAFNUnlaCAUmU6pcZNeUCNEjjYGRNxWJqzmwT_-MLaWOClgqeHz8NnC5jd0HZZNoTpqIBKBfqny5d4zi8Y3B7hZPytZLaIWb_pyuNsb6HbLTPMyRqnRpR3CuHY1j6en2vx7SlVf3FD39Qb8=
+      token: enc:v1:gAAAAABqH6rtXCMDpIHE8mHxpRadiGNFSkvcZvJ2NGTUtjxc-P3ekT-pBX2i6KJY6t2r28hTQmxQrfk_jzoDMFGlcv5l4QdzAUzSwynp2o-ZNztEF35VXA4IrokMpWdjC2eoq1EyzZDLf3CD8J0IVUyh7UZBFJrsU2j-Vcii24KDreUR441J45b3Rt_mS_D1pD2F2lEEZRX1P91WmYaT8MzSXk4BQ0duTNWAdV3itc93g7RsYi8ZXKpNKQAzw0aK-JQOx6NEwn7us0kSbkGqhj_cOsbfe1nGdZMfNiJ1XzXgCfUEwn_d7QTrZmzDpYFAJ2U6wGuPcuv-FnKlExbveAJvSDseM0EKKOkvt_opdjVfqJnQQcTBOk2O3fcgnON2jgya1gA0Y4YGwal7kPZeSel7lGP2rBBBj3HkLSwcBC-AfTzFy4eNfqXHhIEwWhpgOe7dPzY7lDoW9Cv0fgzvnYMMP8LU7G1nLHfFW_BAwVVKEIYX0xmehE15D4wdBxfab7k5rolY8vaKJf7dVV-MLES0lRUtEvWn16JKbUnKCR8Q1HhZwryp9-Q7pA2xxl_VqB5NRQGqiKyl7gTswFzQJdGMUTecfdZ0d-OnKNddtpxj4MEwRWJWZUmbtm8qoQsZfiH9BsYPqnH-
+      cookie: ''
+      user_id: ''
       models:
       - glm-4-plus
       - glm-4-flash
@@ -108,8 +121,25 @@ providers:
     accounts:
     - name: account-1
       token: ''
+      cookie: ''
+      user_id: ''
       models:
       - coze-chat
+      max_concurrent: 5
+      health_check_interval: 60
+      enabled: true
+  mimo:
+    enabled: true
+    accounts:
+    - name: account-1
+      token: ''
+      cookie: ''
+      user_id: ''
+      xiaomichatbot_ph: ''
+      models:
+      - mimo-v2-flash
+      - mimo-v2-pro
+      - mimo-v2-omni
       max_concurrent: 5
       health_check_interval: 60
       enabled: true
@@ -143,6 +173,9 @@ model_mappings:
     actual_model: null
   '*coze*':
     provider: coze
+    actual_model: null
+  '*mimo*':
+    provider: mimo
     actual_model: null
 provider_fallback: {}
 context_management:

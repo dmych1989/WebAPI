@@ -1,24 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-MiniMax (Hailuo AI) Provider Adapter
+MiniMax Provider Adapter — 官方 OpenAI 兼容 API
 
-网页 API 协议:
-- Base URL: https://hailuoai.com
-- 认证: JWT Token（登录后获取的 access_token）
-- 登录: POST /api/user/login (email + password)
-- 对话: POST /api/chat/completion_prod（SSE 流）
-- 会话: GET /api/chat/list
-- 模型: MiniMax-Text-01, abab6.5s-chat
+官方 API 协议:
+- Base URL: https://api.minimaxi.com/v1
+- 认证: Authorization: Bearer <api_key>
+- 对话: POST /chat/completions（OpenAI 兼容）
+- 流式: POST /chat/completions（带 stream=true，SSE 响应）
+- 模型: MiniMax-M3, MiniMax-M2.7, MiniMax-M2.7-highspeed, MiniMax-M2.5,
+       MiniMax-M2.5-highspeed, MiniMax-M2.1, MiniMax-M2.1-highspeed, MiniMax-M2
 
-参考 Chat2API minimax.ts
+凭证获取:
+1. 访问 https://platform.minimaxi.com/user-center/basic-information/interface-key
+2. 创建新的 API Key（eyJ... JWT 格式）
+3. 粘贴到 config.yaml 的 providers.minimax.accounts[0].token
+
+也支持账号级 api_base 自定义，默认为 https://api.minimaxi.com/v1
 """
 
 from __future__ import annotations
 
 import json
 import time
-import uuid
 from typing import Any, AsyncIterator, Optional
+
+import aiohttp
 
 from src.core.config import AccountConfig
 from src.core.models import ChatCompletionRequest, ProviderResponse, StreamChunk
@@ -27,310 +33,229 @@ from src.core.logger import logger
 from src.provider.base import BaseProvider, ProviderRegistry
 from src.transport.api_reverse import APIReverseTransport
 
-MINIMAX_BASE = "https://hailuoai.com"
 
-FAKE_HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-    "Content-Type": "application/json",
-    "Origin": "https://hailuoai.com",
-    "Referer": "https://hailuoai.com/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-origin",
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    ),
-}
+# 官方 OpenAI 兼容 API base
+DEFAULT_API_BASE = "https://api.minimaxi.com/v1"
 
+# 新一代官方模型
 DEFAULT_MODELS = [
-    "MiniMax-Text-01",
-    "abab6.5s-chat",
-    "abab7-chat-preview",
+    "MiniMax-M3",
+    "MiniMax-M2.7",
+    "MiniMax-M2.7-highspeed",
+    "MiniMax-M2.5",
+    "MiniMax-M2.5-highspeed",
+    "MiniMax-M2.1",
+    "MiniMax-M2.1-highspeed",
+    "MiniMax-M2",
 ]
-
-
-def _random_hex(length: int) -> str:
-    return uuid.uuid4().hex[:length]
 
 
 @ProviderRegistry.register("minimax")
 class MiniMaxProvider(BaseProvider):
-    """MiniMax (Hailuo AI) 网页 API 适配器"""
+    """MiniMax 官方 OpenAI 兼容 API 适配器"""
 
     name = "minimax"
-    display_name = "MiniMax (Hailuo AI)"
-    auth_type = "jwt"
+    display_name = "MiniMax"
+    auth_type = "token"
 
     def __init__(self, account: AccountConfig):
         self.account = account
-        self._token: Optional[str] = account.token
-        self._user_id: Optional[str] = getattr(account, "user_id", None)
-        self._access_token: Optional[str] = None
-        self._access_token_expires: float = 0
+        # 优先 token 字段（API Key 形如 eyJ...），其次 cookie（兼容旧配置）
+        self._api_key: Optional[str] = account.token or account.cookie
+        # 账号可自定义 api_base，否则用官方 base
+        self._api_base: str = (
+            getattr(account, "api_base", None) or DEFAULT_API_BASE
+        ).rstrip("/")
         self._transport = APIReverseTransport()
-        self._conversation_id: Optional[str] = None
-
-    def _build_auth_headers(self) -> dict:
-        """构建带 Authorization 和 Real User ID 的请求头"""
-        headers = {
-            "Authorization": f"Bearer {self._token}" if self._token else "",
-        }
-        if self._user_id:
-            # MiniMax (Hailuo) API 需要 Real User ID 作为额外认证字段
-            headers["X-Real-User-Id"] = str(self._user_id)
-            headers["X-User-Id"] = str(self._user_id)
-        return headers
 
     # ---- Auth ----
 
     async def login(self) -> str:
-        """获取/刷新 access token"""
-        if not self._token:
-            raise AuthError("MiniMax Token not configured")
-
-        now = time.time()
-        if self._access_token and self._access_token_expires > now:
-            return self._access_token
-
-        # 如果 token 是 JWT，直接用作 Bearer token
-        # MiniMax 的 access token 有效期较长（~30天）
-        logger.info("[MiniMax] Validating token...")
-
-        session = await self._transport._get_session()
-
-        async with session.get(
-            f"{MINIMAX_BASE}/api/user/info",
-            headers={
-                **self._build_auth_headers(),
-                **FAKE_HEADERS,
-            },
-        ) as resp:
-            if resp.status in (401, 403):
-                raise AuthError("MiniMax Token invalid or expired, refresh required")
-            if resp.status == 200:
-                self._access_token = self._token
-                self._access_token_expires = now + 86400  # 24h 缓存
-                logger.info("[MiniMax] Token validated")
-                return self._access_token
-
-            # 保底：直接信任用户提供的 token
-            self._access_token = self._token
-            self._access_token_expires = now + 3600
-            logger.warning(f"[MiniMax] Token check returned {resp.status}, using as-is")
-            return self._access_token
-
-    # ---- Messages → Prompt ----
-
-    def _messages_to_prompt(self, request: ChatCompletionRequest) -> str:
-        """OpenAI messages → MiniMax prompt 格式"""
-        parts: list[str] = []
-        for i, msg in enumerate(request.messages):
-            role = msg.role
-            content = self._get_text(msg)
-
-            if role == "system":
-                parts.append(f"System: {content}")
-            elif role == "user":
-                parts.append(f"Human: {content}")
-            elif role == "assistant":
-                parts.append(f"Assistant: {content}")
-            elif role == "tool":
-                parts.append(f"Tool Result: {content}")
-
-        return "\n\n".join(parts)
-
-    @staticmethod
-    def _get_text(msg) -> str:
-        content = msg.content
-        if isinstance(content, str):
-            return content
-        if isinstance(content, list):
-            return "\n".join(
-                part.get("text", "") if isinstance(part, dict) else str(part)
-                for part in content
+        """验证 API Key 存在性"""
+        if not self._api_key:
+            raise AuthError(
+                "MiniMax 凭证未配置。请在 config/config.yaml 的 providers.minimax.accounts[0].token "
+                "填入 API Key（eyJ 开头的 JWT），或前往 https://platform.minimaxi.com/user-center/basic-information/interface-key 创建。"
             )
-        if content is None:
-            return ""
-        return str(content)
+        return self._api_key
 
-    # ---- Chat Completion ----
-
-    def _resolve_model(self, request: ChatCompletionRequest) -> str:
-        """解析实际模型名"""
-        model = request.model
-        if "minimax" in model.lower():
-            return "MiniMax-Text-01"
-        if "abab" in model.lower():
-            return model
-        return self.account.models[0] if self.account.models else "MiniMax-Text-01"
-
-    async def chat_completion(self, request: ChatCompletionRequest) -> ProviderResponse:
-        """非流式对话"""
-        token = await self.login()
-        model = self._resolve_model(request)
-        prompt = self._messages_to_prompt(request)
-
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "stream": False,
-            "temperature": request.temperature or 0.7,
-            "max_tokens": request.max_tokens or 4096,
+    def _build_headers(self) -> dict[str, str]:
+        """构造带 Bearer Token 的请求头"""
+        return {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
-        http_session = await self._transport._get_session()
-        url = f"{MINIMAX_BASE}/api/chat/completion_prod"
+    def _resolve_actual_model(self, request: ChatCompletionRequest) -> str:
+        """直接透传模型名"""
+        model = (request.model or "").strip()
+        return model or "MiniMax-M2.7-highspeed"
 
-        async with http_session.post(
-            url,
-            json=payload,
-            headers={
-                **self._build_auth_headers(),
-                **FAKE_HEADERS,
-            },
-        ) as resp:
-            if resp.status != 200:
-                text = await resp.text()
-                raise ProviderError(
-                    f"MiniMax API error: HTTP {resp.status} — {text[:200]}",
-                    provider="minimax",
-                )
+    def _build_payload(
+        self, request: ChatCompletionRequest, actual_model: str, stream: bool
+    ) -> dict[str, Any]:
+        """构造 OpenAI 兼容 payload"""
+        messages: list[dict[str, Any]] = []
+        for msg in request.messages:
+            messages.append({"role": msg.role, "content": msg.content})
 
-            data = await resp.json()
+        payload: dict[str, Any] = {
+            "model": actual_model,
+            "messages": messages,
+            "stream": stream,
+        }
+        # 透传 OpenAI 标准可选参数
+        for opt in (
+            "temperature",
+            "top_p",
+            "max_tokens",
+            "max_completion_tokens",
+            "stop",
+            "user",
+        ):
+            v = getattr(request, opt, None)
+            if v is not None:
+                payload[opt] = v
+        # 透传 tools
+        if getattr(request, "tools", None):
+            payload["tools"] = [t.model_dump() if hasattr(t, "model_dump") else t for t in request.tools]
+        return payload
 
-            # 提取回复内容
-            content = ""
-            if "reply" in data:
-                content = data["reply"]
-            elif "choices" in data:
-                content = data["choices"][0].get("message", {}).get("content", "")
-            elif "data" in data:
-                content = data.get("data", {}).get("reply", "")
+    async def _post_request(
+        self, request: ChatCompletionRequest, actual_model: str, stream: bool
+    ) -> aiohttp.ClientResponse:
+        """发送 POST 请求"""
+        await self.login()
+        url = f"{self._api_base}/chat/completions"
+        payload = self._build_payload(request, actual_model, stream)
+        session = await self._transport._get_session()
 
-            return ProviderResponse(
-                status_code=200,
-                data={
-                    "id": f"chatcmpl-{_random_hex(12)}",
-                    "object": "chat.completion",
-                    "created": int(time.time()),
-                    "model": model,
-                    "choices": [{
-                        "index": 0,
-                        "message": {
-                            "role": "assistant",
-                            "content": content,
-                        },
-                        "finish_reason": "stop",
-                    }],
-                    "usage": {
-                        "prompt_tokens": 0,
-                        "completion_tokens": 0,
-                        "total_tokens": 0,
-                    },
-                },
+        try:
+            resp = await session.post(
+                url,
+                json=payload,
+                headers=self._build_headers(),
+                timeout=aiohttp.ClientTimeout(total=120),
             )
+        except aiohttp.ClientError as e:
+            raise ProviderError(
+                f"MiniMax 网络错误: {e}", provider="minimax"
+            ) from e
+
+        if resp.status == 401:
+            await resp.release()
+            raise AuthError(
+                "MiniMax 认证失败（HTTP 401）。请检查 API Key 是否正确或已过期。"
+            )
+        if resp.status == 429:
+            body = await resp.text()
+            await resp.release()
+            raise ProviderError(
+                f"MiniMax 限流（HTTP 429）: {body[:200]}",
+                provider="minimax",
+                status_code=429,
+            )
+        if resp.status >= 400:
+            body = await resp.text()
+            await resp.release()
+            raise ProviderError(
+                f"MiniMax API error: HTTP {resp.status} — {body[:300]}",
+                provider="minimax",
+                status_code=resp.status,
+            )
+        return resp
+
+    # ---- Chat: 非流式 ----
+
+    async def chat_completion(
+        self, request: ChatCompletionRequest
+    ) -> ProviderResponse:
+        actual_model = self._resolve_actual_model(request)
+        resp = await self._post_request(request, actual_model, stream=False)
+        try:
+            data = await resp.json()
+        finally:
+            await resp.release()
+        return ProviderResponse(status_code=200, data=data)
+
+    # ---- Chat: 流式 ----
 
     async def chat_completion_stream(
         self, request: ChatCompletionRequest
     ) -> AsyncIterator[StreamChunk]:
-        """流式对话"""
-        token = await self.login()
-        model = self._resolve_model(request)
-        prompt = self._messages_to_prompt(request)
+        actual_model = self._resolve_actual_model(request)
+        resp = await self._post_request(request, actual_model, stream=True)
 
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "stream": True,
-            "temperature": request.temperature or 0.7,
-            "max_tokens": request.max_tokens or 4096,
-        }
-
-        logger.info(f"[MiniMax] Stream: model={model}")
-
-        http_session = await self._transport._get_session()
-        url = f"{MINIMAX_BASE}/api/chat/completion_prod"
-
-        async with http_session.post(
-            url,
-            json=payload,
-            headers={
-                **self._build_auth_headers(),
-                **FAKE_HEADERS,
-            },
-        ) as resp:
-            if resp.status != 200:
-                text = await resp.text()
-                raise ProviderError(
-                    f"MiniMax API error: HTTP {resp.status} — {text[:200]}",
-                    provider="minimax",
-                )
-
-            is_first = True
-            gathered = ""
-
-            async for line_raw in resp.content:
-                line = line_raw.decode("utf-8", errors="replace").strip()
+        is_first = True
+        try:
+            async for line_bytes in resp.content:
+                line = line_bytes.decode("utf-8", errors="replace").strip()
                 if not line or not line.startswith("data:"):
                     continue
-
                 data_str = line[5:].strip()
                 if data_str == "[DONE]":
                     break
 
                 try:
-                    parsed = json.loads(data_str)
-                except json.JSONDecodeError:
+                    obj = json.loads(data_str)
+                except (json.JSONDecodeError, ValueError):
                     continue
 
-                content = self._extract_delta_content(parsed)
-                if content:
+                choices = obj.get("choices") or []
+                if not choices:
+                    continue
+                delta = choices[0].get("delta") or {}
+                content_delta = delta.get("content") or ""
+                # MiniMax M3 支持 reasoning_details（Interleaved Thinking）
+                reasoning_delta = ""
+                if isinstance(delta.get("reasoning_details"), list):
+                    for detail in delta["reasoning_details"]:
+                        if isinstance(detail, dict) and detail.get("text"):
+                            reasoning_delta += detail["text"]
+                finish_reason = choices[0].get("finish_reason")
+
+                if content_delta or reasoning_delta:
                     if is_first:
                         yield StreamChunk(
-                            content=content,
+                            content=content_delta,
+                            reasoning_content=reasoning_delta or None,
                             role="assistant",
-                            model=model,
+                            model=actual_model,
                         )
                         is_first = False
                     else:
-                        yield StreamChunk(content=content, model=model)
-                    gathered += content
+                        yield StreamChunk(
+                            content=content_delta,
+                            reasoning_content=reasoning_delta or None,
+                            model=actual_model,
+                        )
 
-            logger.debug(f"[MiniMax] Stream done: {len(gathered)} chars")
-
-    def _extract_delta_content(self, parsed: dict) -> str:
-        """从 SSE chunk 提取 delta 内容"""
-        # MiniMax SSE 格式: {"choices": [{"delta": {"content": "text"}}]}
-        choices = parsed.get("choices", [])
-        if choices:
-            delta = choices[0].get("delta", {})
-            return delta.get("content", "")
-        # 备选: {"reply": "text"}
-        if "reply" in parsed:
-            return parsed["reply"]
-        # 备选: {"data": {"reply": "text"}}
-        if isinstance(parsed.get("data"), dict):
-            return parsed["data"].get("reply", "")
-        return ""
+                if finish_reason:
+                    yield StreamChunk(finish_reason=finish_reason, model=actual_model)
+        finally:
+            await resp.release()
 
     # ---- Models ----
 
     async def list_models(self) -> list[str]:
-        return self.account.models or DEFAULT_MODELS
+        # 优先使用账号级 models 配置，否则用官方模型列表
+        if self.account.models:
+            return self.account.models
+        return DEFAULT_MODELS
 
     # ---- Health Check ----
 
     async def health_check(self) -> bool:
         try:
             await self.login()
-            return True
-        except Exception:
+            session = await self._transport._get_session()
+            async with session.get(
+                f"{self._api_base}/models",
+                headers=self._build_headers(),
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
+                return resp.status == 200
+        except Exception as e:
+            logger.debug(f"[MiniMax] health_check failed: {type(e).__name__}: {e}")
             return False

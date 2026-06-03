@@ -147,7 +147,11 @@ class APIReverseTransport:
 # =============================================================================
 
 class BrowserDriveTransport:
-    """浏览器自动化传输层
+    """浏览器自动化传输层（旧版 — 兼容保留）
+
+    .. deprecated::
+        请使用 `BrowserAutomationTransport`（src/transport/browser_automation.py）。
+        新版提供完整的 JS 执行、fetch API、SSE 流支持。
 
     通过 Playwright 驱动 Chromium，操控网页版对话。
     适用于 API Reverse 无法使用的场景（Cloudflare 保护、WebSocket 通信等）。

@@ -21,6 +21,7 @@ from src.core.exceptions import ProviderError, RateLimitError, AuthError
 # 导入各个传输层模块
 from .api_reverse import APIReverseTransport
 from .browser_drive import BrowserDriveTransport
+from .browser_automation import BrowserAutomationTransport
 
 
 # =============================================================================

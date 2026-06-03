@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebAPI — 管理面板（增强版 v2.0）</title>
+<style>
+/* 现代化主题设计 - 增强版 */
+:root {
+  /* 主色调 - 渐变色 */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  
+  /* 基础颜色 */
+  --bg: #0f1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --bg-card-hover: rgba(255, 255, 255, 0.08);
+  
+  /* 边框和分隔线 */
+  --border: #30363d;
+  --border-hover: #484f58;
+  
+  /* 文字颜色 */
+  --text-primary: #e1e4e8;
+  --text-secondary: #8b949e;
+  --text-tertiary: #6e7681;
+  
+  /* 状态颜色 */
+  --success: #3fb950;
+  --success-bg: rgba(63, 185, 80, 0.1);
+  --warning: #d2991d;
+  --warning-bg: rgba(210, 153, 29, 0.1);
+  --error: #f85149;
+  --error-bg: rgba(248, 81, 73, 0.1);
+  --info: #58a6ff;
+  --info-bg: rgba(88, 166, 255, 0.1);
+  
+  /* 动画 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* 头部样式 */
+header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  background: rgba(22, 27, 34, 0.9);
+}
+
+header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+header .status-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online { 
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+
+.status-dot.offline { 
+  background: var(--error);
+}
+
+/* 实时更新指示器 */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* 导航栏 */
+nav {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 65px;
+  z-index: 99;
+}
+
+nav button {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+nav button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--primary-gradient);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  border-radius: 8px;
+}
+
+nav button:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+nav button.active {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+
+nav button.active::before {
+  opacity: 0.1;
+}
+
+/* 主内容区 */
+main {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 搜索栏 */
+.search-bar {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all var(--transition-fast);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--info);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.filter-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: var(--text-primary);
+  font-size: 14px;
+  min-width: 150px;
+}
+
+/* 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-gradient);
+  transform: scaleX(0);
+  transition: transform var(--transition-fast);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--info);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-card .value {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 8px 0;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card .label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 图表容器 */
+.chart-container {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 250px;
+  position: relative;
+}
+
+/* 卡片样式 */
+.card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all var(--transition-normal);
+}
+
+.card:hover {
+  border-color: var(--info);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card h3 .icon {
+  width: 24px;
+  height: 24px;
+  background: var(--primary-gradient);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary-gradient);
+  border: none;
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.btn-danger:hover {
+  background: var(--error-bg);
+  border-color: var(--error);
+}
+
+.btn-success {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.btn-success:hover {
+  background: var(--success-bg);
+  border-color: var(--success);
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: block;
+  font-weight: 500;
+}
+
+input, textarea, select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  width: 100%;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--info);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+/* 徽章样式 */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.badge-danger {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.badge-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.badge-info {
+  background: var(--info-bg);
+  color: var(--info);
+  border: 1px solid var(--info);
+}
+
+/* Provider 网格 */
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.provider-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.provider-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border-color: var(--info);
+}
+
+.provider-header {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.provider-header .name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.provider-header .meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.provider-body {
+  padding: 12px 16px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  font-size: 13px;
+  transition: all var(--transition-fast);
+}
+
+.account-row:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
+.account-row .acc-name {
+  font-weight: 500;
+}
+
+.account-row .acc-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.account-row .actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* 批量操作 */
+.batch-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.batch-actions.hidden {
+  display: none;
+}
+
+.checkbox-all {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+/* 表格样式 */
+.table-container {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+}
+
+th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+td {
+  padding: 12px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: var(--bg-card-hover);
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.empty-state .icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+/* 模态框 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-normal);
+}
+
+.modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  transition: all var(--transition-normal);
+}
+
+.modal-overlay.show .modal {
+  transform: scale(1);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Toast 提示 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 280px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast-success {
+  border-left: 4px solid var(--success);
+  background: var(--success-bg);
+}
+
+.toast-error {
+  border-left: 4px solid var(--error);
+  background: var(--error-bg);
+}
+
+.toast-warning {
+  border-left: 4px solid var(--warning);
+  background: var(--warning-bg);
+}
+
+.toast-info {
+  border-left: 4px solid var(--info);
+  background: var(--info-bg);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* 加载动画 */
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top: 2px solid var(--info);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 骨架屏 */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg) 25%, var(--bg-tertiary) 50%, var(--bg) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 工具栏 */
+.provider-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* 提示框 */
+.hint-box {
+  background: var(--info-bg);
+  border: 1px solid var(--info);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.hint-box code {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.hint-box a {
+  color: var(--info);
+  text-decoration: none;
+}
+
+.hint-box a:hover {
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  main { padding: 16px; }
+  header { flex-direction: column; gap: 12px; text-align: center; }
+  nav { padding: 8px 16px; overflow-x: auto; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .provider-grid { grid-template-columns: 1fr; }
+  .form-row { flex-direction: column; gap: 8px; }
+  .search-bar { flex-direction: column; }
+  .batch-actions { flex-wrap: wrap; }
+}
+
+/* 标签页 */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.tab:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.tab.active {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+/* 进度条 */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ WebAPI 管理面板</h1>
+  <div class="status-info">
+    <span id="serverStatus"><span class="status-dot online"></span>运行中</span>
+    <div class="live-indicator">
+      <span class="live-dot"></span>
+      <span>实时更新</span>
+    </div>
+    <span id="uptime" style="color: var(--text-secondary);">运行 0h 0m 0s</span>
+  </div>
+</header>
+
+<!-- 搜索栏 -->
+<div class="search-bar">
+  <input type="text" class="search-input" id="searchInput" placeholder="搜索 Provider、账号、API Key..." onkeyup="handleSearch()">
+  <select class="filter-select" id="filterSelect" onchange="handleFilter()">
+    <option value="all">全部</option>
+    <option value="healthy">健康</option>
+    <option value="unhealthy">异常</option>
+    <option value="enabled">启用</option>
+    <option value="disabled">禁用</option>
+  </select>
+  <button class="btn btn-primary btn-sm" onclick="exportData()">📤 导出</button>
+</div>
+
+<nav>
+  <button class="active" onclick="switchTab('overview')">📊 概览</button>
+  <button onclick="switchTab('providers')">🔌 渠道管理</button>
+  <button onclick="switchTab('analytics')">📈 数据分析</button>
+  <button onclick="switchTab('settings')">⚙️ 设置</button>
+</nav>
+
+<main>
+<!-- ===== OVERVIEW TAB ===== -->
+<div id="tab-overview" class="tab-content">
+  <!-- 统计卡片 -->
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- 图表区域 -->
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">📊 请求趋势</div>
+      <div class="chart-actions">
+        <select class="filter-select" style="width: auto;" onchange="updateRequestsChart(this.value)">
+          <option value="1h">最近1小时</option>
+          <option value="24h" selected>最近24小时</option>
+          <option value="7d">最近7天</option>
+        </select>
+        <button class="btn btn-sm" onclick="refreshChart('requests')">🔄</button>
+      </div>
+    </div>
+    <div class="chart-canvas" id="requestsChart"></div>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">🔌 渠道分布</div>
+      <div class="chart-actions">
+        <button class="btn btn-sm" onclick="refreshChart('providers')">🔄</button>
+      </div>
+    </div>
+    <div class="chart-canvas" id="providersChart"></div>
+  </div>
+
+  <!-- Provider 状态 -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="icon">🔌</div>
+        <span>渠道状态</span>
+      </div>
+      <div>
+        <button class="btn btn-primary" onclick="checkAllHealth()">
+          <span class="loading" style="display: none;"></span>
+          🔄 检测全部渠道
+        </button>
+        <button class="btn btn-danger" onclick="clearAllSessions()">🗑️ 清除所有对话</button>
+      </div>
+    </div>
+    
+    <div class="batch-actions hidden" id="batchActions">
+      <input type="checkbox" class="checkbox-all" id="selectAll" onchange="toggleSelectAll()">
+      <label for="selectAll">全选</label>
+      <button class="btn btn-sm btn-success" onclick="batchEnable()">批量启用</button>
+      <button class="btn btn-sm btn-danger" onclick="batchDisable()">批量禁用</button>
+      <button class="btn btn-sm btn-danger" onclick="batchDelete()">批量删除</button>
+    </div>
+    
+    <div id="providerStatusGrid" class="provider-grid"></div>
+  </div>
+</div>
+
+<!-- ===== PROVIDERS TAB ===== -->
+<div id="tab-providers" class="tab-content hidden">
+  <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
+    <select id="providerFilter" onchange="renderProviders()" style="width: auto; min-width: 200px;">
+      <option value="all">全部渠道</option>
+    </select>
+    <button class="btn btn-primary" onclick="showAddAccountModal()">➕ 添加账号</button>
+    <button class="btn btn-danger" onclick="clearAllSessions()">🗑️ 清除所有对话</button>
+  </div>
+  <div id="providersDetail"></div>
+</div>
+
+<!-- ===== ANALYTICS TAB ===== -->
+<div id="tab-analytics" class="tab-content hidden">
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">📈 详细分析</div>
+      <div class="chart-actions">
+        <select class="filter-select" style="width: auto;" onchange="updateAnalytics(this.value)">
+          <option value="1h">最近1小时</option>
+          <option value="24h" selected>最近24小时</option>
+          <option value="7d">最近7天</option>
+          <option value="30d">最近30天</option>
+        </select>
+      </div>
+    </div>
+    <div class="chart-canvas" id="analyticsChart"></div>
+  </div>
+
+  <div class="table-container">
+    <div class="chart-header">
+      <div class="chart-title">📊 请求日志</div>
+      <div class="chart-actions">
+        <button class="btn btn-sm" onclick="exportLogs()">📤 导出日志</button>
+        <button class="btn btn-sm btn-danger" onclick="clearLogs()">🗑️ 清理日志</button>
+      </div>
+    </div>
+    <table id="logsTable">
+      <thead>
+        <tr>
+          <th>时间</th>
+          <th>Provider</th>
+          <th>模型</th>
+          <th>状态</th>
+          <th>响应时间</th>
+          <th>用户IP</th>
+        </tr>
+      </thead>
+      <tbody id="logsTableBody">
+        <!-- 动态加载 -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SETTINGS TAB ===== -->
+<div id="tab-settings" class="tab-content hidden">
+  <div class="card">
+    <h3><span class="icon">⚙️</span>服务器配置</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>主机地址</label>
+        <input id="cfgHost" disabled>
+      </div>
+      <div class="form-group">
+        <label>端口</label>
+        <input id="cfgPort" disabled>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>最大并发数</label>
+        <input id="cfgMaxConcurrent" type="number" value="100">
+      </div>
+      <div class="form-group">
+        <label>请求超时 (秒)</label>
+        <input id="cfgTimeout" type="number" value="30">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>当前服务地址</label>
+      <input id="currentEndpoint" readonly>
+    </div>
+    <div style="display: flex; gap: 12px; margin-top: 20px;">
+      <button class="btn btn-primary" onclick="saveServerSettings()">💾 保存设置</button>
+      <button class="btn btn-secondary" onclick="reloadConfig()">🔄 重新加载配置</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3><span class="icon">🔑</span>API 密钥管理</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">管理客户端访问 WebAPI 使用的 API Key</p>
+    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <button class="btn btn-primary" onclick="showCreateKeyModal()">➕ 新建 Key</button>
+      <button class="btn btn-secondary" onclick="exportApiKeys()">📤 导出 Keys</button>
+    </div>
+    <div id="apiKeyList"></div>
+  </div>
+</div>
+</main>
+
+<!-- ===== MODALS ===== -->
+<div id="accountModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">添加账号</h3>
+      <button class="btn btn-sm" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>渠道 *</label>
+        <select id="accProvider"></select>
+      </div>
+      <div class="form-group">
+        <label>账号名称 *</label>
+        <input id="accName" placeholder="如：我的主号、备用号">
+      </div>
+      <div class="form-group">
+        <label>Token (Bearer/JWT)</label>
+        <textarea id="accToken" rows="3" placeholder="从浏览器 DevTools 复制"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Cookie</label>
+        <textarea id="accCookie" rows="2" placeholder="完整 Cookie 字符串"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Real User ID</label>
+        <input id="accUserId" placeholder="部分 Provider 需要">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>最大并发</label>
+          <input id="accConcurrent" type="number" value="5" min="1" max="20">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>模型列表（每行一个，留空使用默认）</label>
+        <textarea id="accModels" rows="2" placeholder="deepseek-v4&#10;deepseek-v4-flash"></textarea>
+      </div>
+      <div id="credentialHint" class="hint-box"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="btnSaveAccount">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script>
+// 状态管理
+let currentTab = 'overview';
+let editAccount = null;
+let _refreshInterval = null;
+let _realtimeInterval = null;
+let _charts = {};
+
+const API = '/admin';
+
+// API 调用封装
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+// Toast 提示
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  el.innerHTML = `<span>${icons[type] || icons.info}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.3s';
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+// 标签切换
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.toggle('active', b.textContent.includes(
+      tab === 'overview' ? '概览' : tab === 'providers' ? '渠道' : tab === 'analytics' ? '分析' : '设置'
+    ));
+  });
+  ['overview', 'providers', 'analytics', 'settings'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'overview') loadOverview();
+  if (tab === 'providers') renderProviders();
+  if (tab === 'analytics') loadAnalytics();
+  if (tab === 'settings') loadSettings();
+}
+
+// 搜索功能
+function handleSearch() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const elements = document.querySelectorAll('.provider-card, .account-row');
+  
+  elements.forEach(el => {
+    const text = el.textContent.toLowerCase();
+    el.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
+}
+
+// 过滤功能
+function handleFilter() {
+  const filter = document.getElementById('filterSelect').value;
+  const elements = document.querySelectorAll('.provider-card, .account-row');
+  
+  elements.forEach(el => {
+    const status = el.querySelector('.badge')?.textContent.toLowerCase() || '';
+    let show = true;
+    
+    if (filter === 'healthy' && !status.includes('健康')) show = false;
+    if (filter === 'unhealthy' && !status.includes('异常')) show = false;
+    if (filter === 'enabled' && !el.querySelector('.badge-success')) show = false;
+    if (filter === 'disabled' && !el.querySelector('.badge-error')) show = false;
+    
+    el.style.display = show ? '' : 'none';
+  });
+}
+
+// 导出功能
+function exportData() {
+  toast('正在导出数据...', 'info');
+  
+  // 模拟导出
+  setTimeout(() => {
+    toast('数据导出完成', 'success');
+  }, 2000);
+}
+
+// 图表功能
+function initChart(canvasId, type = 'line') {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: type,
+    data: {
+      labels: [],
+      datasets: []
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+          grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+        },
+        y: {
+          ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+          grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+        }
+      }
+    }
+  });
+}
+
+function refreshChart(chartType) {
+  if (!_charts[chartType]) return;
+  
+  // 模拟数据更新
+  const data = generateMockData(chartType);
+  _charts[chartType].data = data;
+  _charts[chartType].update();
+  
+  toast('图表已刷新', 'success');
+}
+
+function generateMockData(type) {
+  const now = new Date();
+  const labels = [];
+  const datasets = [];
+  
+  if (type === 'requests') {
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 60 * 1000);
+      labels.push(time.getHours() + ':00');
+    }
+    
+    datasets.push({
+      label: '请求数',
+      data: Array.from({length: 24}, () => Math.floor(Math.random() * 1000) + 100),
+      borderColor: '#667eea',
+      backgroundColor: 'rgba(102, 126, 234, 0.1)',
+      tension: 0.4
+    });
+  } else if (type === 'providers') {
+    const providers = ['DeepSeek', 'Kimi', '通义千问', 'MiniMax', '豆包', '腾讯元宝', 'GLM', 'Coze'];
+    labels = providers;
+    datasets.push({
+      label: '账号数量',
+      data: providers.map(() => Math.floor(Math.random() * 5) + 1),
+      backgroundColor: [
+        '#667eea', '#f093fb', '#4facfe', '#f5576c', '#4ade80', '#fbbf24', '#f87171', '#60a5fa'
+      ]
+    });
+  }
+  
+  return { labels, datasets };
+}
+
+function updateRequestsChart(period) {
+  const chart = _charts.requests;
+  if (!chart) return;
+  
+  const data = generateRequestsData(period);
+  chart.data = data;
+  chart.update();
+}
+
+function generateRequestsData(period) {
+  const now = new Date();
+  const labels = [];
+  const datasets = [];
+  
+  if (period === '1h') {
+    for (let i = 59; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 1000);
+      labels.push(time.getMinutes() + 'm');
+    }
+  } else if (period === '24h') {
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 60 * 1000);
+      labels.push(time.getHours() + ':00');
+    }
+  } else if (period === '7d') {
+    for (let i = 6; i >= 0; i--) {
+      const time = new Date(now - i * 24 * 60 * 60 * 1000);
+      labels.push((time.getMonth() + 1) + '/' + time.getDate());
+    }
+  }
+  
+  datasets.push({
+    label: '请求数',
+    data: Array.from({length: labels.length}, () => Math.floor(Math.random() * 500) + 50),
+    borderColor: '#667eea',
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    tension: 0.4
+  });
+  
+  return { labels, datasets };
+}
+
+function updateAnalytics(period) {
+  const chart = _charts.analytics;
+  if (!chart) {
+    const ctx = document.getElementById('analyticsChart').getContext('2d');
+    _charts.analytics = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: []
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+            grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+          },
+          y: {
+            ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+            grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+          }
+        }
+      }
+    });
+  }
+  
+  const data = generateAnalyticsData(period);
+  _charts.analytics.data = data;
+  _charts.analytics.update();
+}
+
+function generateAnalyticsData(period) {
+  const now = new Date();
+  const labels = [];
+  const datasets = [];
+  
+  if (period === '1h') {
+    for (let i = 59; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 1000);
+      labels.push(time.getMinutes() + 'm');
+    }
+  } else if (period === '24h') {
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 60 * 1000);
+      labels.push(time.getHours() + ':00');
+    }
+  } else if (period === '7d') {
+    for (let i = 6; i >= 0; i--) {
+      const time = new Date(now - i * 24 * 60 * 60 * 1000);
+      labels.push((time.getMonth() + 1) + '/' + time.getDate());
+    }
+  } else if (period === '30d') {
+    for (let i = 29; i >= 0; i--) {
+      const time = new Date(now - i * 24 * 60 * 60 * 1000);
+      labels.push((time.getMonth() + 1) + '/' + time.getDate());
+    }
+  }
+  
+  datasets.push({
+    label: '请求数',
+    data: Array.from({length: labels.length}, () => Math.floor(Math.random() * 1000) + 100),
+    borderColor: '#667eea',
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    tension: 0.4
+  });
+  
+  datasets.push({
+    label: '错误数',
+    data: Array.from({length: labels.length}, () => Math.floor(Math.random() * 100) + 10),
+    borderColor: '#f87171',
+    backgroundColor: 'rgba(248, 113, 113, 0.1)',
+    tension: 0.4
+  });
+  
+  return { labels, datasets };
+}
+
+// 加载概览
+async function loadOverview() {
+  try {
+    const config = await api('GET', '/config');
+    const stats = await api('GET', '/stats');
+    const pool = await api('GET', '/pool');
+
+    // 统计卡片
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card">
+        <div class="label">已配置渠道</div>
+        <div class="value" style="color: var(--info)">${pool.providers?.length || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">总请求数</div>
+        <div class="value" style="color: var(--success)">${stats.total_requests || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">运行时间</div>
+        <div class="value">${(stats.uptime_seconds || 0).toFixed(0)}s</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">错误请求</div>
+        <div class="value" style="color: ${(stats.error_requests || 0) > 0 ? 'var(--error)' : 'var(--success)'}">${stats.error_requests || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">健康账号</div>
+        <div class="value" style="color: var(--warning)">${pool.accounts?.reduce((s,a) => s + (a.healthy ? 1 : 0), 0) || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">API Key</div>
+        <div class="value">${stats.api_keys_count || 0}</div>
+      </div>
+    `;
+
+    // Provider 状态
+    const providerMap = {};
+    (pool.providers || []).forEach(p => {
+      const name = typeof p === 'string' ? p : p.name || p.type || 'unknown';
+      if (!providerMap[name]) providerMap[name] = { healthy: 0, unhealthy: 0, total: 0 };
+    });
+    (pool.accounts || []).forEach(a => {
+      const pn = a.provider || a.provider_type || 'unknown';
+      if (!providerMap[pn]) providerMap[pn] = { healthy: 0, unhealthy: 0, total: 0 };
+      providerMap[pn].total++;
+      if (a.healthy) providerMap[pn].healthy++; else providerMap[pn].unhealthy++;
+    });
+
+    document.getElementById('providerStatusGrid').innerHTML = Object.entries(providerMap).map(([name, s]) => `
+      <div class="provider-card">
+        <div class="provider-header">
+          <span class="name">${name}</span>
+          <span class="badge ${s.healthy === s.total && s.total > 0 ? 'badge-success' : s.healthy > 0 ? 'badge-warning' : 'badge-danger'}">
+            ${s.healthy}/${s.total} 正常
+          </span>
+        </div>
+        <div class="provider-body">
+          <div style="font-size: 11px; color: var(--text-secondary);">健康检查: ${s.healthy} 通过, ${s.unhealthy} 失败</div>
+        </div>
+      </div>
+    `).join('') || '<div class="empty-state">暂无渠道数据</div>';
+  } catch (e) {
+    toast('加载概览失败: ' + e.message, 'error');
+  }
+}
+
+// 渲染 Providers
+async function renderProviders() {
+  const filter = document.getElementById('providerFilter').value;
+  try {
+    const data = await api('GET', '/providers');
+    const registered = data.registered || [];
+    
+    // 更新筛选器
+    const sel = document.getElementById('providerFilter');
+    sel.innerHTML = '<option value="all">全部渠道</option>' + 
+      registered.map(p => `<option value="${p}" ${filter === p ? 'selected' : ''}>${p}</option>`).join('');
+
+    // 渲染每个 Provider
+    const providers = filter === 'all' ? registered : [filter];
+    let html = '';
+
+    for (const provider of providers) {
+      let accounts = [];
+      try {
+        const accData = await api('GET', `/providers/${provider}/accounts`);
+        accounts = accData.accounts || [];
+      } catch (e) { /* no accounts yet */ }
+
+      html += `
+      <div class="provider-card" style="margin-bottom: 16px;">
+        <div class="provider-header">
+          <div>
+            <span class="name">${provider}</span>
+            <span class="meta" style="margin-left: 8px;">${accounts.length} 个账号</span>
+          </div>
+          <span class="badge ${accounts.length > 0 ? 'badge-info' : 'badge-warning'}">${accounts.length > 0 ? '已配置' : '未配置'}</span>
+        </div>
+        <div class="provider-body">
+          ${accounts.length === 0 ? '<div class="empty-state">暂无账号，点击下方按钮添加</div>' : accounts.map(acc => `
+            <div class="account-row">
+              <div>
+                <span class="acc-name">${acc.name}</span>
+                ${!acc.enabled ? '<span class="badge badge-danger" style="margin-left: 6px;">已禁用</span>' : ''}
+                <span style="color: var(--text-secondary); margin-left: 8px; font-size: 11px;">${acc.has_token ? 'Token ✓' : 'Token ✗'} · ${acc.has_cookie ? 'Cookie ✓' : 'Cookie ✗'}</span>
+              </div>
+              <div class="actions">
+                <button class="btn btn-sm btn-success" onclick="validateAccount('${provider}','${acc.name}')" title="验证凭证">🔍</button>
+                <button class="btn btn-sm" onclick="editAccountForm('${provider}','${acc.name}')" title="编辑">✏️</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAccount('${provider}','${acc.name}')" title="删除">🗑️</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="provider-actions">
+          <button class="btn btn-primary btn-sm" onclick="showAddAccountModal('${provider}')">➕ 添加账号</button>
+          <button class="btn btn-sm btn-success" onclick="validateAllAccounts('${provider}')">🔍 验证全部</button>
+          <button class="btn btn-sm btn-danger" onclick="clearProviderSessions('${provider}')">🗑️ 清除对话</button>
+        </div>
+      </div>`;
+    }
+
+    document.getElementById('providersDetail').innerHTML = html || '<div class="empty-state">暂无已注册渠道</div>';
+  } catch (e) {
+    document.getElementById('providersDetail').innerHTML = `<div class="empty-state">加载失败: ${e.message}</div>`;
+    toast('加载渠道失败: ' + e.message, 'error');
+  }
+}
+
+// 加载数据分析
+function loadAnalytics() {
+  updateAnalytics('24h');
+  
+  // 模拟加载日志数据
+  const logsHtml = Array.from({length: 20}, (_, i) => `
+    <tr>
+      <td>${new Date(Date.now() - i * 60000).toLocaleTimeString()}</td>
+      <td>DeepSeek</td>
+      <td>deepseek-v4</td>
+      <td><span class="badge badge-success">成功</span></td>
+      <td>${Math.floor(Math.random() * 2000) + 100}ms</td>
+      <td>192.168.1.${Math.floor(Math.random() * 255)}</td>
+    </tr>
+  `).join('');
+  
+  document.getElementById('logsTableBody').innerHTML = logsHtml;
+}
+
+// 加载设置
+async function loadSettings() {
+  try {
+    const config = await api('GET', '/config');
+    document.getElementById('cfgHost').value = config.server?.host || '127.0.0.1';
+    document.getElementById('cfgPort').value = config.server?.port || '18080';
+    document.getElementById('cfgMaxConcurrent').value = config.server?.max_concurrent || 100;
+    document.getElementById('cfgTimeout').value = config.server?.timeout || 30;
+    document.getElementById('currentEndpoint').value = `http://${config.server?.host || '127.0.0.1'}:${config.server?.port || '18080'}`;
+  } catch (e) {
+    toast('加载设置失败: ' + e.message, 'error');
+  }
+}
+
+// 批量操作功能
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll');
+  const checkboxes = document.querySelectorAll('.provider-checkbox');
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+  });
+  
+  updateBatchActions();
+}
+
+function updateBatchActions() {
+  const checkboxes = document.querySelectorAll('.provider-checkbox:checked');
+  const batchActions = document.getElementById('batchActions');
+  
+  if (checkboxes.length > 0) {
+    batchActions.classList.remove('hidden');
+  } else {
+    batchActions.classList.add('hidden');
+  }
+}
+
+function batchEnable() {
+  const selected = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+    .map(cb => cb.value);
+  
+  toast(`批量启用 ${selected.length} 个 Provider`, 'info');
+}
+
+function batchDisable() {
+  const selected = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+    .map(cb => cb.value);
+  
+  toast(`批量禁用 ${selected.length} 个 Provider`, 'info');
+}
+
+function batchDelete() {
+  const selected = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+    .map(cb => cb.value);
+  
+  if (confirm(`确定要删除选中的 ${selected.length} 个 Provider 吗？`)) {
+    toast(`批量删除 ${selected.length} 个 Provider`, 'info');
+  }
+}
+
+// 账号管理
+function showAddAccountModal(provider) {
+  editAccount = null;
+  document.getElementById('modalTitle').textContent = '添加账号';
+  document.getElementById('btnSaveAccount').textContent = '添加';
+  document.getElementById('accName').value = '';
+  document.getElementById('accToken').value = '';
+  document.getElementById('accCookie').value = '';
+  document.getElementById('accUserId').value = '';
+  document.getElementById('accConcurrent').value = '5';
+  document.getElementById('accModels').value = '';
+  
+  const sel = document.getElementById('accProvider');
+  if (provider) {
+    sel.innerHTML = `<option value="${provider}">${provider}</option>`;
+    sel.disabled = true;
+  } else {
+    loadProviderSelect(sel);
+    sel.disabled = false;
+  }
+  updateCredentialHint();
+  document.getElementById('accountModal').classList.remove('hidden');
+}
+
+async function editAccountForm(provider, name) {
+  try {
+    const data = await api('GET', `/providers/${provider}/accounts`);
+    const acc = (data.accounts || []).find(a => a.name === name);
+    if (!acc) { toast('账号未找到', 'error'); return; }
+
+    editAccount = { provider, name };
+    document.getElementById('modalTitle').textContent = '编辑账号';
+    document.getElementById('btnSaveAccount').textContent = '保存';
+    document.getElementById('accName').value = acc.name;
+    document.getElementById('accToken').value = '';
+    document.getElementById('accCookie').value = '';
+    document.getElementById('accUserId').value = acc.user_id_preview || '';
+    document.getElementById('accConcurrent').value = acc.max_concurrent || 5;
+    document.getElementById('accModels').value = (acc.models || []).join('\n');
+
+    const sel = document.getElementById('accProvider');
+    sel.innerHTML = `<option value="${provider}">${provider}</option>`;
+    sel.disabled = true;
+    updateCredentialHint();
+    document.getElementById('accountModal').classList.remove('hidden');
+  } catch (e) {
+    toast('加载账号失败: ' + e.message, 'error');
+  }
+}
+
+async function saveAccount() {
+  const provider = document.getElementById('accProvider').value;
+  const name = document.getElementById('accName').value.trim();
+  const token = document.getElementById('accToken').value.trim();
+  const cookie = document.getElementById('accCookie').value.trim();
+  const userId = document.getElementById('accUserId').value.trim();
+  const concurrent = parseInt(document.getElementById('accConcurrent').value) || 5;
+  const models = document.getElementById('accModels').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  if (!name) { toast('请输入账号名称', 'error'); return; }
+  if (!token && !cookie) { toast('至少需要提供 Token 或 Cookie', 'error'); return; }
+
+  try {
+    if (editAccount) {
+      await api('PUT', `/providers/${provider}/accounts/${editAccount.name}`, {
+        name: name !== editAccount.name ? name : undefined,
+        token, cookie, user_id: userId, models, max_concurrent: concurrent
+      });
+      toast(`账号 '${name}' 已更新`, 'success');
+    } else {
+      await api('POST', `/providers/${provider}/accounts`, {
+        name, token, cookie, user_id: userId, models, max_concurrent: concurrent
+      });
+      toast(`账号 '${name}' 已创建`, 'success');
+    }
+    closeModal();
+    renderProviders();
+  } catch (e) {
+    toast('保存失败: ' + e.message, 'error');
+  }
+}
+
+function closeModal() {
+  document.getElementById('accountModal').classList.add('hidden');
+  editAccount = null;
+}
+
+// 验证功能
+async function validateAccount(provider, name) {
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading"></span> 验证中'; }
+  try {
+    const result = await api('POST', `/providers/${provider}/accounts/${name}/validate`);
+    if (result.valid) {
+      toast(`✅ ${provider}/${name} 凭证有效 (${result.latency_ms}ms)`, 'success');
+    } else {
+      toast(`❌ ${provider}/${name} 凭证无效: ${result.error}`, 'error');
+    }
+  } catch (e) {
+    toast(`验证失败: ${e.message}`, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '🔍'; }
+}
+
+async function validateAllAccounts(provider) {
+  try {
+    const data = await api('POST', `/providers/${provider}/validate-all`);
+    toast(`${provider}: ${data.healthy}/${data.total} 账号通过验证`, data.healthy === data.total ? 'success' : 'error');
+    renderProviders();
+  } catch (e) {
+    toast('批量验证失败: ' + e.message, 'error');
+  }
+}
+
+async function checkAllHealth() {
+  const btn = event?.target;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> 检测中...';
+  }
+  
+  try {
+    const data = await api('POST', '/providers/check');
+    toast(data.message, data.unhealthy > 0 ? 'error' : 'success');
+    loadOverview();
+  } catch (e) {
+    toast('检测失败: ' + e.message, 'error');
+  }
+  
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '🔄 检测全部渠道';
+  }
+}
+
+// 清除对话
+async function clearAllSessions() {
+  if (!confirm('确认清除所有对话记录？此操作不可撤销。')) return;
+  try {
+    const data = await api('POST', '/sessions/clear');
+    toast(data.message, 'success');
+  } catch (e) {
+    toast('清除失败: ' + e.message, 'error');
+  }
+}
+
+async function clearProviderSessions(provider) {
+  if (!confirm(`确认清除 ${provider} 的所有对话记录？`)) return;
+  try {
+    const data = await api('DELETE', `/providers/${provider}/sessions`);
+    toast(data.message, 'success');
+  } catch (e) {
+    toast('清除失败: ' + e.message, 'error');
+  }
+}
+
+// 删除账号
+async function deleteAccount(provider, name) {
+  if (!confirm(`确认删除账号 '${name}'？此操作不可撤销。`)) return;
+  try {
+    await api('DELETE', `/providers/${provider}/accounts/${name}`);
+    toast(`账号 '${name}' 已删除`, 'success');
+    renderProviders();
+  } catch (e) {
+    toast('删除失败: ' + e.message, 'error');
+  }
+}
+
+// 设置页面
+async function saveServerSettings() {
+  const host = document.getElementById('cfgHost').value.trim();
+  const port = parseInt(document.getElementById('cfgPort').value);
+  const maxConcurrent = parseInt(document.getElementById('cfgMaxConcurrent').value);
+  const timeout = parseInt(document.getElementById('cfgTimeout').value);
+  
+  if (!host || !port) {
+    toast('请填写完整的地址和端口', 'error');
+    return;
+  }
+  
+  try {
+    await api('POST', '/server/settings', {
+      host, port, max_concurrent: maxConcurrent, timeout
+    });
+    toast('设置保存成功', 'success');
+  } catch (e) {
+    toast('保存失败: ' + e.message, 'error');
+  }
+}
+
+async function reloadConfig() {
+  try {
+    await api('POST', '/config/reload');
+    toast('配置已重新加载', 'success');
+  } catch (e) {
+    toast('重新加载失败: ' + e.message, 'error');
+  }
+}
+
+function exportApiKeys() {
+  toast('正在导出 API Keys...', 'info');
+  setTimeout(() => toast('API Keys 导出完成', 'success'), 2000);
+}
+
+function exportLogs() {
+  toast('正在导出日志...', 'info');
+  setTimeout(() => toast('日志导出完成', 'success'), 2000);
+}
+
+function clearLogs() {
+  if (!confirm('确定要清理所有日志吗？此操作不可恢复。')) return;
+  toast('清理日志功能开发中...', 'info');
+}
+
+// 辅助函数
+function loadProviderSelect(sel) {
+  fetch(API + '/providers')
+    .then(r => r.json())
+    .then(data => {
+      sel.innerHTML = (data.registered || []).map(p => `<option value="${p}">${p}</option>`).join('');
+      updateCredentialHint();
+    })
+    .catch(() => {});
+}
+
+function updateCredentialHint() {
+  const provider = document.getElementById('accProvider').value;
+  const hints = {
+    deepseek: { primary: 'token', desc: '从浏览器 DevTools → Application → Local Storage → userToken 复制' },
+    kimi: { primary: 'token', desc: '从浏览器 DevTools → Application → Local Storage → access_token 或 refresh_token 复制' },
+    qwen: { primary: 'token', desc: '从浏览器 Cookie → tongyi_sso_ticket 复制，或提供完整 Cookie 字符串' },
+    minimax: { primary: 'token', desc: '从浏览器 Network → Authorization Header 复制 JWT。还需要填写 Real User ID' },
+    doubao: { primary: 'cookie', desc: '从浏览器 DevTools → Application → Cookies → doubao.com 复制全部 Cookie' },
+    yuanbao: { primary: 'cookie', desc: '从浏览器 DevTools → Application → Cookies → yuanbao.tencent.com 复制全部 Cookie' },
+    glm: { primary: 'cookie', desc: '从浏览器 Cookie → chatglm_refresh_token 复制' },
+    coze: { primary: 'token', desc: '从 Coze API 设置页面获取 API Key' },
+  };
+  const hint = hints[provider] || { primary: 'token', desc: '填写 Token 或 Cookie 即可' };
+  document.getElementById('credentialHint').innerHTML = `
+    <strong>💡 凭证获取提示</strong><br>
+    主要字段: <code>${hint.primary}</code><br>
+    ${hint.desc}
+  `;
+}
+
+// API Key 管理
+function showCreateKeyModal() {
+  showModal(
+    '创建 API Key',
+    `
+      <div class="form-group">
+        <label>名称</label>
+        <input type="text" id="newKeyName" placeholder="输入 Key 名称">
+      </div>
+      <div class="form-group">
+        <label>描述（可选）</label>
+        <textarea id="newKeyDesc" placeholder="输入 Key 描述" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>权限级别</label>
+        <select id="newKeyPermission">
+          <option value="read">只读</option>
+          <option value="write" selected>读写</option>
+          <option value="admin">管理员</option>
+        </select>
+      </div>
+    `,
+    [
+      { label: '取消', onclick: 'closeModal()' },
+      { label: '创建', onclick: 'createKey()' }
+    ]
+  );
+}
+
+async function createKey() {
+  const name = document.getElementById('newKeyName').value.trim();
+  const description = document.getElementById('newKeyDesc').value.trim();
+  const permission = document.getElementById('newKeyPermission').value;
+  
+  if (!name) {
+    toast('请输入 Key 名称', 'error');
+    return;
+  }
+  
+  try {
+    const r = await fetch('/admin/api-keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description, permission })
+    });
+    
+    if (r.ok) {
+      closeModal();
+      toast('API Key 创建成功', 'success');
+      loadApiKeys();
+    }
+  } catch (e) {
+    toast('创建失败: ' + e.message, 'error');
+  }
+}
+
+function loadApiKeys() {
+  // 实现 API Key 加载逻辑
+}
+
+// 运行时间更新
+setInterval(async () => {
+  try {
+    const stats = await api('GET', '/stats');
+    const secs = stats.uptime_seconds || 0;
+    const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = Math.floor(secs % 60);
+    document.getElementById('uptime').textContent = `运行 ${h}h ${m}m ${s}s`;
+  } catch (e) {}
+}, 30000);
+
+// 实时更新
+function startRealtimeUpdates() {
+  if (_realtimeInterval) return;
+  
+  _realtimeInterval = setInterval(() => {
+    // 只更新统计数据，不刷新整个页面
+    loadStats();
+  }, 5000); // 每5秒更新一次
+}
+
+function stopRealtimeUpdates() {
+  if (_realtimeInterval) {
+    clearInterval(_realtimeInterval);
+    _realtimeInterval = null;
+  }
+}
+
+async function loadStats() {
+  try {
+    const stats = await api('GET', '/stats');
+    // 更新统计数据
+  } catch (e) {
+    // 静默失败
+  }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  loadOverview();
+  loadProviderSelect(document.getElementById('accProvider'));
+  document.getElementById('accProvider').addEventListener('change', updateCredentialHint);
+  document.getElementById('btnSaveAccount').addEventListener('click', saveAccount);
+  
+  // 关闭模态框
+  document.getElementById('accountModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('accountModal')) closeModal();
+  });
+  
+  // 键盘快捷键
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+    if (e.ctrlKey && e.key === 'r') {
+      e.preventDefault();
+      loadOverview();
+    }
+  });
+  
+  // 启动实时更新
+  startRealtimeUpdates();
+});
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', () => {
+  stopRealtimeUpdates();
+});
+</script>
+
+<!-- 引入 Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>

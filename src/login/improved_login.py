@@ -6,6 +6,7 @@ WebAPI 改进版 Token 提取器 - 参考 Chat2API OAuth 架构
 
 import asyncio
 import json
+import os
 import re
 import time
 from pathlib import Path

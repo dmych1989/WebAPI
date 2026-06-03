@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-GLM (智谱AI) Provider Adapter
+GLM (智谱AI) Provider Adapter — 官方 BigModel OpenAI 兼容 API
 
-网页 API 协议:
-- Base URL: https://bigmodel.cn
-- 认证: Cookie（登录后的 session cookie）
-- 对话: POST /api/bigmodel/chat (智谱 BigModel API)
-- 模型: glm-4-plus, glm-4-flash, glm-4-air, glm-z1-air
+官方 API 协议:
+- Base URL: https://open.bigmodel.cn/api/paas/v4
+- 认证: Authorization: Bearer <api_key>
+- 对话: POST /chat/completions（OpenAI 兼容）
+- 流式: POST /chat/completions（带 stream=true，SSE 响应）
+- 模型: glm-4-plus, glm-4-flash, glm-4-air, glm-z1-air, glm-4-airx, glm-zero-preview
 
-注：此 Provider 是为智谱 AI 网页版大模型对话服务设计的基础实现。
-由于智谱官网 API 协议可能经常更新，需要从浏览器 DevTools 抓包验证。
+凭证获取:
+1. 访问 https://open.bigmodel.cn/ 登录
+2. 右上角「API 密钥」→ 「创建新的 API Key」
+3. 复制 sk-xxx... 粘贴到 config.yaml 的 providers.glm.accounts[0].token
 """
 
 from __future__ import annotations
@@ -29,295 +32,219 @@ from src.provider.base import BaseProvider, ProviderRegistry
 from src.transport.api_reverse import APIReverseTransport
 
 
-GLM_BASE = "https://bigmodel.cn"
-
-FAKE_HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-    "Content-Type": "application/json",
-    "Origin": GLM_BASE,
-    "Referer": GLM_BASE + "/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-origin",
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    ),
-}
-
-DEFAULT_MODELS = [
-    "glm-4-plus",
-    "glm-4-flash",
-    "glm-4-air",
-    "glm-4-airx",
-    "glm-z1-air",
-    "glm-zero-preview",
-]
+# 智谱 BigModel 官方 API（OpenAI 兼容）
+GLM_API_BASE = "https://open.bigmodel.cn/api/paas/v4"
 
 
 @ProviderRegistry.register("glm")
 class GLMProvider(BaseProvider):
-    """智谱 AI (GLM) 网页 API 适配器"""
+    """智谱 GLM 官方 BigModel OpenAI 兼容 API 适配器"""
 
     name = "glm"
     display_name = "智谱 GLM"
-    auth_type = "cookie"
+    auth_type = "token"
 
     def __init__(self, account: AccountConfig):
         self.account = account
-        self._cookie: Optional[str] = account.cookie or account.token
+        # 优先 token 字段（API key 形如 sk-xxx），其次 cookie（兼容旧配置）
+        self._api_key: Optional[str] = account.token or account.cookie
         self._transport = APIReverseTransport()
-        self._session_validated: float = 0
-        self._session_ttl: int = 300
-        self._conversation_id: Optional[str] = None
 
     # ---- Auth ----
 
     async def login(self) -> str:
-        """验证 Cookie / Token 有效性
-
-        Returns:
-            有效的凭证字符串
-
-        Raises:
-            AuthError: 当凭证无效或未配置时
-        """
-        if not self._cookie:
+        """验证 API Key 存在性（实际鉴权在每次请求时由 chatglm.cn 校验）"""
+        if not self._api_key:
             raise AuthError(
-                "GLM 凭证未配置。请编辑 config/config.yaml 中的 providers.glm.accounts[0].cookie "
-                "（或 token），或运行 python -m src.login glm 自动登录提取。"
+                "GLM 凭证未配置。请在 config/config.yaml 的 providers.glm.accounts[0].token "
+                "填入智谱 API Key（以 sk- 开头），或前往 https://open.bigmodel.cn/ 创建。"
             )
-
-        # 命中本地缓存（避免频繁验证）
-        now = time.time()
-        if self._session_validated and (now - self._session_validated) < self._session_ttl:
-            return self._cookie
-
-        # 调用 /api/user 验证 Cookie
-        http_session = await self._transport._get_session()
-        try:
-            async with http_session.get(
-                f"{GLM_BASE}/api/user",
-                headers=self._build_headers(),
-                timeout=aiohttp.ClientTimeout(total=10),
-            ) as resp:
-                if resp.status == 401:
-                    self._session_validated = 0
-                    raise AuthError(
-                        "GLM Cookie/Token 已失效（HTTP 401）。"
-                        "请运行 python -m src.login glm 重新登录。"
-                    )
-                if resp.status != 200:
-                    self._session_validated = 0
-                    raise AuthError(
-                        f"GLM 凭证验证失败: HTTP {resp.status}。"
-                        "请运行 python -m src.login glm 重新登录。"
-                    )
-                # 验证通过
-                self._session_validated = now
-                logger.info("[GLM] Cookie validated via /api/user (200 OK)")
-                return self._cookie
-        except aiohttp.ClientError as e:
-            raise ProviderError(
-                f"GLM 网络错误: {e}", provider="glm"
-            ) from e
+        return self._api_key
 
     def _build_headers(self) -> dict[str, str]:
-        """构造带 Cookie 的请求头"""
-        headers = dict(FAKE_HEADERS)
-        headers["Cookie"] = self._cookie or ""
-        return headers
-
-    # ---- Chat ----
-
-    async def _call_chat(
-        self,
-        request: ChatCompletionRequest,
-        actual_model: str,
-    ) -> dict[str, Any]:
-        """调用智谱对话 API（核心方法）"""
-        await self.login()
-        if not self._conversation_id:
-            self._conversation_id = uuid.uuid4().hex
-
-        messages = [
-            {"role": m.role, "content": m.content}
-            for m in request.messages
-            if m.role in ("user", "assistant", "system")
-        ]
-        if not messages:
-            raise ProviderError("No valid messages in request", provider="glm")
-
-        payload = {
-            "conversation_id": self._conversation_id,
-            "model": actual_model,
-            "messages": messages,
-            "stream": request.stream,
+        """构造带 Bearer Token 的请求头"""
+        return {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
-        http_session = await self._transport._get_session()
+    def _resolve_actual_model(self, request: ChatCompletionRequest) -> str:
+        """直接透传模型名（官方 API 接受 glm-* 系列）"""
+        model = (request.model or "").strip()
+        return model or "glm-4-flash"
+
+    def _build_payload(
+        self, request: ChatCompletionRequest, actual_model: str, stream: bool
+    ) -> dict[str, Any]:
+        """构造 OpenAI 兼容 payload"""
+        messages: list[dict[str, Any]] = []
+        for msg in request.messages:
+            content = msg.content
+            # 多模态内容（list of parts）原样透传
+            messages.append({"role": msg.role, "content": content})
+
+        payload: dict[str, Any] = {
+            "model": actual_model,
+            "messages": messages,
+            "stream": stream,
+        }
+        # 可选参数透传
+        for opt in (
+            "temperature",
+            "top_p",
+            "n",
+            "max_tokens",
+            "stop",
+            "presence_penalty",
+            "frequency_penalty",
+            "user",
+        ):
+            v = getattr(request, opt, None)
+            if v is not None:
+                payload[opt] = v
+        return payload
+
+    async def _post_request(
+        self, request: ChatCompletionRequest, actual_model: str, stream: bool
+    ) -> aiohttp.ClientResponse:
+        """发送 POST 请求，返回 aiohttp 响应（调用方负责读取 body）"""
+        await self.login()
+        url = f"{GLM_API_BASE}/chat/completions"
+        payload = self._build_payload(request, actual_model, stream)
+        session = await self._transport._get_session()
+
         try:
-            async with http_session.post(
-                f"{GLM_BASE}/api/bigmodel/chat",
+            resp = await session.post(
+                url,
                 json=payload,
                 headers=self._build_headers(),
                 timeout=aiohttp.ClientTimeout(total=120),
-            ) as resp:
-                if resp.status == 401:
-                    self._session_validated = 0
-                    raise AuthError(
-                        "GLM 认证失败（HTTP 401）。请重新登录。"
-                    )
-                if resp.status == 429:
-                    raise ProviderError(
-                        "GLM 限流（HTTP 429）", provider="glm", status_code=429
-                    )
-                if resp.status != 200:
-                    body = await resp.text()
-                    raise ProviderError(
-                        f"GLM API error: HTTP {resp.status} — {body[:200]}",
-                        provider="glm",
-                        status_code=resp.status,
-                    )
-                return {"response": resp, "session": http_session}
+            )
         except aiohttp.ClientError as e:
             raise ProviderError(
                 f"GLM 网络错误: {e}", provider="glm"
             ) from e
 
-    async def _parse_sse_text(self, raw: str) -> str:
-        """解析智谱 SSE 流，提取所有 content 字段拼接"""
-        parts: list[str] = []
-        for line in raw.split("\n"):
-            line = line.strip()
-            if not line.startswith("data:"):
-                continue
-            data = line[5:].strip()
-            if not data or data == "[DONE]":
-                continue
-            try:
-                obj = json.loads(data)
-            except (json.JSONDecodeError, ValueError):
-                continue
-            # 智谱格式: {"data": {"choices": [{"delta": {"content": "..."}}]}}
-            choices = (
-                obj.get("data", {}).get("choices")
-                or obj.get("choices")
-                or []
+        if resp.status == 401:
+            await resp.release()
+            raise AuthError(
+                "GLM 认证失败（HTTP 401）。请检查 API Key 是否正确或已过期。"
             )
-            for c in choices:
-                delta = c.get("delta", {}) or {}
-                content = delta.get("content", "")
-                if content:
-                    parts.append(content)
-                # 兼容非流式字段
-                if not content:
-                    content = c.get("message", {}).get("content", "")
-                    if content:
-                        parts.append(content)
-        return "".join(parts)
+        if resp.status == 429:
+            body = await resp.text()
+            await resp.release()
+            raise ProviderError(
+                f"GLM 限流（HTTP 429）: {body[:200]}", provider="glm", status_code=429
+            )
+        if resp.status >= 400:
+            body = await resp.text()
+            await resp.release()
+            raise ProviderError(
+                f"GLM API error: HTTP {resp.status} — {body[:300]}",
+                provider="glm",
+                status_code=resp.status,
+            )
+        return resp
 
-    def _resolve_actual_model(self, request: ChatCompletionRequest) -> str:
-        """从 request.model 推断实际模型名（GLM 端点接受 GLM 模型名）"""
-        model = (request.model or "").strip()
-        if not model:
-            return self.account.models[0] if self.account.models else DEFAULT_MODELS[0]
-        return model
+    # ---- Chat: 非流式 ----
 
     async def chat_completion(
         self, request: ChatCompletionRequest
     ) -> ProviderResponse:
-        """非流式对话"""
         actual_model = self._resolve_actual_model(request)
-        result = await self._call_chat(request, actual_model)
-        resp = result["response"]
+        resp = await self._post_request(request, actual_model, stream=False)
         try:
-            raw = await resp.text()
+            data = await resp.json()
         finally:
             await resp.release()
-        content = await self._parse_sse_text(raw)
-        if not content:
-            try:
-                obj = json.loads(raw)
-                content = (
-                    obj.get("data", {}).get("content")
-                    or obj.get("content")
-                    or ""
-                )
-            except (json.JSONDecodeError, ValueError):
-                pass
+
         return ProviderResponse(
             status_code=200,
-            data={
-                "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
-                "object": "chat.completion",
-                "created": int(time.time()),
-                "model": actual_model,
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {"role": "assistant", "content": content},
-                        "finish_reason": "stop",
-                    }
-                ],
-                "usage": {
-                    "prompt_tokens": 0,
-                    "completion_tokens": 0,
-                    "total_tokens": 0,
-                },
-            },
+            data=data,  # 官方 API 已经是 OpenAI 格式，直接透传
         )
+
+    # ---- Chat: 流式 ----
 
     async def chat_completion_stream(
         self, request: ChatCompletionRequest
     ) -> AsyncIterator[StreamChunk]:
-        """流式对话"""
         actual_model = self._resolve_actual_model(request)
-        result = await self._call_chat(request, actual_model)
-        resp = result["response"]
+        resp = await self._post_request(request, actual_model, stream=True)
+
+        is_first = True
         try:
             async for line_bytes in resp.content:
                 line = line_bytes.decode("utf-8", errors="replace").strip()
-                if not line.startswith("data:"):
+                if not line or not line.startswith("data:"):
                     continue
-                data = line[5:].strip()
-                if not data or data == "[DONE]":
-                    continue
+                data_str = line[5:].strip()
+                if data_str == "[DONE]":
+                    break
+
                 try:
-                    obj = json.loads(data)
+                    obj = json.loads(data_str)
                 except (json.JSONDecodeError, ValueError):
                     continue
-                choices = (
-                    obj.get("data", {}).get("choices")
-                    or obj.get("choices")
-                    or []
-                )
-                for c in choices:
-                    delta = c.get("delta", {}) or {}
-                    content = delta.get("content", "")
-                    if not content:
-                        content = c.get("message", {}).get("content", "")
-                    if content:
+
+                # OpenAI 格式：choices[].delta
+                choices = obj.get("choices") or []
+                if not choices:
+                    continue
+                delta = choices[0].get("delta") or {}
+                content_delta = delta.get("content") or ""
+                reasoning_delta = delta.get("reasoning_content") or ""
+                finish_reason = choices[0].get("finish_reason")
+
+                if content_delta or reasoning_delta:
+                    if is_first:
                         yield StreamChunk(
-                            content=content, finish_reason=None, model=actual_model
+                            content=content_delta,
+                            reasoning_content=reasoning_delta or None,
+                            role="assistant",
+                            model=actual_model,
                         )
+                        is_first = False
+                    else:
+                        yield StreamChunk(
+                            content=content_delta,
+                            reasoning_content=reasoning_delta or None,
+                            model=actual_model,
+                        )
+
+                if finish_reason:
+                    yield StreamChunk(
+                        finish_reason=finish_reason, model=actual_model
+                    )
         finally:
             await resp.release()
 
     # ---- Models ----
 
     async def list_models(self) -> list[str]:
-        return self.account.models or DEFAULT_MODELS
+        return [
+            "glm-4-plus",
+            "glm-4-flash",
+            "glm-4-air",
+            "glm-4-airx",
+            "glm-z1-air",
+            "glm-zero-preview",
+        ]
 
     # ---- Health Check ----
 
     async def health_check(self) -> bool:
         try:
             await self.login()
-            return True
+            # 用极简请求验证 API Key 是否有效（/chat/completions 不支持 ping，
+            # 改用 /models 端点列出模型，能成功即视为鉴权通过）
+            session = await self._transport._get_session()
+            async with session.get(
+                f"{GLM_API_BASE}/models",
+                headers=self._build_headers(),
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
+                return resp.status == 200
         except Exception as e:
             logger.debug(f"[GLM] health_check failed: {type(e).__name__}: {e}")
             return False

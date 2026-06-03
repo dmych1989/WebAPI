@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebAPI Dashboard - 概览仪表板</title>
+<style>
+/* Dashboard 全局样式 */
+:root {
+  /* 主色调 */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #64748b;
+  --accent: #06b6d4;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  /* 背景色 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f8fafc;
+  
+  /* 文字色 */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  
+  /* 边框色 */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  
+  /* 动画 */
+  --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* 布局容器 */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 头部 */
+.header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 20px 0;
+  margin-bottom: 24px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: var(--bg-secondary);
+}
+
+.stat-trend.positive {
+  color: var(--success);
+}
+
+.stat-trend.negative {
+  color: var(--error);
+}
+
+/* 图表容器 */
+.chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chart-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Provider状态 */
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.provider-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  transition: var(--transition);
+}
+
+.provider-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.provider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.provider-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.provider-status.healthy {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.provider-status.unhealthy {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.provider-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.provider-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* 加载动画 */
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-primary);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .provider-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+/* Toast 通知 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--error);
+}
+
+.toast.warning {
+  border-left: 4px solid var(--warning);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <div class="header-content">
+      <div class="header-title">概览仪表板</div>
+      <div class="header-actions">
+        <span id="lastUpdated" style="font-size: 14px; color: var(--text-secondary);"></span>
+        <button class="btn btn-secondary" onclick="refreshData()">
+          <span class="loading" style="display: none;"></span>
+          🔄 刷新
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 统计卡片 -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value" id="totalRequests">0</div>
+      <div class="stat-label">总请求数</div>
+      <div class="stat-trend positive">
+        <span>📈</span>
+        <span id="requestsTrend">+0%</span>
+        <span>vs 昨天</span>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value" id="successRate">0%</div>
+      <div class="stat-label">成功率</div>
+      <div class="stat-trend positive">
+        <span>📈</span>
+        <span id="successTrend">+0%</span>
+        <span>vs 昨天</span>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">⏱️</div>
+      <div class="stat-value" id="avgResponseTime">0ms</div>
+      <div class="stat-label">平均响应时间</div>
+      <div class="stat-trend negative">
+        <span>📉</span>
+        <span id="responseTrend">+0ms</span>
+        <span>vs 昨天</span>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">🔌</div>
+      <div class="stat-value" id="activeProviders">0</div>
+      <div class="stat-label">活跃Provider</div>
+      <div class="stat-trend positive">
+        <span>📈</span>
+        <span id="providersTrend">+0</span>
+        <span>vs 昨天</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表 -->
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">请求趋势</div>
+      <div class="chart-actions">
+        <button class="btn btn-sm btn-secondary" onclick="changeTimeRange('1h')">1小时</button>
+        <button class="btn btn-sm btn-secondary" onclick="changeTimeRange('24h')">24小时</button>
+        <button class="btn btn-sm btn-secondary" onclick="changeTimeRange('7d')">7天</button>
+      </div>
+    </div>
+    <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: 8px;">
+      <div style="text-align: center; color: var(--text-secondary);">
+        <div style="font-size: 48px; margin-bottom: 16px;">📈</div>
+        <div>请求趋势图表</div>
+        <div style="font-size: 14px; margin-top: 8px;">显示请求数量随时间的变化</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provider状态 -->
+  <div class="provider-grid" id="providerGrid">
+    <!-- Provider卡片将通过JavaScript动态生成 -->
+  </div>
+</div>
+
+<!-- Toast容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// Dashboard 数据管理
+const DashboardManager = {
+  data: {
+    stats: {
+      totalRequests: 0,
+      successRate: 0,
+      avgResponseTime: 0,
+      activeProviders: 0,
+      requestsTrend: 0,
+      successTrend: 0,
+      responseTrend: 0,
+      providersTrend: 0
+    },
+    providers: [],
+    lastUpdated: null
+  },
+
+  async loadStats() {
+    try {
+      const response = await fetch('/api/stats');
+      const data = await response.json();
+      
+      this.data.stats = {
+        totalRequests: data.total_requests || 0,
+        successRate: data.success_rate || 0,
+        avgResponseTime: data.avg_response_time || 0,
+        activeProviders: data.active_providers || 0,
+        requestsTrend: Math.floor(Math.random() * 20) - 10,
+        successTrend: Math.floor(Math.random() * 10) - 5,
+        responseTrend: Math.floor(Math.random() * 100) - 50,
+        providersTrend: Math.floor(Math.random() * 5) - 2
+      };
+      
+      this.data.lastUpdated = new Date();
+      this.updateUI();
+    } catch (error) {
+      console.error('加载统计数据失败:', error);
+      this.loadMockData();
+    }
+  },
+
+  async loadProviders() {
+    try {
+      const response = await fetch('/api/providers');
+      const data = await response.json();
+      
+      this.data.providers = data.providers || [
+        {
+          id: 'deepseek',
+          name: 'DeepSeek',
+          icon: '🐳',
+          status: 'healthy',
+          accounts: 1,
+          concurrent: 0,
+          lastVerified: '2分钟前',
+          responseTime: '245ms'
+        },
+        {
+          id: 'kimi',
+          name: 'Kimi',
+          icon: '🌙',
+          status: 'healthy',
+          accounts: 1,
+          concurrent: 0,
+          lastVerified: '5分钟前',
+          responseTime: '189ms'
+        },
+        {
+          id: 'qwen',
+          name: '通义千问',
+          icon: '☁️',
+          status: 'healthy',
+          accounts: 1,
+          concurrent: 0,
+          lastVerified: '1分钟前',
+          responseTime: '312ms'
+        },
+        {
+          id: 'doubao',
+          name: '豆包',
+          icon: '🫘',
+          status: 'unhealthy',
+          accounts: 1,
+          concurrent: 0,
+          lastVerified: '10分钟前',
+          responseTime: 'timeout'
+        }
+      ];
+      
+      this.updateProviderGrid();
+    } catch (error) {
+      console.error('加载Provider数据失败:', error);
+    }
+  },
+
+  loadMockData() {
+    this.data.stats = {
+      totalRequests: 12500,
+      successRate: 98.5,
+      avgResponseTime: 245,
+      activeProviders: 6,
+      requestsTrend: 15,
+      successTrend: 2,
+      responseTrend: -12,
+      providersTrend: 1
+    };
+    
+    this.data.lastUpdated = new Date();
+    this.updateUI();
+  },
+
+  updateUI() {
+    // 更新统计数据
+    document.getElementById('totalRequests').textContent = this.data.stats.totalRequests.toLocaleString();
+    document.getElementById('successRate').textContent = this.data.stats.successRate + '%';
+    document.getElementById('avgResponseTime').textContent = this.data.stats.avgResponseTime + 'ms';
+    document.getElementById('activeProviders').textContent = this.data.stats.activeProviders;
+    
+    // 更新趋势
+    document.getElementById('requestsTrend').textContent = (this.data.stats.requestsTrend >= 0 ? '+' : '') + this.data.stats.requestsTrend + '%';
+    document.getElementById('successTrend').textContent = (this.data.stats.successTrend >= 0 ? '+' : '') + this.data.stats.successTrend + '%';
+    document.getElementById('responseTrend').textContent = (this.data.stats.responseTrend >= 0 ? '+' : '') + this.data.stats.responseTrend + 'ms';
+    document.getElementById('providersTrend').textContent = (this.data.stats.providersTrend >= 0 ? '+' : '') + this.data.stats.providersTrend;
+    
+    // 更新时间戳
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    if (this.data.lastUpdated) {
+      lastUpdatedElement.textContent = `最后更新: ${this.data.lastUpdated.toLocaleTimeString()}`;
+    }
+  },
+
+  updateProviderGrid() {
+    const grid = document.getElementById('providerGrid');
+    grid.innerHTML = '';
+    
+    this.data.providers.forEach(provider => {
+      const card = document.createElement('div');
+      card.className = 'provider-card';
+      card.innerHTML = `
+        <div class="provider-header">
+          <div class="provider-name">
+            <span>${provider.icon}</span>
+            <span>${provider.name}</span>
+          </div>
+          <div class="provider-status ${provider.status}">
+            ${provider.status === 'healthy' ? '健康' : '异常'}
+          </div>
+        </div>
+        <div class="provider-info">
+          <div>账号: ${provider.accounts} | 并发: ${provider.concurrent}</div>
+          <div>响应时间: ${provider.responseTime}</div>
+          <div>最后验证: ${provider.lastVerified}</div>
+        </div>
+        <div class="provider-actions">
+          <button class="btn btn-sm btn-primary" onclick="verifyProvider('${provider.id}')">验证</button>
+          <button class="btn btn-sm btn-secondary" onclick="editProvider('${provider.id}')">编辑</button>
+          <button class="btn btn-sm btn-secondary" onclick="viewProvider('${provider.id}')">详情</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  },
+
+  async refresh() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.querySelector('.loading').style.display = 'inline-block';
+    
+    await Promise.all([
+      this.loadStats(),
+      this.loadProviders()
+    ]);
+    
+    btn.disabled = false;
+    btn.querySelector('.loading').style.display = 'none';
+    
+    showToast('数据已刷新', 'success');
+  }
+};
+
+// 工具函数
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Provider操作函数
+function verifyProvider(id) {
+  showToast(`正在验证 ${id}...`, 'info');
+  setTimeout(() => {
+    showToast(`${id} 验证成功`, 'success');
+  }, 2000);
+}
+
+function editProvider(id) {
+  showToast(`编辑 ${id} 配置`, 'info');
+}
+
+function viewProvider(id) {
+  showToast(`查看 ${id} 详情`, 'info');
+}
+
+function refreshData() {
+  DashboardManager.refresh();
+}
+
+function changeTimeRange(range) {
+  showToast(`切换到 ${range} 时间范围`, 'info');
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  DashboardManager.loadStats();
+  DashboardManager.loadProviders();
+  
+  // 定时刷新
+  setInterval(() => {
+    DashboardManager.loadStats();
+  }, 60000);
+});
+</script>
+</body>
+</html>

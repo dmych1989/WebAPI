@@ -159,9 +159,21 @@ async def update_account(provider: str, account_name: str, body: UpdateAccountRe
     if body.token is not None:
         target.token = body.token
         changes.append("token")
+        # 凭证更新：自动重置账号状态，避免旧失败计数导致 503
+        account_pool.mark_healthy(provider, account_name)
+        for s in account_pool._accounts.get(provider, []):
+            if s.name == account_name:
+                s.cooldown_until = 0.0
+                break
     if body.cookie is not None:
         target.cookie = body.cookie
         changes.append("cookie")
+        # 凭证更新：自动重置账号状态，避免旧失败计数导致 503
+        account_pool.mark_healthy(provider, account_name)
+        for s in account_pool._accounts.get(provider, []):
+            if s.name == account_name:
+                s.cooldown_until = 0.0
+                break
     if body.user_id is not None:
         target.user_id = body.user_id
         changes.append("user_id")
@@ -332,6 +344,37 @@ async def validate_all_provider_accounts(provider: str):
         "total": len(results),
         "healthy": healthy,
         "unhealthy": len(results) - healthy,
+    }
+
+
+# =============================================================================
+# 账号状态重置
+# =============================================================================
+
+@router.post("/providers/{provider}/accounts/{account_name}/reset")
+async def reset_account_state(provider: str, account_name: str):
+    """强制重置账号状态为 healthy + 清空 cooldown
+
+    用途：凭证已更新但账号还卡在 unhealthy / cooldown 状态时手动恢复。
+    不做实际健康检查，下次请求会自动 health_check 验证。
+    """
+    found = False
+    for s in account_pool._accounts.get(provider, []):
+        if s.name == account_name:
+            s.healthy = True
+            s.fail_count = 0
+            s.cooldown_until = 0.0
+            s.last_checked = time.time()
+            found = True
+            logger.info(f"[Accounts] Reset state: {provider}:{account_name}")
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail=f"账号 '{account_name}' 未找到")
+    return {
+        "status": "ok",
+        "provider": provider,
+        "account": account_name,
+        "message": f"已重置 {provider}/{account_name} 的账号状态",
     }
 
 

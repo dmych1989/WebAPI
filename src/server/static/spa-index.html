@@ -3,50 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WebAPI Admin Console - 管理控制台</title>
+<title>WebAPI - 现代化管理平台</title>
 <style>
-/* Admin Console 主题设计 - SPA版本 */
+/* 现代化主题设计 - SPA版本 */
 :root {
-  /* 主色调 - 管理系统专用 */
-  --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  --accent-gradient: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  /* 主色调 - 现代渐变色 */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   
   /* 主题色 */
-  --primary-color: #2563eb;
-  --secondary-color: #1e40af;
-  --accent-color: #3b82f6;
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --accent-color: #f093fb;
   
   /* 现代化背景 */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
+  --bg-primary: #0f0f14;
+  --bg-secondary: #1a1a24;
+  --bg-tertiary: #21212e;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --bg-card-hover: rgba(255, 255, 255, 0.08);
   
   /* 边框和分隔线 */
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e1;
-  --border-accent: #2563eb;
+  --border-primary: rgba(255, 255, 255, 0.1);
+  --border-secondary: rgba(255, 255, 255, 0.2);
   
   /* 文字色 */
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b0;
+  --text-tertiary: #808090;
   
   /* 状态色彩 */
-  --success: #10b981;
-  --success-bg: #d1fae5;
-  --success-border: #10b981;
-  --warning: #f59e0b;
-  --warning-bg: #fef3c7;
-  --warning-border: #f59e0b;
-  --error: #ef4444;
-  --error-bg: #fee2e2;
-  --error-border: #ef4444;
-  --info: #3b82f6;
-  --info-bg: #dbeafe;
-  --info-border: #3b82f6;
+  --success: #4ade80;
+  --success-bg: rgba(74, 222, 128, 0.1);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.1);
+  --error: #f87171;
+  --error-bg: rgba(248, 113, 113, 0.1);
+  --info: #60a5fa;
+  --info-bg: rgba(96, 165, 250, 0.1);
   
   /* 动画 */
   --transition-fast: 0.15s ease;
@@ -54,11 +49,24 @@
   --transition-slow: 0.5s ease;
   
   /* 阴影 */
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+/* 浅色主题 */
+html[data-theme="light"] {
+  --bg-primary: #f5f6fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: rgba(0, 0, 0, 0.02);
+  --bg-card-hover: rgba(0, 0, 0, 0.04);
+  --border-primary: rgba(0, 0, 0, 0.1);
+  --border-secondary: rgba(0, 0, 0, 0.2);
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -78,75 +86,9 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* 布局容器 */
-.admin-container {
+.app-container {
   display: flex;
   min-height: 100vh;
-}
-
-/* 顶部导航栏 */
-.top-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  z-index: 100;
-  box-shadow: var(--shadow-sm);
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  background: var(--primary-gradient);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.breadcrumb-item {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.breadcrumb-separator {
-  color: var(--text-tertiary);
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
 }
 
 /* 侧边栏 */
@@ -154,42 +96,64 @@ body {
   width: 280px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-primary);
-  padding: 88px 0 24px;
+  padding: 24px 0;
   position: fixed;
   height: 100vh;
   overflow-y: auto;
   transition: all var(--transition-normal);
-  z-index: 90;
+  z-index: 100;
 }
 
-.sidebar-nav {
+.sidebar-header {
+  padding: 0 24px 24px;
+  border-bottom: 1px solid var(--border-primary);
+  margin-bottom: 24px;
+}
+
+.sidebar-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.sidebar-header .subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 导航菜单 */
+.nav-menu {
   padding: 0 16px;
 }
 
-.nav-section {
-  margin-bottom: 32px;
-}
-
-.nav-section-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
-  padding: 0 8px;
+.nav-item {
+  margin-bottom: 4px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  margin-bottom: 4px;
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--text-secondary);
   text-decoration: none;
   transition: all var(--transition-fast);
   position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--primary-gradient);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  border-radius: 12px;
 }
 
 .nav-link:hover {
@@ -198,9 +162,13 @@ body {
 }
 
 .nav-link.active {
-  color: var(--primary-color);
-  background: var(--bg-card-hover);
-  border-left: 3px solid var(--primary-color);
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border-color: var(--primary-color);
+}
+
+.nav-link.active::before {
+  opacity: 0.1;
 }
 
 .nav-link .icon {
@@ -226,15 +194,93 @@ body {
 .main-content {
   flex: 1;
   margin-left: 280px;
-  margin-top: 64px;
-  padding: 24px;
-  min-height: calc(100vh - 64px);
+  min-height: 100vh;
+}
+
+/* 顶部栏 */
+.topbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  background: rgba(26, 26, 36, 0.9);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.breadcrumb-item {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: var(--text-tertiary);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 搜索栏 */
+.search-box {
+  position: relative;
+  width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 16px 8px 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all var(--transition-fast);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
 }
 
 /* 页面内容 */
 .page-content {
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 24px;
 }
 
 .page-header {
@@ -245,7 +291,10 @@ body {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 8px;
-  color: var(--text-primary);
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .page-subtitle {
@@ -256,17 +305,36 @@ body {
 /* 卡片样式 */
 .card {
   background: var(--bg-card);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-gradient);
+  transform: scaleX(0);
+  transition: transform var(--transition-fast);
 }
 
 .card:hover {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  border-color: var(--border-accent);
+  border-color: var(--primary-color);
+}
+
+.card:hover::before {
+  transform: scaleX(1);
 }
 
 .card-header {
@@ -274,8 +342,6 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border-primary);
 }
 
 .card-title {
@@ -284,7 +350,6 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--text-primary);
 }
 
 .card-title .icon {
@@ -309,24 +374,46 @@ body {
 
 .stat-card {
   background: var(--bg-card);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 24px;
   text-align: center;
-  box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-gradient);
+  transform: scaleX(0);
+  transition: transform var(--transition-fast);
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  border-color: var(--primary-color);
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
 }
 
 .stat-value {
   font-size: 36px;
   font-weight: 700;
   margin: 12px 0;
-  color: var(--primary-color);
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stat-label {
@@ -397,7 +484,7 @@ body {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   border: 1px solid var(--border-primary);
 }
@@ -428,15 +515,18 @@ body {
 /* 表格样式 */
 .table-container {
   background: var(--bg-card);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  overflow-x: auto;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  background: transparent;
 }
 
 th {
@@ -447,7 +537,7 @@ th {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
 }
 
@@ -473,30 +563,31 @@ tr:hover td {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  backdrop-filter: blur(10px);
 }
 
 .badge-success {
   background: var(--success-bg);
   color: var(--success);
-  border: 1px solid var(--success-border);
+  border: 1px solid var(--success);
 }
 
 .badge-error {
   background: var(--error-bg);
   color: var(--error);
-  border: 1px solid var(--error-border);
+  border: 1px solid var(--error);
 }
 
 .badge-warning {
   background: var(--warning-bg);
   color: var(--warning);
-  border: 1px solid var(--warning-border);
+  border: 1px solid var(--warning);
 }
 
 .badge-info {
   background: var(--info-bg);
   color: var(--info);
-  border: 1px solid var(--info-border);
+  border: 1px solid var(--info);
 }
 
 /* 输入框样式 */
@@ -515,7 +606,7 @@ input, textarea, select {
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* 模态框样式 */
@@ -525,7 +616,8 @@ input:focus, textarea:focus, select:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -545,10 +637,10 @@ input:focus, textarea:focus, select:focus {
   border: 1px solid var(--border-primary);
   border-radius: 16px;
   width: 90%;
-  max-width: 800px;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   transform: scale(0.9);
   transition: all var(--transition-normal);
 }
@@ -558,7 +650,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 .modal-header {
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
@@ -586,8 +678,8 @@ input:focus, textarea:focus, select:focus {
 /* Toast 提示 */
 .toast-container {
   position: fixed;
-  top: 80px;
-  right: 24px;
+  top: 20px;
+  right: 20px;
   z-index: 2000;
   display: flex;
   flex-direction: column;
@@ -596,8 +688,9 @@ input:focus, textarea:focus, select:focus {
 
 .toast {
   background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 16px 20px;
   min-width: 280px;
   box-shadow: var(--shadow-md);
@@ -699,16 +792,19 @@ input:focus, textarea:focus, select:focus {
   
   .main-content {
     margin-left: 0;
-    margin-top: 64px;
-    padding: 16px;
   }
   
   .stats-grid {
     grid-template-columns: 1fr;
   }
   
-  .top-nav {
-    padding: 0 16px;
+  .search-box {
+    width: 100%;
+  }
+  
+  .topbar {
+    flex-direction: column;
+    gap: 16px;
   }
 }
 
@@ -750,7 +846,7 @@ input:focus, textarea:focus, select:focus {
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 8px;
@@ -792,150 +888,29 @@ input:focus, textarea:focus, select:focus {
   opacity: 1;
 }
 
-/* 表单样式 */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.form-row .form-group {
-  margin-bottom: 0;
-}
-
-/* 标签页 */
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.tab {
-  padding: 12px 24px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-card-hover);
-}
-
-.tab.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-
-/* 分页 */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-top: 24px;
-}
-
-.page-btn {
-  padding: 8px 12px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.page-btn:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--primary-color);
-}
-
-.page-btn.active {
+/* 浮动操作按钮 */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   background: var(--primary-gradient);
   color: white;
-  border-color: var(--primary-color);
-}
-
-/* 搜索栏 */
-.search-box {
-  position: relative;
-  width: 300px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 8px 16px 8px 40px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 14px;
-  transition: all var(--transition-fast);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-}
-
-/* 状态指示器 */
-.status-indicator {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.status-online {
-  background: var(--success);
-  box-shadow: 0 0 8px var(--success);
-}
-
-.status-warning {
-  background: var(--warning);
-  box-shadow: 0 0 8px var(--warning);
-}
-
-.status-offline {
-  background: var(--error);
-  box-shadow: 0 0 8px var(--error);
-}
-
-/* 操作按钮组 */
-.action-buttons {
+  border: none;
+  cursor: pointer;
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 16px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-fast);
+  z-index: 100;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-glow);
 }
 
 /* 移动端菜单按钮 */
@@ -958,139 +933,107 @@ input:focus, textarea:focus, select:focus {
     width: 100%;
     max-width: 320px;
   }
-  
-  .search-box {
-    width: 100%;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .tabs {
-    overflow-x: auto;
-  }
 }
 </style>
 </head>
 <body>
-<div class="admin-container">
-  <!-- 顶部导航栏 -->
-  <nav class="top-nav">
-    <div class="nav-left">
-      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-      <div class="logo">
-        <div class="logo-icon">⚡</div>
-        <span>WebAPI Admin Console</span>
-      </div>
-      <div class="breadcrumb">
-        <span class="breadcrumb-item">控制台</span>
-        <span class="breadcrumb-separator">›</span>
-        <span class="breadcrumb-item" id="currentPage">概览</span>
-      </div>
-    </div>
-    
-    <div class="nav-right">
-      <div class="search-box">
-        <span class="icon search-icon">🔍</span>
-        <input type="text" class="search-input" placeholder="搜索 Provider、账号、API Key..." onkeyup="handleSearch(event)">
-      </div>
-      
-      <button class="btn btn-sm" onclick="refreshAll()">
-        <span class="loading" style="display: none;"></span>
-        🔄 刷新
-      </button>
-      
-      <button class="btn btn-sm" onclick="showNotifications()">
-        <span class="icon">🔔</span>
-      </button>
-      
-      <button class="btn btn-sm" onclick="showSettings()">
-        <span class="icon">⚙️</span>
-      </button>
-    </div>
-  </nav>
-
+<div class="app-container">
   <!-- 侧边栏 -->
   <aside class="sidebar" id="sidebar">
-    <nav class="sidebar-nav">
-      <div class="nav-section">
-        <div class="nav-section-title">概览</div>
-        <div class="nav-item">
-          <a href="#overview" class="nav-link active" onclick="showPage('overview')">
-            <span class="icon">📊</span>
-            <span>概览</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#providers" class="nav-link" onclick="showPage('providers')">
-            <span class="icon">🔌</span>
-            <span>Provider管理</span>
-            <span class="badge">8</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#api-keys" class="nav-link" onclick="showPage('api-keys')">
-            <span class="icon">🔑</span>
-            <span>API Keys</span>
-            <span class="badge">3</span>
-          </a>
-        </div>
+    <div class="sidebar-header">
+      <h1>⚡ WebAPI</h1>
+      <div class="subtitle">现代化管理平台</div>
+    </div>
+    
+    <nav class="nav-menu">
+      <div class="nav-item">
+        <a href="#dashboard" class="nav-link active" onclick="showPage('dashboard')">
+          <span class="icon">📊</span>
+          <span>概览仪表板</span>
+        </a>
       </div>
       
-      <div class="nav-section">
-        <div class="nav-section-title">监控</div>
-        <div class="nav-item">
-          <a href="#analytics" class="nav-link" onclick="showPage('analytics')">
-            <span class="icon">📈</span>
-            <span>数据分析</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#logs" class="nav-link" onclick="showPage('logs')">
-            <span class="icon">📋</span>
-            <span>日志管理</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#performance" class="nav-link" onclick="showPage('performance')">
-            <span class="icon">⚡</span>
-            <span>性能监控</span>
-          </a>
-        </div>
+      <div class="nav-item">
+        <a href="#providers" class="nav-link" onclick="showPage('providers')">
+          <span class="icon">🔌</span>
+          <span>Provider管理</span>
+          <span class="badge">8</span>
+        </a>
       </div>
       
-      <div class="nav-section">
-        <div class="nav-section-title">系统</div>
-        <div class="nav-item">
-          <a href="#settings" class="nav-link" onclick="showPage('settings')">
-            <span class="icon">⚙️</span>
-            <span>系统设置</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#security" class="nav-link" onclick="showPage('security')">
-            <span class="icon">🔒</span>
-            <span>安全设置</span>
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="#backup" class="nav-link" onclick="showPage('backup')">
-            <span class="icon">💾</span>
-            <span>备份恢复</span>
-          </a>
-        </div>
+      <div class="nav-item">
+        <a href="#analytics" class="nav-link" onclick="showPage('analytics')">
+          <span class="icon">📈</span>
+          <span>数据分析</span>
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="#settings" class="nav-link" onclick="showPage('settings')">
+          <span class="icon">⚙️</span>
+          <span>系统设置</span>
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="#logs" class="nav-link" onclick="showPage('logs')">
+          <span class="icon">📋</span>
+          <span>日志管理</span>
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a href="#api-keys" class="nav-link" onclick="showPage('api-keys')">
+          <span class="icon">🔑</span>
+          <span>API Keys</span>
+          <span class="badge">3</span>
+        </a>
       </div>
     </nav>
   </aside>
 
   <!-- 主内容区 -->
   <main class="main-content">
+    <!-- 顶部栏 -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">首页</span>
+          <span class="breadcrumb-separator">›</span>
+          <span class="breadcrumb-item" id="currentPage">概览仪表板</span>
+        </div>
+      </div>
+      
+      <div class="topbar-right">
+        <div class="search-box">
+          <span class="icon search-icon">🔍</span>
+          <input type="text" class="search-input" placeholder="搜索 Provider、账号、API Key..." onkeyup="handleSearch(event)">
+        </div>
+        
+        <div class="topbar-actions">
+          <button class="btn btn-secondary btn-sm" onclick="refreshAll()">
+            <span class="loading" style="display: none;"></span>
+            🔄 刷新
+          </button>
+          
+          <button class="btn btn-sm" onclick="toggleTheme()">
+            <span class="icon">🌙</span>
+          </button>
+          
+          <button class="btn btn-sm" onclick="showNotifications()">
+            <span class="icon">🔔</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 页面内容 -->
     <div class="page-content">
-      <!-- 概览页面 -->
-      <div id="overview" class="page active">
+      <!-- 概览仪表板 -->
+      <div id="dashboard" class="page active">
         <div class="page-header">
-          <h1 class="page-title">概览</h1>
+          <h1 class="page-title">概览仪表板</h1>
           <p class="page-subtitle">实时监控您的WebAPI服务状态和性能指标</p>
         </div>
 
@@ -1183,7 +1126,7 @@ input:focus, textarea:focus, select:focus {
         </div>
       </div>
 
-      <!-- Provider管理页面 -->
+      <!-- Provider管理 -->
       <div id="providers" class="page">
         <div class="page-header">
           <h1 class="page-title">Provider管理</h1>
@@ -1212,36 +1155,7 @@ input:focus, textarea:focus, select:focus {
         </div>
       </div>
 
-      <!-- API Keys页面 -->
-      <div id="api-keys" class="page">
-        <div class="page-header">
-          <h1 class="page-title">API Keys</h1>
-          <p class="page-subtitle">管理API访问密钥和权限控制</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">🔑</span>
-              <span>API Key列表</span>
-            </div>
-            <div>
-              <button class="btn btn-success btn-sm" onclick="showCreateKeyModal()">➕ 新建Key</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportApiKeys()">📤 导出</button>
-            </div>
-          </div>
-          
-          <div id="apiKeyList">
-            <div class="empty-state">
-              <div class="icon">🔑</div>
-              <div class="title">暂无API Key</div>
-              <div class="description">点击上方按钮创建第一个API Key</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 数据分析页面 -->
+      <!-- 数据分析 -->
       <div id="analytics" class="page">
         <div class="page-header">
           <h1 class="page-title">数据分析</h1>
@@ -1292,95 +1206,7 @@ input:focus, textarea:focus, select:focus {
         </div>
       </div>
 
-      <!-- 日志管理页面 -->
-      <div id="logs" class="page">
-        <div class="page-header">
-          <h1 class="page-title">日志管理</h1>
-          <p class="page-subtitle">查看和管理系统日志</p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">📋</span>
-              <span>系统日志</span>
-            </div>
-            <div>
-              <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">🔄 刷新</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportLogs()">📤 导出</button>
-            </div>
-          </div>
-          
-          <div style="height: 400px; overflow-y: auto; background: var(--bg-tertiary); border-radius: 12px; padding: 16px;">
-            <div style="font-family: monospace; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
-              <div style="color: var(--success);">[2026-06-03 13:17:00] INFO: WebAPI服务启动成功</div>
-              <div style="color: var(--info);">[2026-06-03 13:17:01] INFO: 加载了8个Provider</div>
-              <div style="color: var(--info);">[2026-06-03 13:17:02] INFO: 注册了12个模型</div>
-              <div style="color: var(--warning);">[2026-06-03 13:17:03] WARN: Provider doubao 健康检查失败</div>
-              <div style="color: var(--warning);">[2026-06-03 13:17:03] WARN: Provider coze 健康检查失败</div>
-              <div style="color: var(--info);">[2026-06-03 13:17:04] INFO: 管理界面初始化完成</div>
-              <div style="color: var(--success);">[2026-06-03 13:17:05] INFO: 所有服务就绪</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 性能监控页面 -->
-      <div id="performance" class="page">
-        <div class="page-header">
-          <h1 class="page-title">性能监控</h1>
-          <p class="page-subtitle">监控系统性能指标和资源使用情况</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="icon">💾</div>
-            <div class="stat-value">2.4GB</div>
-            <div class="stat-label">内存使用</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">🔄</div>
-            <div class="stat-value">45%</div>
-            <div class="stat-label">CPU使用</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">💿</div>
-            <div class="stat-value">1.2GB</div>
-            <div class="stat-label">磁盘使用</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="icon">🌐</div>
-            <div class="stat-value">100Mbps</div>
-            <div class="stat-label">网络带宽</div>
-            <div class="stat-change positive">正常</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="icon">📊</span>
-              <span>性能趋势</span>
-            </div>
-          </div>
-          
-          <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 12px;">
-            <div style="text-align: center; color: var(--text-secondary);">
-              <div class="icon" style="font-size: 48px; margin-bottom: 16px;">📈</div>
-              <div class="title">性能趋势图表</div>
-              <div class="description">显示CPU、内存、网络等性能指标变化</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 系统设置页面 -->
+      <!-- 系统设置 -->
       <div id="settings" class="page">
         <div class="page-header">
           <h1 class="page-title">系统设置</h1>
@@ -1428,123 +1254,146 @@ input:focus, textarea:focus, select:focus {
         </div>
       </div>
 
-      <!-- 安全设置页面 -->
-      <div id="security" class="page">
+      <!-- 日志管理 -->
+      <div id="logs" class="page">
         <div class="page-header">
-          <h1 class="page-title">安全设置</h1>
-          <p class="page-subtitle">配置安全策略和访问控制</p>
+          <h1 class="page-title">日志管理</h1>
+          <p class="page-subtitle">查看和管理系统日志</p>
         </div>
 
         <div class="card">
           <div class="card-header">
             <div class="card-title">
-              <span class="icon">🔒</span>
-              <span>认证配置</span>
+              <span class="icon">📋</span>
+              <span>系统日志</span>
+            </div>
+            <div>
+              <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">🔄 刷新</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportLogs()">📤 导出</button>
             </div>
           </div>
           
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="authEnabled" checked> 启用API Key认证
-            </label>
-          </div>
-          
-          <div class="form-group">
-            <label>访问限制</label>
-            <select>
-              <option>无限制</option>
-              <option>IP白名单</option>
-              <option>速率限制</option>
-              <option>IP白名单 + 速率限制</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>速率限制 (请求/分钟)</label>
-            <input type="number" value="1000">
-          </div>
-          
-          <div style="display: flex; gap: 12px; margin-top: 20px;">
-            <button class="btn" onclick="saveSecuritySettings()">💾 保存设置</button>
-            <button class="btn btn-secondary" onclick="resetSecuritySettings()">🔄 重置</button>
+          <div style="height: 400px; overflow-y: auto; background: var(--bg-tertiary); border-radius: 12px; padding: 16px;">
+            <div style="font-family: monospace; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+              <div style="color: var(--success);">[2026-06-03 13:17:00] INFO: WebAPI服务启动成功</div>
+              <div style="color: var(--info);">[2026-06-03 13:17:01] INFO: 加载了8个Provider</div>
+              <div style="color: var(--info);">[2026-06-03 13:17:02] INFO: 注册了12个模型</div>
+              <div style="color: var(--warning);">[2026-06-03 13:17:03] WARN: Provider doubao 健康检查失败</div>
+              <div style="color: var(--warning);">[2026-06-03 13:17:03] WARN: Provider coze 健康检查失败</div>
+              <div style="color: var(--info);">[2026-06-03 13:17:04] INFO: 管理界面初始化完成</div>
+              <div style="color: var(--success);">[2026-06-03 13:17:05] INFO: 所有服务就绪</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 备份恢复页面 -->
-      <div id="backup" class="page">
+      <!-- API Keys -->
+      <div id="api-keys" class="page">
         <div class="page-header">
-          <h1 class="page-title">备份恢复</h1>
-          <p class="page-subtitle">管理系统备份和恢复操作</p>
+          <h1 class="page-title">API Keys</h1>
+          <p class="page-subtitle">管理API访问密钥和权限控制</p>
         </div>
 
         <div class="card">
           <div class="card-header">
             <div class="card-title">
-              <span class="icon">💾</span>
-              <span>备份管理</span>
+              <span class="icon">🔑</span>
+              <span>API Key列表</span>
+            </div>
+            <div>
+              <button class="btn btn-success btn-sm" onclick="showCreateKeyModal()">➕ 新建Key</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportApiKeys()">📤 导出</button>
             </div>
           </div>
           
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>备份文件</th>
-                  <th>大小</th>
-                  <th>创建时间</th>
-                  <th>状态</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>webapi_backup_2026-06-03_130000.zip</td>
-                  <td>2.4MB</td>
-                  <td>2026-06-03 13:00:00</td>
-                  <td><span class="badge badge-success">正常</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-secondary" onclick="downloadBackup('webapi_backup_2026-06-03_130000.zip')">📥</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteBackup('webapi_backup_2026-06-03_130000.zip')">🗑️</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>webapi_backup_2026-06-02_130000.zip</td>
-                  <td>2.2MB</td>
-                  <td>2026-06-02 13:00:00</td>
-                  <td><span class="badge badge-success">正常</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-secondary" onclick="downloadBackup('webapi_backup_2026-06-02_130000.zip')">📥</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteBackup('webapi_backup_2026-06-02_130000.zip')">🗑️</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div style="display: flex; gap: 12px; margin-top: 20px;">
-            <button class="btn btn-success" onclick="createBackup()">➕ 创建备份</button>
-            <button class="btn btn-secondary" onclick="restoreBackup()">🔄 恢复备份</button>
+          <div id="apiKeyList">
+            <div class="empty-state">
+              <div class="icon">🔑</div>
+              <div class="title">暂无API Key</div>
+              <div class="description">点击上方按钮创建第一个API Key</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </main>
-</div>
 
-<!-- Toast 容器 -->
-<div class="toast-container" id="toastContainer"></div>
+  <!-- 浮动操作按钮 -->
+  <button class="fab" onclick="showQuickActions()">
+    <span class="icon-lg">+</span>
+  </button>
 
-<!-- 模态框容器 -->
-<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
-  <div class="modal" id="modalContent"></div>
+  <!-- Toast 容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 模态框容器 -->
+  <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal" id="modalContent"></div>
+  </div>
 </div>
 
 <script>
 // 全局变量
-let currentPage = 'overview';
+let currentPage = 'dashboard';
 let _refreshInterval = null;
 let _realtimeInterval = null;
+
+// 主题管理
+const THEME_KEY = 'webapi-spa-theme';
+const THEMES = ['dark', 'light'];
+
+function getStoredTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
+function storeTheme(theme) {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch (e) {
+    /* localStorage 不可用 */
+  }
+}
+
+function applyTheme(theme) {
+  if (!THEMES.includes(theme)) theme = 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  storeTheme(theme);
+  updateThemeIcon(theme);
+}
+
+function updateThemeIcon(theme) {
+  const toggle = document.querySelector('.menu-toggle + .search-box + .topbar-actions button:last-child');
+  if (!toggle) return;
+  toggle.setAttribute('title', theme === 'dark' ? '切换到浅色主题' : '切换到深色主题');
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+}
+
+// 初始化主题
+(function initTheme() {
+  let theme = getStoredTheme();
+  if (!theme || !THEMES.includes(theme)) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      theme = 'light';
+    } else {
+      theme = 'dark';
+    }
+  }
+  document.documentElement.setAttribute('data-theme', theme);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => updateThemeIcon(theme));
+  } else {
+    updateThemeIcon(theme);
+  }
+})();
 
 // 页面切换
 function showPage(pageId) {
@@ -1562,15 +1411,12 @@ function showPage(pageId) {
   
   // 更新面包屑
   const pageNames = {
-    'overview': '概览',
+    'dashboard': '概览仪表板',
     'providers': 'Provider管理',
-    'api-keys': 'API Keys',
     'analytics': '数据分析',
-    'logs': '日志管理',
-    'performance': '性能监控',
     'settings': '系统设置',
-    'security': '安全设置',
-    'backup': '备份恢复'
+    'logs': '日志管理',
+    'api-keys': 'API Keys'
   };
   document.getElementById('currentPage').textContent = pageNames[pageId] || pageId;
   
@@ -1583,38 +1429,29 @@ function showPage(pageId) {
 // 加载页面数据
 function loadPageData(pageId) {
   switch(pageId) {
-    case 'overview':
-      loadOverviewData();
+    case 'dashboard':
+      loadDashboardData();
       break;
     case 'providers':
       loadProvidersData();
       break;
-    case 'api-keys':
-      loadApiKeysData();
-      break;
     case 'analytics':
       loadAnalyticsData();
-      break;
-    case 'logs':
-      loadLogsData();
-      break;
-    case 'performance':
-      loadPerformanceData();
       break;
     case 'settings':
       loadSettingsData();
       break;
-    case 'security':
-      loadSecurityData();
+    case 'logs':
+      loadLogsData();
       break;
-    case 'backup':
-      loadBackupData();
+    case 'api-keys':
+      loadApiKeysData();
       break;
   }
 }
 
-// 加载概览数据
-function loadOverviewData() {
+// 加载仪表板数据
+function loadDashboardData() {
   // 模拟加载Provider状态
   const providerStatus = document.getElementById('providerStatus');
   providerStatus.innerHTML = `
@@ -1682,148 +1519,58 @@ function loadOverviewData() {
 function loadProvidersData() {
   const providerList = document.getElementById('providerList');
   providerList.innerHTML = `
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Provider</th>
-            <th>状态</th>
-            <th>账号数量</th>
-            <th>并发数</th>
-            <th>失败次数</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-online"></span>
-                DeepSeek 🐳
-              </div>
-            </td>
-            <td><span class="badge badge-success">健康</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>0</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('deepseek')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('deepseek')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('deepseek')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-online"></span>
-                Kimi 🌙
-              </div>
-            </td>
-            <td><span class="badge badge-success">健康</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>0</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('kimi')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('kimi')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('kimi')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-online"></span>
-                通义千问 ☁️
-              </div>
-            </td>
-            <td><span class="badge badge-success">健康</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>0</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('qwen')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('qwen')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('qwen')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <span class="status-indicator status-offline"></span>
-                豆包 🫘
-              </div>
-            </td>
-            <td><span class="badge badge-error">异常</span></td>
-            <td>1</td>
-            <td>0/5</td>
-            <td>47</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('doubao')">🔍</button>
-              <button class="btn btn-sm btn-secondary" onclick="editProvider('doubao')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteProvider('doubao')">🗑️</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-// 加载API Keys数据
-function loadApiKeysData() {
-  const apiKeyList = document.getElementById('apiKeyList');
-  apiKeyList.innerHTML = `
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>Key</th>
-            <th>使用次数</th>
-            <th>状态</th>
-            <th>创建时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Cherry Studio</td>
-            <td>sk-webapi-cherry-abc123</td>
-            <td>1,234</td>
-            <td><span class="badge badge-success">启用</span></td>
-            <td>2026-06-01 10:00:00</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="regenerateKey('cherry-studio')">🔄</button>
-              <button class="btn btn-sm btn-secondary" onclick="editKey('cherry-studio')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteKey('cherry-studio')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>NextChat</td>
-            <td>sk-webapi-nextchat-xyz789</td>
-            <td>567</td>
-            <td><span class="badge badge-success">启用</span></td>
-            <td>2026-06-01 10:00:00</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="regenerateKey('nextchat')">🔄</button>
-              <button class="btn btn-sm btn-secondary" onclick="editKey('nextchat')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteKey('nextchat')">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td>测试客户端</td>
-            <td>sk-webapi-test-123456</td>
-            <td>0</td>
-            <td><span class="badge badge-error">已禁用</span></td>
-            <td>2026-06-01 10:00:00</td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="regenerateKey('test')">🔄</button>
-              <button class="btn btn-sm btn-secondary" onclick="editKey('test')">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteKey('test')">🗑️</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+      <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="icon">🐳</span>
+            <span>DeepSeek</span>
+          </div>
+          <span class="badge badge-success">健康</span>
+        </div>
+        <div style="padding: 16px;">
+          <div style="margin-bottom: 12px;">
+            <strong>账号信息</strong>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">
+              名称: production-account<br>
+              状态: 健康<br>
+              并发: 0/5<br>
+              模型: deepseek-v4, deepseek-v4-flash
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-sm" onclick="verifyProvider('deepseek')">🔍 验证</button>
+            <button class="btn btn-sm btn-secondary" onclick="editProvider('deepseek')">✏️ 编辑</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProvider('deepseek')">🗑️ 删除</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="icon">🌙</span>
+            <span>Kimi</span>
+          </div>
+          <span class="badge badge-success">健康</span>
+        </div>
+        <div style="padding: 16px;">
+          <div style="margin-bottom: 12px;">
+            <strong>账号信息</strong>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">
+              名称: main-account<br>
+              状态: 健康<br>
+              并发: 0/5<br>
+              模型: moonshot-v1-32k, moonshot-v1-128k
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-sm" onclick="verifyProvider('kimi')">🔍 验证</button>
+            <button class="btn btn-sm btn-secondary" onclick="editProvider('kimi')">✏️ 编辑</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProvider('kimi')">🗑️ 删除</button>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -1834,34 +1581,69 @@ function loadAnalyticsData() {
   console.log('加载分析数据...');
 }
 
-// 加载日志数据
-function loadLogsData() {
-  // 模拟日志数据加载
-  console.log('加载日志数据...');
-}
-
-// 加载性能数据
-function loadPerformanceData() {
-  // 模拟性能数据加载
-  console.log('加载性能数据...');
-}
-
 // 加载设置数据
 function loadSettingsData() {
   // 模拟设置数据加载
   console.log('加载设置数据...');
 }
 
-// 加载安全数据
-function loadSecurityData() {
-  // 模拟安全数据加载
-  console.log('加载安全数据...');
+// 加载日志数据
+function loadLogsData() {
+  // 模拟日志数据加载
+  console.log('加载日志数据...');
 }
 
-// 加载备份数据
-function loadBackupData() {
-  // 模拟备份数据加载
-  console.log('加载备份数据...');
+// 加载API Keys数据
+function loadApiKeysData() {
+  const apiKeyList = document.getElementById('apiKeyList');
+  apiKeyList.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="card" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">Cherry Studio</div>
+            <div style="color: var(--text-secondary); font-size: 12px;">sk-webapi-cherry-abc123</div>
+            <div style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px;">使用次数: 1,234 | 启用</div>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-secondary" onclick="regenerateKey('cherry-studio')">🔄</button>
+            <button class="btn btn-sm btn-secondary" onclick="editKey('cherry-studio')">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteKey('cherry-studio')">🗑️</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">NextChat</div>
+            <div style="color: var(--text-secondary); font-size: 12px;">sk-webapi-nextchat-xyz789</div>
+            <div style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px;">使用次数: 567 | 启用</div>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-secondary" onclick="regenerateKey('nextchat')">🔄</button>
+            <button class="btn btn-sm btn-secondary" onclick="editKey('nextchat')">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteKey('nextchat')">🗑️</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+          <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">测试客户端</div>
+            <div style="color: var(--text-secondary); font-size: 12px;">sk-webapi-test-123456</div>
+            <div style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px;">使用次数: 0 | 已禁用</div>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-secondary" onclick="regenerateKey('test')">🔄</button>
+            <button class="btn btn-sm btn-secondary" onclick="editKey('test')">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteKey('test')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // 工具函数
@@ -1910,7 +1692,7 @@ function checkAllHealth() {
   showToast('开始检测所有Provider...', 'info');
   setTimeout(() => {
     showToast('检测完成: 6/8 正常', 'success');
-    loadPageData('overview');
+    loadPageData('dashboard');
   }, 3000);
 }
 
@@ -1973,8 +1755,8 @@ function showNotifications() {
   showToast('暂无新通知', 'info');
 }
 
-function showSettings() {
-  showToast('设置功能开发中...', 'info');
+function showQuickActions() {
+  showToast('快速操作菜单开发中...', 'info');
 }
 
 function refreshChart() {
@@ -1995,38 +1777,6 @@ function saveServerSettings() {
 
 function reloadConfig() {
   showToast('配置已重载', 'success');
-}
-
-function saveSecuritySettings() {
-  showToast('安全设置已保存', 'success');
-}
-
-function resetSecuritySettings() {
-  showToast('安全设置已重置', 'success');
-}
-
-function downloadBackup(filename) {
-  showToast(`正在下载 ${filename}...`, 'info');
-  setTimeout(() => {
-    showToast(`${filename} 下载完成`, 'success');
-  }, 2000);
-}
-
-function deleteBackup(filename) {
-  if (confirm(`确定要删除 ${filename} 吗？`)) {
-    showToast(`${filename} 已删除`, 'success');
-  }
-}
-
-function createBackup() {
-  showToast('正在创建备份...', 'info');
-  setTimeout(() => {
-    showToast('备份创建成功', 'success');
-  }, 3000);
-}
-
-function restoreBackup() {
-  showToast('恢复备份功能开发中...', 'info');
 }
 
 // 实时更新
@@ -2089,7 +1839,7 @@ function closeModal() {
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
-  showPage('overview');
+  showPage('dashboard');
   startRealtimeUpdates();
 });
 

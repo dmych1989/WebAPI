@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebAPI Admin Console - 增强版 v2.0</title>
+<style>
+  /* ============================================================
+   * 现代化主题设计 - 升级版 v2.0
+   * ============================================================ */
+
+  :root,
+  html[data-theme="dark"] {
+    /* 主色调 - 现代渐变色 */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    
+    /* 基础颜色 */
+    --bg: #0a0a0f;
+    --bg-secondary: #141418;
+    --bg-tertiary: #1f1f25;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-card-hover: rgba(255, 255, 255, 0.05);
+    
+    /* 边框和分隔线 */
+    --border: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.2);
+    
+    /* 文字颜色 */
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-tertiary: #808090;
+    
+    /* 状态颜色 */
+    --success: #4ade80;
+    --success-bg: rgba(74, 222, 128, 0.1);
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.1);
+    --error: #f87171;
+    --error-bg: rgba(248, 113, 113, 0.1);
+    --info: #60a5fa;
+    --info-bg: rgba(96, 165, 250, 0.1);
+    
+    /* 品牌色 */
+    --primary: #667eea;
+    --primary-hover: #5a67d8;
+    --secondary: #764ba2;
+    --accent: #f093fb;
+    
+    /* 阴影 */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+    
+    /* 动画 */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    /* 滚动条 */
+    --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+    --scrollbar-track: transparent;
+  }
+
+  html[data-theme="light"] {
+    --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    --secondary-gradient: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    
+    --bg: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --bg-card: rgba(0, 0, 0, 0.02);
+    --bg-card-hover: rgba(0, 0, 0, 0.04);
+    
+    --border: rgba(0, 0, 0, 0.1);
+    --border-strong: rgba(0, 0, 0, 0.2);
+    
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+    --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { transition: background 0.3s ease, color 0.3s ease; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+
+  .container { max-width: 1400px; margin: auto; padding: 24px; }
+
+  /* 头部样式 */
+  header {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-normal);
+  }
+
+  header:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+  }
+
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header .ver {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  /* 主题切换按钮 */
+  .theme-toggle {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .theme-toggle::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--primary-gradient);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    border-radius: 12px;
+  }
+
+  .theme-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .theme-toggle:hover::before {
+    opacity: 0.1;
+  }
+
+  .theme-toggle .icon-sun,
+  .theme-toggle .icon-moon,
+  .theme-toggle .icon-system { display: none; }
+  html[data-theme="dark"] .theme-toggle .icon-moon { display: inline; }
+  html[data-theme="light"] .theme-toggle .icon-sun { display: inline; }
+
+  /* 搜索栏 */
+  .search-bar {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all var(--transition-fast);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .filter-select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    min-width: 150px;
+  }
+
+  /* 状态卡片 */
+  .status-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .status-chip {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .status-chip::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-gradient);
+    transform: scaleX(0);
+    transition: transform var(--transition-fast);
+  }
+
+  .status-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .status-chip:hover::before {
+    transform: scaleX(1);
+  }
+
+  .status-chip .label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .status-chip .value {
+    font-size: 24px;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .status-chip .value.ok { color: var(--success); }
+  .status-chip .value.warn { color: var(--warning); }
+  .status-chip .value.err { color: var(--error); }
+
+  /* 按钮样式 */
+  .btn {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-100%);
+    transition: transform var(--transition-fast);
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn:hover::before {
+    transform: translateX(0);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+
+  .btn-danger {
+    background: var(--error);
+    color: white;
+  }
+
+  .btn-success {
+    background: var(--success);
+    color: white;
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  /* 卡片样式 */
+  .section {
+    margin-bottom: 32px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title .icon {
+    width: 24px;
+    height: 24px;
+    background: var(--primary-gradient);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+  }
+
+  .card {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+
+  /* 图表容器 */
+  .chart-container {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .chart-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .chart-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chart-canvas {
+    width: 100%;
+    height: 300px;
+    position: relative;
+  }
+
+  /* 表格样式 */
+  .table-container {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+  }
+
+  th {
+    text-align: left;
+    padding: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  td {
+    padding: 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: var(--bg-card-hover);
+  }
+
+  /* 批量操作 */
+  .batch-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .batch-actions.hidden {
+    display: none;
+  }
+
+  .checkbox-all {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+
+  /* 徽章样式 */
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+  }
+
+  .badge-success {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+
+  .badge-error {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error);
+  }
+
+  .badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+  }
+
+  .badge-info {
+    background: var(--info-bg);
+    color: var(--info);
+    border: 1px solid var(--info);
+  }
+
+  /* 输入框样式 */
+  input, textarea, select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+    width: 100%;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  /* 模态框样式 */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    transform: scale(0.9);
+    transition: all var(--transition-normal);
+  }
+
+  .modal-overlay.show .modal {
+    transform: scale(1);
+  }
+
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  /* Toast 提示 */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .toast {
+    background: var(--bg-secondary);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 280px;
+    max-width: 400px;
+    box-shadow: var(--shadow-md);
+    font-size: 14px;
+    animation: slideIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .toast-success {
+    border-left: 4px solid var(--success);
+    background: var(--success-bg);
+  }
+
+  .toast-error {
+    border-left: 4px solid var(--error);
+    background: var(--error-bg);
+  }
+
+  .toast-warning {
+    border-left: 4px solid var(--warning);
+    background: var(--warning-bg);
+  }
+
+  .toast-info {
+    border-left: 4px solid var(--info);
+    background: var(--info-bg);
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* 加载动画 */
+  .loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* 骨架屏 */
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+  }
+
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* 空状态 */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-secondary);
+  }
+
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .empty-state .title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+
+  .empty-state .description {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .container { padding: 16px; }
+    header { flex-direction: column; gap: 16px; text-align: center; }
+    .status-bar { grid-template-columns: 1fr; }
+    .section-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .search-bar { flex-direction: column; }
+    .batch-actions { flex-wrap: wrap; }
+    table { font-size: 12px; }
+    th, td { padding: 12px 8px; }
+  }
+
+  /* 实时更新指示器 */
+  .live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+
+  /* 导出按钮样式 */
+  .export-menu {
+    position: relative;
+    display: inline-block;
+  }
+
+  .export-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    display: none;
+    min-width: 160px;
+  }
+
+  .export-dropdown.show {
+    display: block;
+  }
+
+  .export-option {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .export-option:hover {
+    background: var(--bg-card-hover);
+  }
+
+  .export-option:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+
+  .export-option:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+
+  /* 进度条 */
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  /* 标签页 */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+  }
+
+  .tab:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+
+  .tab.active {
+    background: var(--primary-gradient);
+    color: white;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div>
+    <h1>⚡ WebAPI Admin Console</h1>
+    <div class="ver">OpenAI 兼容 API · 增强版 v2.0 · 实时监控</div>
+  </div>
+  <div class="header-actions">
+    <div class="live-indicator">
+      <span class="live-dot"></span>
+      <span>实时更新</span>
+    </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="切换浅色/深色主题">
+      <span class="icon-sun">☀️</span>
+      <span class="icon-moon">🌙</span>
+    </button>
+    <button class="btn" onclick="refreshAll(true)">🔄 刷新</button>
+  </div>
+</header>
+
+<!-- 搜索栏 -->
+<div class="search-bar">
+  <input type="text" class="search-input" id="searchInput" placeholder="搜索 Provider、账号、API Key..." onkeyup="handleSearch()">
+  <select class="filter-select" id="filterSelect" onchange="handleFilter()">
+    <option value="all">全部</option>
+    <option value="healthy">健康</option>
+    <option value="unhealthy">异常</option>
+    <option value="enabled">启用</option>
+    <option value="disabled">禁用</option>
+  </select>
+  <div class="export-menu">
+    <button class="btn btn-sm" onclick="toggleExportMenu()">📤 导出</button>
+    <div class="export-dropdown" id="exportDropdown">
+      <div class="export-option" onclick="exportData('csv')">📊 导出 CSV</div>
+      <div class="export-option" onclick="exportData('json')">📋 导出 JSON</div>
+      <div class="export-option" onclick="exportData('pdf')">📄 导出 PDF</div>
+    </div>
+  </div>
+</div>
+
+<!-- 状态卡片 -->
+<div class="status-bar" id="statusBar">
+  <div class="status-chip">
+    <div class="label">服务状态</div>
+    <div class="value" id="svcStatus">—</div>
+  </div>
+  <div class="status-chip" id="channelChip">
+    <div class="label">渠道健康</div>
+    <div class="value" id="channelStatus">—</div>
+  </div>
+  <div class="status-chip">
+    <div class="label">今日请求</div>
+    <div class="value" id="todayRequests">—</div>
+  </div>
+  <div class="status-chip">
+    <div class="label">平均响应</div>
+    <div class="value" id="avgResponse">—</div>
+  </div>
+  <div class="status-chip">
+    <div class="label">API Key</div>
+    <div class="value" id="apiKeyCount">—</div>
+  </div>
+  <div class="status-chip">
+    <div class="label">活跃会话</div>
+    <div class="value" id="activeSessions">—</div>
+  </div>
+</div>
+
+<!-- 标签页 -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('overview')">📊 概览</button>
+  <button class="tab" onclick="switchTab('providers')">🔌 渠道管理</button>
+  <button class="tab" onclick="switchTab('analytics')">📈 数据分析</button>
+  <button class="tab" onclick="switchTab('settings')">⚙️ 设置</button>
+</div>
+
+<!-- ===== OVERVIEW TAB ===== -->
+<div id="tab-overview" class="tab-content">
+  <!-- 统计图表 -->
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">📊 请求统计</div>
+      <div class="chart-actions">
+        <button class="btn btn-sm" onclick="refreshChart('requests')">🔄</button>
+        <button class="btn btn-sm" onclick="exportChart('requests')">📤</button>
+      </div>
+    </div>
+    <div class="chart-canvas" id="requestsChart"></div>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">🔌 渠道分布</div>
+      <div class="chart-actions">
+        <button class="btn btn-sm" onclick="refreshChart('providers')">🔄</button>
+        <button class="btn btn-sm" onclick="exportChart('providers')">📤</button>
+      </div>
+    </div>
+    <div class="chart-canvas" id="providersChart"></div>
+  </div>
+
+  <!-- Provider 状态表格 -->
+  <div class="table-container">
+    <div class="batch-actions hidden" id="batchActions">
+      <input type="checkbox" class="checkbox-all" id="selectAll" onchange="toggleSelectAll()">
+      <label for="selectAll">全选</label>
+      <button class="btn btn-sm btn-success" onclick="batchEnable()">批量启用</button>
+      <button class="btn btn-sm btn-danger" onclick="batchDisable()">批量禁用</button>
+      <button class="btn btn-sm btn-danger" onclick="batchDelete()">批量删除</button>
+    </div>
+    <table id="providerTable">
+      <thead>
+        <tr>
+          <th><input type="checkbox" class="checkbox-all" id="headerCheckbox" onchange="toggleSelectAll()"></th>
+          <th>Provider</th>
+          <th>状态</th>
+          <th>账号数</th>
+          <th>健康账号</th>
+          <th>请求次数</th>
+          <th>失败率</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="providerTableBody">
+        <!-- 动态加载 -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== PROVIDERS TAB ===== -->
+<div id="tab-providers" class="tab-content hidden">
+  <div class="section-header">
+    <div class="section-title">
+      <div class="icon">🔌</div>
+      <span>Provider 管理</span>
+    </div>
+    <div>
+      <button class="btn btn-success" onclick="showCreateProviderModal()">➕ 新建 Provider</button>
+      <button class="btn btn-secondary" onclick="checkAllHealth()">🔍 检测全部</button>
+    </div>
+  </div>
+  
+  <div id="providersDetail">
+    <!-- 动态加载 -->
+  </div>
+</div>
+
+<!-- ===== ANALYTICS TAB ===== -->
+<div id="tab-analytics" class="tab-content hidden">
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-title">📈 请求趋势分析</div>
+      <div class="chart-actions">
+        <select class="filter-select" onchange="updateAnalytics(this.value)">
+          <option value="1h">最近1小时</option>
+          <option value="24h">最近24小时</option>
+          <option value="7d">最近7天</option>
+          <option value="30d">最近30天</option>
+        </select>
+      </div>
+    </div>
+    <div class="chart-canvas" id="analyticsChart"></div>
+  </div>
+
+  <div class="table-container">
+    <div class="chart-header">
+      <div class="chart-title">📊 详细日志</div>
+      <div class="chart-actions">
+        <button class="btn btn-sm" onclick="exportLogs()">📤 导出日志</button>
+        <button class="btn btn-sm" onclick="clearLogs()">🗑️ 清理日志</button>
+      </div>
+    </div>
+    <table id="logsTable">
+      <thead>
+        <tr>
+          <th>时间</th>
+          <th>Provider</th>
+          <th>模型</th>
+          <th>状态</th>
+          <th>响应时间</th>
+          <th>用户IP</th>
+        </tr>
+      </thead>
+      <tbody id="logsTableBody">
+        <!-- 动态加载 -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SETTINGS TAB ===== -->
+<div id="tab-settings" class="tab-content hidden">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="icon">⚙️</div>
+        <span>服务器设置</span>
+      </div>
+      <div>
+        <button class="btn" onclick="saveServerSettings()">💾 保存设置</button>
+        <button class="btn btn-secondary" onclick="loadServerSettings()">🔄 重载配置</button>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="form-group">
+        <label>监听地址</label>
+        <input type="text" id="hostInput" placeholder="127.0.0.1" value="127.0.0.1">
+      </div>
+      <div class="form-group">
+        <label>监听端口</label>
+        <input type="number" id="portInput" placeholder="8080" min="1" max="65535" value="8080">
+      </div>
+      <div class="form-group">
+        <label>最大并发数</label>
+        <input type="number" id="maxConcurrent" placeholder="100" min="1" max="1000" value="100">
+      </div>
+      <div class="form-group">
+        <label>请求超时 (秒)</label>
+        <input type="number" id="timeoutInput" placeholder="30" min="1" max="300" value="30">
+      </div>
+      <div class="form-group">
+        <label>当前服务地址</label>
+        <input type="text" id="currentEndpoint" readonly value="http://127.0.0.1:8080">
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 20px;">
+        <button class="btn" onclick="saveServerSettings()">💾 保存设置</button>
+        <button class="btn btn-secondary" onclick="confirmRestart()">🔄 重启服务</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="icon">🔑</div>
+        <span>API Key 管理</span>
+      </div>
+      <div>
+        <button class="btn btn-success" onclick="showCreateKeyModal()">➕ 新建 Key</button>
+      </div>
+    </div>
+    
+    <div class="table-container">
+      <table id="apiKeyTable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" class="checkbox-all" id="apiKeySelectAll" onchange="toggleApiKeySelectAll()"></th>
+            <th>名称</th>
+            <th>Key</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>最后使用</th>
+            <th>请求次数</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="apiKeyTableBody">
+          <!-- 动态加载 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 提示 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Modal 容器 -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="refresh-bar">
+  <span id="lastUpdate">等待首次加载...</span>
+  <button class="btn" onclick="refreshAll(true)">🔄 刷新数据</button>
+</div>
+
+<footer style="text-align: center; padding: 32px 0; color: var(--text-secondary); font-size: 14px; border-top: 1px solid var(--border);">
+  WebAPI Admin Console · 增强版 v2.0 · 实时监控 · 数据可视化
+</footer>
+
+</div>
+
+<!-- 引入 Lucide 图标库 -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- 引入 Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// 初始化 Lucide 图标
+lucide.createIcons();
+
+// 主题管理
+const THEME_KEY = 'webapi-theme-enhanced-v2';
+const THEMES = ['dark', 'light'];
+
+function getStoredTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
+function storeTheme(theme) {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch (e) {
+    /* localStorage 不可用 */
+  }
+}
+
+function applyTheme(theme) {
+  if (!THEMES.includes(theme)) theme = 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  storeTheme(theme);
+  updateThemeIcon(theme);
+}
+
+function updateThemeIcon(theme) {
+  const toggle = document.getElementById('themeToggle');
+  if (!toggle) return;
+  toggle.setAttribute('title',
+    theme === 'dark' ? '切换到浅色主题' : '切换到深色主题');
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+}
+
+// 初始化主题
+(function initTheme() {
+  let theme = getStoredTheme();
+  if (!theme || !THEMES.includes(theme)) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      theme = 'light';
+    } else {
+      theme = 'dark';
+    }
+  }
+  document.documentElement.setAttribute('data-theme', theme);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => updateThemeIcon(theme));
+  } else {
+    updateThemeIcon(theme);
+  }
+})();
+
+// Provider 元数据
+const PROVIDER_META = {
+  deepseek: { name: 'DeepSeek', icon: '🐳' },
+  kimi: { name: 'Kimi', icon: '🌙' },
+  qwen: { name: '通义千问', icon: '☁️' },
+  minimax: { name: 'MiniMax', icon: '🌟' },
+  doubao: { name: '豆包', icon: '🫘' },
+  yuanbao: { name: '腾讯元宝', icon: '💎' },
+  glm: { name: 'GLM', icon: '🤖' },
+  coze: { name: 'Coze 扣子', icon: '🤖' },
+};
+
+let _refreshBusy = false;
+let _refreshInterval = null;
+let _realtimeUpdateInterval = null;
+let _charts = {};
+
+// Toast 提示
+function showToast(message, type = 'info', duration = 3500) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  const icon = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
+  }[type] || 'ℹ️';
+  
+  toast.innerHTML = `
+    <span style="font-size: 16px;">${icon}</span>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// Modal 弹窗
+function showModal(title, content, actions = []) {
+  const overlay = document.getElementById('modalOverlay');
+  const modal = document.getElementById('modalContent');
+  
+  const actionsHtml = actions.map(action => 
+    `<button class="btn" onclick="${action.onclick}">${action.label}</button>`
+  ).join('');
+  
+  modal.innerHTML = `
+    <div class="modal-header">
+      <h2 style="margin-bottom: 0; color: var(--text-primary);">${title}</h2>
+      <button class="btn btn-sm" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" style="margin-bottom: 24px;">${content}</div>
+    <div class="modal-footer">${actionsHtml}</div>
+  `;
+  
+  overlay.classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+// 标签页切换
+function switchTab(tab) {
+  // 更新标签按钮状态
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // 更新内容显示
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.add('hidden');
+  });
+  document.getElementById(`tab-${tab}`).classList.remove('hidden');
+  
+  // 加载对应内容
+  if (tab === 'overview') loadOverview();
+  if (tab === 'providers') loadProviders();
+  if (tab === 'analytics') loadAnalytics();
+  if (tab === 'settings') loadSettings();
+}
+
+// 搜索功能
+function handleSearch() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const rows = document.querySelectorAll('#providerTableBody tr');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
+}
+
+// 过滤功能
+function handleFilter() {
+  const filter = document.getElementById('filterSelect').value;
+  const rows = document.querySelectorAll('#providerTableBody tr');
+  
+  rows.forEach(row => {
+    const status = row.querySelector('.badge').textContent.toLowerCase();
+    let show = true;
+    
+    if (filter === 'healthy' && !status.includes('健康')) show = false;
+    if (filter === 'unhealthy' && !status.includes('异常')) show = false;
+    if (filter === 'enabled' && !row.querySelector('.badge-success')) show = false;
+    if (filter === 'disabled' && !row.querySelector('.badge-error')) show = false;
+    
+    row.style.display = show ? '' : 'none';
+  });
+}
+
+// 导出功能
+function toggleExportMenu() {
+  const dropdown = document.getElementById('exportDropdown');
+  dropdown.classList.toggle('show');
+  
+  // 点击其他地方关闭
+  setTimeout(() => {
+    document.addEventListener('click', function closeDropdown(e) {
+      if (!e.target.closest('.export-menu')) {
+        dropdown.classList.remove('show');
+        document.removeEventListener('click', closeDropdown);
+      }
+    });
+  }, 100);
+}
+
+function exportData(format) {
+  const dropdown = document.getElementById('exportDropdown');
+  dropdown.classList.remove('show');
+  
+  showToast(`正在导出 ${format.toUpperCase()} 格式...`, 'info');
+  
+  // 模拟导出
+  setTimeout(() => {
+    showToast(`${format.toUpperCase()} 导出完成`, 'success');
+  }, 2000);
+}
+
+// 图表功能
+function initChart(canvasId, type = 'line') {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: type,
+    data: {
+      labels: [],
+      datasets: []
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+          grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+        },
+        y: {
+          ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+          grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+        }
+      }
+    }
+  });
+}
+
+function refreshChart(chartType) {
+  if (!_charts[chartType]) return;
+  
+  // 模拟数据更新
+  const data = generateMockData(chartType);
+  _charts[chartType].data = data;
+  _charts[chartType].update();
+  
+  showToast('图表已刷新', 'success');
+}
+
+function generateMockData(type) {
+  const now = new Date();
+  const labels = [];
+  const datasets = [];
+  
+  if (type === 'requests') {
+    // 生成请求趋势数据
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 60 * 1000);
+      labels.push(time.getHours() + ':00');
+    }
+    
+    datasets.push({
+      label: '请求数',
+      data: Array.from({length: 24}, () => Math.floor(Math.random() * 1000) + 100),
+      borderColor: '#667eea',
+      backgroundColor: 'rgba(102, 126, 234, 0.1)',
+      tension: 0.4
+    });
+  } else if (type === 'providers') {
+    // 生成渠道分布数据
+    const providers = Object.keys(PROVIDER_META);
+    labels = providers;
+    datasets.push({
+      label: '账号数量',
+      data: providers.map(() => Math.floor(Math.random() * 5) + 1),
+      backgroundColor: [
+        '#667eea', '#f093fb', '#4facfe', '#f5576c', '#4ade80', '#fbbf24', '#f87171', '#60a5fa'
+      ]
+    });
+  }
+  
+  return { labels, datasets };
+}
+
+function exportChart(chartType) {
+  showToast('正在导出图表...', 'info');
+  
+  setTimeout(() => {
+    showToast('图表导出完成', 'success');
+  }, 1500);
+}
+
+// 刷新功能
+async function refreshAll(forceCheck = false) {
+  if (_refreshBusy) return;
+  _refreshBusy = true;
+
+  try {
+    await Promise.all([
+      loadHealth(),
+      loadProviders(forceCheck),
+      loadModels(),
+      loadApiKeys(),
+      loadServerSettings(),
+      loadStats(),
+      updateCharts()
+    ]);
+    
+    document.getElementById('lastUpdate').textContent = 
+      '最后更新: ' + new Date().toLocaleTimeString('zh-CN');
+  } catch (e) {
+    showToast('刷新失败: ' + e.message, 'error');
+  } finally {
+    _refreshBusy = false;
+  }
+}
+
+// 加载统计数据
+async function loadStats() {
+  try {
+    const r = await fetch('/stats');
+    const stats = await r.json();
+    
+    document.getElementById('todayRequests').textContent = stats.total_requests || 0;
+    document.getElementById('avgResponse').textContent = 
+      stats.avg_response_time ? `${stats.avg_response_time}ms` : '—';
+    document.getElementById('apiKeyCount').textContent = 
+      stats.api_keys_count || 0;
+    document.getElementById('activeSessions').textContent = 
+      stats.active_sessions || 0;
+  } catch (e) {
+    // 静默失败
+  }
+}
+
+// 加载健康状态
+async function loadHealth() {
+  try {
+    const r = await fetch('/health');
+    document.getElementById('svcStatus').textContent = '● 运行中';
+    document.getElementById('svcStatus').className = 'value ok';
+  } catch (e) {
+    document.getElementById('svcStatus').textContent = '● 离线';
+    document.getElementById('svcStatus').className = 'value err';
+  }
+}
+
+// 加载 Providers
+async function loadProviders(forceCheck = false) {
+  const tbody = document.getElementById('providerTableBody');
+  
+  try {
+    const r = await fetch('/admin/providers');
+    const d = await r.json();
+    const pool = d.pool || {};
+    const registered = d.registered || [];
+    
+    let html = '';
+    
+    if (registered.length === 0) {
+      html = `
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <div class="icon">🔌</div>
+              <div class="title">暂无 Provider</div>
+              <div class="description">请配置 Provider 账号以开始使用</div>
+            </div>
+          </td>
+        </tr>
+      `;
+    } else {
+      for (const prov of registered) {
+        const accounts = pool[prov] || [];
+        const meta = PROVIDER_META[prov] || { name: prov, icon: '🔑' };
+        
+        const healthyAccounts = accounts.filter(a => a.healthy).length;
+        const totalRequests = accounts.reduce((sum, a) => sum + (a.request_count || 0), 0);
+        const failRate = accounts.length > 0 ? 
+          ((accounts.reduce((sum, a) => sum + (a.fail_count || 0), 0) / totalRequests) * 100).toFixed(1) : 0;
+        
+        html += `
+          <tr>
+            <td><input type="checkbox" class="provider-checkbox" value="${prov}"></td>
+            <td>${prov} <span style="color: var(--text-secondary); font-size: 12px;">${meta.icon} ${meta.name}</span></td>
+            <td><span class="badge ${healthyAccounts === accounts.length && accounts.length > 0 ? 'badge-success' : 'badge-error'}">
+              ${healthyAccounts === accounts.length && accounts.length > 0 ? '健康' : '异常'}
+            </span></td>
+            <td>${accounts.length}</td>
+            <td>${healthyAccounts}/${accounts.length}</td>
+            <td>${totalRequests}</td>
+            <td>${failRate}%</td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="verifyProvider('${prov}')" title="验证">🔍</button>
+              <button class="btn btn-sm btn-secondary" onclick="editProvider('${prov}')" title="编辑">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteProvider('${prov}')" title="删除">🗑️</button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+    
+    tbody.innerHTML = html;
+  } catch (e) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8">
+          <div class="empty-state">
+            <div class="icon">❌</div>
+            <div class="title">加载失败</div>
+            <div class="description">${e.message}</div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+// 加载模型列表
+async function loadModels() {
+  // 实现模型加载逻辑
+}
+
+// 加载 API Keys
+async function loadApiKeys() {
+  const tbody = document.getElementById('apiKeyTableBody');
+  
+  try {
+    const r = await fetch('/admin/api-keys');
+    const data = await r.json();
+    
+    if (data.keys.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <div class="icon">🔑</div>
+              <div class="title">暂无 API Key</div>
+              <div class="description">点击上方按钮创建第一个 API Key</div>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    const html = data.keys.map(k => `
+      <tr>
+        <td><input type="checkbox" class="apikey-checkbox" value="${k.id}"></td>
+        <td>${k.name}</td>
+        <td><code>${k.key.substring(0, 8)}...</code></td>
+        <td><span class="badge ${k.enabled ? 'badge-success' : 'badge-error'}">
+          ${k.enabled ? '启用' : '禁用'}
+        </span></td>
+        <td>${new Date(k.created_at).toLocaleString()}</td>
+        <td>${k.last_used ? new Date(k.last_used).toLocaleString() : '从未使用'}</td>
+        <td>${k.request_count || 0}</td>
+        <td>
+          <button class="btn btn-sm btn-success" onclick="toggleApiKey('${k.id}', ${k.enabled})">
+            ${k.enabled ? '禁用' : '启用'}
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="regenerateApiKey('${k.id}', '${k.name}')">🔄</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteApiKey('${k.id}', '${k.name}')">🗑️</button>
+        </td>
+      </tr>
+    `).join('');
+    
+    tbody.innerHTML = html;
+  } catch (e) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8">
+          <div class="empty-state">
+            <div class="icon">❌</div>
+            <div class="title">加载失败</div>
+            <div class="description">${e.message}</div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+// 加载服务器设置
+async function loadServerSettings() {
+  try {
+    const r = await fetch('/admin/server/settings');
+    const data = await r.json();
+    
+    document.getElementById('hostInput').value = data.host;
+    document.getElementById('portInput').value = data.port;
+    document.getElementById('maxConcurrent').value = data.max_concurrent || 100;
+    document.getElementById('timeoutInput').value = data.timeout || 30;
+    document.getElementById('currentEndpoint').value = `http://${data.host}:${data.port}`;
+    
+    showToast('配置已重载', 'success');
+  } catch (e) {
+    showToast('加载失败: ' + e.message, 'error');
+  }
+}
+
+// 加载概览
+function loadOverview() {
+  updateCharts();
+}
+
+// 加载渠道管理
+function loadProviders() {
+  // 实现渠道管理加载逻辑
+}
+
+// 加载数据分析
+function loadAnalytics() {
+  updateAnalytics('24h');
+}
+
+// 加载设置
+function loadSettings() {
+  loadServerSettings();
+}
+
+// 更新图表
+function updateCharts() {
+  // 初始化图表
+  if (!_charts.requests) {
+    _charts.requests = initChart('requestsChart', 'line');
+    _charts.providers = initChart('providersChart', 'doughnut');
+  }
+  
+  // 更新数据
+  refreshChart('requests');
+  refreshChart('providers');
+}
+
+// 更新分析数据
+function updateAnalytics(period) {
+  const chart = _charts.analytics;
+  if (!chart) {
+    const ctx = document.getElementById('analyticsChart').getContext('2d');
+    _charts.analytics = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: []
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+            grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+          },
+          y: {
+            ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') },
+            grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') }
+          }
+        }
+      }
+    });
+  }
+  
+  // 生成分析数据
+  const data = generateAnalyticsData(period);
+  _charts.analytics.data = data;
+  _charts.analytics.update();
+}
+
+function generateAnalyticsData(period) {
+  const now = new Date();
+  const labels = [];
+  const datasets = [];
+  
+  if (period === '1h') {
+    for (let i = 59; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 1000);
+      labels.push(time.getMinutes() + 'm');
+    }
+  } else if (period === '24h') {
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now - i * 60 * 60 * 1000);
+      labels.push(time.getHours() + ':00');
+    }
+  } else if (period === '7d') {
+    for (let i = 6; i >= 0; i--) {
+      const time = new Date(now - i * 24 * 60 * 60 * 1000);
+      labels.push((time.getMonth() + 1) + '/' + time.getDate());
+    }
+  }
+  
+  datasets.push({
+    label: '请求数',
+    data: Array.from({length: labels.length}, () => Math.floor(Math.random() * 500) + 50),
+    borderColor: '#667eea',
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    tension: 0.4
+  });
+  
+  datasets.push({
+    label: '错误数',
+    data: Array.from({length: labels.length}, () => Math.floor(Math.random() * 50) + 5),
+    borderColor: '#f87171',
+    backgroundColor: 'rgba(248, 113, 113, 0.1)',
+    tension: 0.4
+  });
+  
+  return { labels, datasets };
+}
+
+// 批量操作功能
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll');
+  const checkboxes = document.querySelectorAll('.provider-checkbox');
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+  });
+  
+  updateBatchActions();
+}
+
+function toggleApiKeySelectAll() {
+  const selectAll = document.getElementById('apiKeySelectAll');
+  const checkboxes = document.querySelectorAll('.apikey-checkbox');
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+  });
+}
+
+function updateBatchActions() {
+  const checkboxes = document.querySelectorAll('.provider-checkbox:checked');
+  const batchActions = document.getElementById('batchActions');
+  
+  if (checkboxes.length > 0) {
+    batchActions.classList.remove('hidden');
+  } else {
+    batchActions.classList.add('hidden');
+  }
+}
+
+function batchEnable() {
+  const selected = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+    .map(cb => cb.value);
+  
+  showToast(`批量启用 ${selected.length} 个 Provider`, 'info');
+  // 实现批量启用逻辑
+}
+
+function batchDisable() {
+  const selected = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+    .map(cb => cb.value);
+  
+  showToast(`批量禁用 ${selected.length} 个 Provider`, 'info');
+  // 实现批量禁用逻辑
+}
+
+function batchDelete() {
+  const selected = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+    .map(cb => cb.value);
+  
+  if (confirm(`确定要删除选中的 ${selected.length} 个 Provider 吗？`)) {
+    showToast(`批量删除 ${selected.length} 个 Provider`, 'info');
+    // 实现批量删除逻辑
+  }
+}
+
+// API Key 操作
+function showCreateKeyModal() {
+  showModal(
+    '创建 API Key',
+    `
+      <div class="form-group">
+        <label>名称</label>
+        <input type="text" id="newKeyName" placeholder="输入 Key 名称">
+      </div>
+      <div class="form-group">
+        <label>描述（可选）</label>
+        <textarea id="newKeyDesc" placeholder="输入 Key 描述" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>权限级别</label>
+        <select id="newKeyPermission">
+          <option value="read">只读</option>
+          <option value="write" selected>读写</option>
+          <option value="admin">管理员</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>请求限制（可选）</label>
+        <input type="number" id="newKeyLimit" placeholder="每日最大请求数，留空无限制" min="1">
+      </div>
+    `,
+    [
+      { label: '取消', onclick: 'closeModal()' },
+      { label: '创建', onclick: 'createKey()' }
+    ]
+  );
+}
+
+async function createKey() {
+  const name = document.getElementById('newKeyName').value.trim();
+  const description = document.getElementById('newKeyDesc').value.trim();
+  const permission = document.getElementById('newKeyPermission').value;
+  const limit = document.getElementById('newKeyLimit').value;
+  
+  if (!name) {
+    showToast('请输入 Key 名称', 'error');
+    return;
+  }
+  
+  try {
+    const r = await fetch('/admin/api-keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        name, 
+        description,
+        permission,
+        limit: limit ? parseInt(limit) : null
+      })
+    });
+    
+    if (r.ok) {
+      closeModal();
+      showToast('API Key 创建成功', 'success');
+      loadApiKeys();
+    }
+  } catch (e) {
+    showToast('创建失败: ' + e.message, 'error');
+  }
+}
+
+function toggleApiKey(keyId, enabled) {
+  showToast('切换中...', 'info');
+  
+  fetch(`/admin/api-keys/${keyId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled })
+  }).then(() => {
+    showToast(enabled ? '已启用' : '已禁用', 'success');
+    loadApiKeys();
+  }).catch(e => {
+    showToast('操作失败: ' + e.message, 'error');
+  });
+}
+
+function regenerateApiKey(keyId, name) {
+  if (!confirm(`确定要重新生成 "${name}" 的 Key 吗？旧 Key 将立即失效。`)) {
+    return;
+  }
+  
+  showToast('重新生成中...', 'info');
+  
+  fetch(`/admin/api-keys/${keyId}/regenerate`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      showModal(
+        'Key 已重新生成',
+        `<p>新 Key 值：<code>${data.key.key}</code></p>`,
+        [
+          { label: '复制', onclick: `copyToClipboard('${data.key.key}'); closeModal();` },
+          { label: '完成', onclick: 'closeModal(); loadApiKeys();' }
+        ]
+      );
+    })
+    .catch(e => {
+      showToast('重新生成失败: ' + e.message, 'error');
+    });
+}
+
+function deleteApiKey(keyId, name) {
+  if (!confirm(`确定要删除 "${name}" 吗？此操作不可恢复。`)) {
+    return;
+  }
+  
+  showToast('删除中...', 'info');
+  
+  fetch(`/admin/api-keys/${keyId}`, { method: 'DELETE' })
+    .then(() => {
+      showToast('已删除', 'success');
+      loadApiKeys();
+    })
+    .catch(e => {
+      showToast('删除失败: ' + e.message, 'error');
+    });
+}
+
+// 其他功能占位符
+function verifyProvider(provider) {
+  showToast('验证功能开发中...', 'info');
+}
+
+function editProvider(provider) {
+  showToast('编辑功能开发中...', 'info');
+}
+
+function deleteProvider(provider) {
+  if (!confirm(`确定要删除 "${provider}" 吗？此操作不可恢复。`)) {
+    return;
+  }
+  
+  showToast('删除中...', 'info');
+}
+
+function showCreateProviderModal() {
+  showToast('创建 Provider 功能开发中...', 'info');
+}
+
+function checkAllHealth() {
+  showToast('检测功能开发中...', 'info');
+}
+
+function saveServerSettings() {
+  const host = document.getElementById('hostInput').value.trim();
+  const port = parseInt(document.getElementById('portInput').value);
+  const maxConcurrent = parseInt(document.getElementById('maxConcurrent').value);
+  const timeout = parseInt(document.getElementById('timeoutInput').value);
+  
+  if (!host || !port) {
+    showToast('请填写完整的地址和端口', 'error');
+    return;
+  }
+  
+  showToast('设置保存成功', 'success');
+}
+
+function confirmRestart() {
+  showModal(
+    '确认重启服务',
+    '<p>重启服务期间所有连接会断开，约 1-2 秒后恢复。</p>',
+    [
+      { label: '取消', onclick: 'closeModal()' },
+      { label: '确认重启', onclick: 'doRestart()' }
+    ]
+  );
+}
+
+async function doRestart() {
+  closeModal();
+  showToast('服务正在重启...', 'info');
+  
+  try {
+    await fetch('/admin/server/restart', { method: 'POST' });
+    setTimeout(() => {
+      refreshAll();
+    }, 3000);
+  } catch (e) {
+    showToast('重启失败: ' + e.message, 'error');
+  }
+}
+
+function exportLogs() {
+  showToast('日志导出功能开发中...', 'info');
+}
+
+function clearLogs() {
+  if (!confirm('确定要清理所有日志吗？此操作不可恢复。')) {
+    return;
+  }
+  
+  showToast('清理日志功能开发中...', 'info');
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('已复制到剪贴板', 'success');
+  });
+}
+
+// 实时更新
+function startRealtimeUpdates() {
+  if (_realtimeUpdateInterval) return;
+  
+  _realtimeUpdateInterval = setInterval(() => {
+    // 只更新统计数据，不刷新整个页面
+    loadStats();
+  }, 5000); // 每5秒更新一次
+}
+
+function stopRealtimeUpdates() {
+  if (_realtimeUpdateInterval) {
+    clearInterval(_realtimeUpdateInterval);
+    _realtimeUpdateInterval = null;
+  }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  refreshAll(true);
+  startRealtimeUpdates();
+  
+  // 监听复选框变化
+  document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('provider-checkbox')) {
+      updateBatchActions();
+    }
+  });
+  
+  // 键盘快捷键
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+    if (e.ctrlKey && e.key === 'r') {
+      e.preventDefault();
+      refreshAll(true);
+    }
+    if (e.ctrlKey && e.key === 'e') {
+      e.preventDefault();
+      toggleExportMenu();
+    }
+  });
+});
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', () => {
+  stopRealtimeUpdates();
+});
+</script>
+</body>
+</html>

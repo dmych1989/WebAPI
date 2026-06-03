@@ -25,6 +25,7 @@ import re
 import sys
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Optional
 
 import yaml
@@ -73,8 +74,21 @@ PROVIDER_CONFIGS = {
         "success_url_patterns": ["kimi.com"],
         "target_domains": [".kimi.com", "kimi.com"],
         "extractors": [
-            # Chat2API kimi tokenSource: networkHeader, key=token, extractPattern=^Bearer\s+(.+)$
-            # 从网络请求截取 Authorization header（最可靠）
+            # ★ 用户明确要求：Kimi 访问令牌从浏览器 Cookie 的 kimi-auth 字段值（推荐）
+            # 优先：浏览器 cookie 中的 kimi-auth
+            {
+                "type": "cookie",
+                "keys": ["kimi-auth"],
+                "save_as": "token",
+            },
+            # 兜底 1：从网络请求的 Cookie header 中截取 kimi-auth
+            {
+                "type": "network_cookie",
+                "url_pattern": "kimi.com",
+                "cookie_name": "kimi-auth",
+                "save_as": "token",
+            },
+            # 兜底 2：从网络请求截取 Authorization header (JWT Token)
             {
                 "type": "network_auth",
                 "url_pattern": "kimi.com/api",
@@ -82,17 +96,25 @@ PROVIDER_CONFIGS = {
                 "header_prefix": "Bearer ",
                 "save_as": "token",
             },
-            # 兜底：localStorage 中的各种 token key
+            # 兜底 3：localStorage 中的 refresh_token
+            {
+                "type": "localStorage",
+                "key": "refresh_token",
+                "save_as": "token",
+            },
+            # 兜底 4：localStorage 中的 access_token
             {
                 "type": "localStorage",
                 "key": "access_token",
                 "save_as": "token",
             },
+            # 兜底 5：localStorage 中的 kimi_at
             {
                 "type": "localStorage",
                 "key": "kimi_at",
                 "save_as": "token",
             },
+            # 兜底 6：localStorage 中的 auth_token
             {
                 "type": "localStorage",
                 "key": "auth_token",
@@ -133,49 +155,33 @@ PROVIDER_CONFIGS = {
         "config_key": "token",
     },
     "minimax": {
-        "name": "MiniMax (Hailuo AI)",
-        "login_url": "https://agent.minimaxi.com/",
-        "auth_type": "token",
-        "success_url_patterns": ["minimaxi.com", "agent.minimaxi"],
+        "name": "MiniMax (海螺 AI) — 官方 OpenAI 兼容 API",
+        # 官方 API: https://api.minimaxi.com/v1
+        # 用户在 https://platform.minimaxi.com/ 创建 API Key（eyJ 开头的 JWT）
+        "login_url": "https://platform.minimaxi.com/user-center/basic-information/interface-key",
+        "auth_type": "manual_token",
+        "success_url_patterns": ["minimaxi.com", "platform.minimaxi"],
         "target_domains": [".minimaxi.com", "minimaxi.com"],
         "extractors": [
-            # Chat2API minimax tokenSources: localStorage._token + localStorage.user_detail_agent
-            # 主 Token：localStorage._token (JWT)
-            {
-                "type": "localStorage",
-                "key": "_token",
-                "save_as": "token",
-            },
-            # user_detail_agent 包含 realUserID
-            {
-                "type": "localStorage",
-                "key": "user_detail_agent",
-                "save_as": "user_id",
-            },
-            # 兜底：网络请求截取 Authorization header
-            {
-                "type": "network_auth",
-                "url_pattern": "minimaxi.com",
-                "header_key": "Authorization",
-                "header_prefix": "Bearer ",
-                "save_as": "token",
-            },
-            # 兜底 2：旧 key 名
-            {
-                "type": "localStorage",
-                "key": "access_token",
-                "save_as": "token",
-            },
-            {
-                "type": "localStorage",
-                "key": "token",
-                "save_as": "token",
-            },
+            # 官方 API Key 需要用户手动从控制台复制
+            # 不支持浏览器自动登录提取（agent.minimaxi.com 是消费版，不是 API 入口）
         ],
-        # Chat2API MiniMaxAdapter.validateToken: GET agent.minimaxi.com/v1/api/user/info
-        "validate_url": "https://agent.minimaxi.com/v1/api/user/info",
-        "validate_method": "minimax",
+        "validate_url": "https://api.minimaxi.com/v1/models",
+        "validate_method": "bearer",
+        "validate_header_prefix": "Bearer ",
         "config_key": "token",
+        "instructions": [
+            "MiniMax 使用官方 OpenAI 兼容 API。",
+            "",
+            "获取 API Key 步骤：",
+            "1. 访问 https://platform.minimaxi.com/ 登录账号",
+            "2. 右上角「接口密钥」 → 「创建新的 API Key」",
+            "3. 复制 eyJ... 格式的 Key（JWT）",
+            "4. 粘贴到 config.yaml 的 providers.minimax.accounts[0].token",
+            "",
+            "⚠️ 账号配置中如果存在 api_base 字段，请设为 https://api.minimaxi.com/v1",
+            "💡 支持的模型: MiniMax-M3, MiniMax-M2.7, MiniMax-M2.7-highspeed, MiniMax-M2.5, MiniMax-M2.5-highspeed, MiniMax-M2.1, MiniMax-M2.1-highspeed, MiniMax-M2",
+        ],
     },
     "doubao": {
         "name": "豆包 (Doubao · 字节跳动)",
@@ -195,42 +201,33 @@ PROVIDER_CONFIGS = {
         "config_key": "cookie",
     },
     "glm": {
-        "name": "智谱 GLM (ZhipuAI)",
-        # Chat2API: loginUrl = 'https://chatglm.cn'（不是 bigmodel.cn）
-        "login_url": "https://chatglm.cn/",
-        "auth_type": "token",
-        "success_url_patterns": ["chatglm.cn"],
-        "target_domains": [".chatglm.cn", "chatglm.cn"],
+        "name": "智谱 GLM (ZhipuAI) — 官方 BigModel API",
+        # 官方 API: https://open.bigmodel.cn/api/paas/v4
+        # 用户在 https://open.bigmodel.cn/ 创建 API Key（以 sk- 开头）
+        "login_url": "https://open.bigmodel.cn/usercenter/apikeys",
+        "auth_type": "manual_token",
+        "success_url_patterns": ["open.bigmodel.cn"],
+        "target_domains": [".bigmodel.cn", "bigmodel.cn"],
         "extractors": [
-            # Chat2API glm tokenSource: cookie, key=chatglm_refresh_token
-            # 优先：从浏览器 cookie 直接取 chatglm_refresh_token
-            {
-                "type": "cookie",
-                "keys": ["chatglm_refresh_token"],
-                "save_as": "token",
-            },
-            # 兜底：从 Set-Cookie 拦截中获取
-            {
-                "type": "network_set_cookie",
-                "cookie_name": "chatglm_refresh_token",
-                "save_as": "token",
-            },
-            # 兜底 2：localStorage 中的 token（Chat2API guides.ts 提到）
-            {
-                "type": "localStorage",
-                "key": "token",
-                "save_as": "token",
-            },
-            {
-                "type": "localStorage",
-                "key": "access_token",
-                "save_as": "token",
-            },
+            # 官方 API Key 需要用户手动从控制台复制
+            # 不支持浏览器自动登录提取
         ],
-        # Chat2API GLMAdapter.validateToken: POST chatglm.cn/chatglm/user-api/user/refresh
-        "validate_url": "https://chatglm.cn/chatglm/user-api/user/refresh",
-        "validate_method": "bearer_refresh",
+        "validate_url": "https://open.bigmodel.cn/api/paas/v4/models",
+        "validate_method": "bearer",
+        "validate_header_prefix": "Bearer ",
         "config_key": "token",
+        "instructions": [
+            "智谱 GLM 使用官方 BigModel API（OpenAI 兼容）。",
+            "",
+            "获取 API Key 步骤：",
+            "1. 访问 https://open.bigmodel.cn/ 登录账号",
+            "2. 右上角「API 密钥」 → 「创建新的 API Key」",
+            "3. 复制 sk-xxx... 格式的 Key",
+            "4. 粘贴到 config.yaml 的 providers.glm.accounts[0].token",
+            "",
+            "⚠️ API Key 仅创建时显示一次，请妥善保存。",
+            "💡 智谱新账号通常有 200万 Tokens 免费额度，足够测试用。",
+        ],
     },
     "yuanbao": {
         "name": "腾讯元宝 (Yuanbao)",
@@ -426,7 +423,8 @@ class TokenExtractor:
 
         self._start_url = self.page.url
         self._captured_auth_headers: list[str] = []  # 拦截到的 Authorization header
-        self._captured_cookies: dict[str, str] = {}   # 拦截到的 Set-Cookie
+        self._captured_cookies: dict[str, str] = {}   # 拦截到的 Set-Cookie（cookie_name → value）
+        self._captured_cookie_headers: dict[str, list[str]] = {}  # 从请求 Cookie header 中提取的值
 
         # ── 模拟 Chat2API 的 onBeforeSendHeaders ──
         # 用 page.route() 拦截所有请求，捕获 Authorization 和 Cookie headers
@@ -442,17 +440,19 @@ class TokenExtractor:
                     self._captured_auth_headers.append(token)
                     print(f"  [>>] Captured Auth header ({len(token)} chars)")
 
-            # 捕获 Cookie header（用于 qwen 的 tongyi_sso_ticket）
+            # 捕获 Cookie header（用于 qwen 的 tongyi_sso_ticket 等）
             if cookie:
-                # 检查是否包含 qwen 关键字段
-                if "tongyi_sso_ticket" in cookie:
-                    # 提取 tongyi_sso_ticket 的值
-                    match = re.search(r"tongyi_sso_ticket=([^;]+)", cookie)
-                    if match:
-                        ticket = match.group(1)
-                        if ticket not in self._captured_cookies.get("tongyi_sso_ticket", []):
-                            self._captured_cookies.setdefault("tongyi_sso_ticket", []).append(ticket)
-                            print(f"  [>>] Captured Cookie header (tongyi_sso_ticket, {len(ticket)} chars)")
+                # 提取已知的关键 cookie 字段
+                _cookie_keys_of_interest = ("tongyi_sso_ticket", "chatglm_refresh_token")
+                for ck_name in _cookie_keys_of_interest:
+                    if ck_name in cookie:
+                        match = re.search(rf"{re.escape(ck_name)}=([^;]+)", cookie)
+                        if match:
+                            val = match.group(1)
+                            bucket = self._captured_cookie_headers.setdefault(ck_name, [])
+                            if val not in bucket:
+                                bucket.append(val)
+                                print(f"  [>>] Captured Cookie header ({ck_name}, {len(val)} chars)")
 
             await route.continue_()
 
@@ -558,7 +558,20 @@ class TokenExtractor:
                         if len(str(extracted_value)) >= min_len:
                             if self._is_valid_token(extracted_value):
                                 extracted_values[save_as] = extracted_value
-                                print(f"\n  [OK] {t}.{extractor.get('key', extractor.get('cookie_name', extractor.get('name', '')))} → {save_as} ({len(str(extracted_value))} chars)")
+                                # ★ 后处理钩子：例如 jwt_user_id 解析 Real User ID
+                                post_proc = extractor.get("post_process")
+                                if post_proc:
+                                    processed = self._post_process(extracted_value, extractor)
+                                    extra_user_id = processed.get("user_id")
+                                    if extra_user_id:
+                                        # 如果用户明确要求从 JWT 解析 user_id（如 minimax），覆盖
+                                        extracted_values["user_id"] = extra_user_id
+                                        self.extracted["user_id"] = extra_user_id
+                                        print(f"  [OK] {t}.{extractor.get('key', extractor.get('cookie_name', extractor.get('name', '')))} → {save_as} ({len(str(extracted_value))} chars) + user_id={extra_user_id}")
+                                    else:
+                                        print(f"  [OK] {t}.{extractor.get('key', extractor.get('cookie_name', extractor.get('name', '')))} → {save_as} ({len(str(extracted_value))} chars) [post_process={post_proc} 无结果]")
+                                else:
+                                    print(f"  [OK] {t}.{extractor.get('key', extractor.get('cookie_name', extractor.get('name', '')))} → {save_as} ({len(str(extracted_value))} chars)")
                             else:
                                 print(f"  [WARN]  Extracted value too short or invalid ({len(str(extracted_value))} chars)")
                         else:
@@ -700,70 +713,89 @@ class TokenExtractor:
         return False
 
     async def _validate_extracted_value(self, value: str, config_key: str) -> bool:
-        """实际 API 调用验证提取到的凭证是否有效"""
+        """实际 API 调用验证提取到的凭证是否有效
+
+        Chat2API 风格：直接用 aiohttp 请求验证，不走浏览器新页面（因为新页面不会继承登录上下文的认证状态）。
+        """
         validate_url = self.cfg.get("validate_url")
         cookie_validate_url = self.cfg.get("cookie_validate_url")
         cookie_validate_check = self.cfg.get("cookie_validate_check", "")
+        validate_method = self.cfg.get("validate_method", "")
 
-        if config_key == "cookie" and cookie_validate_url:
-            # Cookie 类验证：用提取到的 cookie 请求验证 URL，检查响应内容
-            print(f"  [*] Validating cookie: {cookie_validate_url}")
+        # 先尝试用 aiohttp 直接验证（Chat2API 风格）
+        if config_key == "token" and validate_url and validate_method:
+            print(f"  [*] Validating token via API: {validate_url}")
             try:
-                vp = await self.context.new_page()
-                try:
-                    resp = await vp.goto(cookie_validate_url, timeout=15000)
-                    if resp and resp.ok:
-                        body = (await resp.text()).lower()
-                        if cookie_validate_check and cookie_validate_check in body:
+                import aiohttp
+                import certifi
+
+                headers = {}
+                async with aiohttp.ClientSession() as session:
+                    if validate_method == "bearer":
+                        headers["Authorization"] = f"Bearer {value}"
+                    elif validate_method == "bearer_refresh":
+                        # GLM 使用 refresh_token
+                        headers["Authorization"] = f"Bearer {value}"
+                    elif validate_method == "cookie_ticket":
+                        # qwen 使用 tongyi_sso_ticket cookie
+                        headers["Cookie"] = f"tongyi_sso_ticket={value}"
+                    elif validate_method == "minimax":
+                        # MiniMax 需要 user_id + token 拼接
+                        user_id = self.extracted.get("user_id")
+                        if user_id:
+                            headers["Authorization"] = f"Bearer {user_id}:{value}"
+                        else:
+                            print(f"  [WARN] MiniMax validation requires user_id, skipping")
+                            return False
+
+                    async with session.get(
+                        validate_url,
+                        headers=headers,
+                        timeout=aiohttp.ClientTimeout(total=15),
+                        ssl=certifi.where(),
+                    ) as resp:
+                        body = await resp.text()
+                        validate_field = self.cfg.get("validate_field", "")
+
+                        if resp.ok:
+                            if validate_field and validate_field in body:
+                                print(f"  [OK] Token validated (contains '{validate_field}')")
+                                return True
+                            elif len(body) > 50:
+                                print(f"  [OK] Token validated (HTTP {resp.status}, body={len(body)} chars)")
+                                return True
+                        print(f"  [WARN] Token validation: HTTP {resp.status}, body={len(body)} chars")
+            except Exception as e:
+                print(f"  [WARN] Token validation error: {e}")
+                return False
+
+        # Cookie 类验证：直接用 aiohttp 请求
+        if config_key == "cookie" and cookie_validate_url:
+            print(f"  [*] Validating cookie via API: {cookie_validate_url}")
+            try:
+                import aiohttp
+                import certifi
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        cookie_validate_url,
+                        timeout=aiohttp.ClientTimeout(total=15),
+                        ssl=certifi.where(),
+                    ) as resp:
+                        body = await resp.text()
+                        if cookie_validate_check and cookie_validate_check in body.lower():
                             print(f"  [OK] Cookie validated (contains '{cookie_validate_check}')")
                             return True
                         elif len(body) > 200:
-                            # body 较长说明有内容，不像是重定向到登录页
                             print(f"  [OK] Cookie validated (HTTP {resp.status}, body={len(body)} chars)")
                             return True
-                    print(f"  [WARN] Cookie validation: HTTP {resp.status if resp else 'N/A'}")
-                finally:
-                    await vp.close()
+                        print(f"  [WARN] Cookie validation: HTTP {resp.status}, body={len(body)} chars")
             except Exception as e:
                 print(f"  [WARN] Cookie validation error: {e}")
-                # 回退：信任提取（因为可能是网络临时故障）
-                if len(str(value)) > 80:
-                    print(f"  [i]  Falling back: trust long cookie value")
-                    return True
-            return False
-
-        if config_key in ("token",) and validate_url:
-            # Token 类验证：用 Authorization header 请求验证 URL
-            print(f"  [*] Validating token: {validate_url}")
-            try:
-                vp = await self.context.new_page()
-                try:
-                    await vp.set_extra_http_headers({
-                        "Authorization": f"Bearer {value}",
-                    })
-                    resp = await vp.goto(validate_url, timeout=15000)
-                    if resp and resp.ok:
-                        body = await resp.text()
-                        validate_field = self.cfg.get("validate_field", "")
-                        if validate_field and validate_field in body:
-                            print(f"  [OK] Token validated (contains '{validate_field}')")
-                            return True
-                        elif len(body) > 50:
-                            print(f"  [OK] Token validated (HTTP {resp.status}, body={len(body)} chars)")
-                            return True
-                    if resp:
-                        print(f"  [WARN] Token validation: HTTP {resp.status}")
-                finally:
-                    await vp.close()
-            except Exception as e:
-                print(f"  [WARN] Token validation error: {e}")
-                # 回退：信任提取
-                if len(str(value)) > 40:
-                    print(f"  [i]  Falling back: trust token value")
-                    return True
-            return False
+                return False
 
         # 无验证 URL：信任长度
+        print(f"  [i]  No validation endpoint, trusting length")
         return len(str(value)) >= (80 if config_key == "cookie" else 20)
 
     async def _try_extract(self, extractor: dict) -> Optional[str]:
@@ -793,6 +825,15 @@ class TokenExtractor:
                 except (json.JSONDecodeError, TypeError):
                     pass  # 纯字符串，直接用
 
+                # 特殊处理：user_detail_agent → realUserID
+                if key == "user_detail_agent" and value:
+                    try:
+                        ud = json.loads(value)
+                        if isinstance(ud, dict) and ud.get("realUserID"):
+                            self.extracted["user_id"] = str(ud["realUserID"])
+                    except Exception:
+                        pass
+
                 return value if value else None
 
             elif ext_type == "cookie":
@@ -807,6 +848,7 @@ class TokenExtractor:
                             return f"{cookie['name']}={value}"
                         return value
                 return None
+
             elif ext_type == "all_cookies":
                 cookies = await self.context.cookies()
                 fmt = extractor.get("format", "header_string")
@@ -819,7 +861,7 @@ class TokenExtractor:
                 return json.dumps(cookies, ensure_ascii=False)
 
             elif ext_type == "network_auth":
-                # 从已捕获的网络请求中提取指定的 header 值
+                # 从已捕获的 Authorization header 中提取
                 url_pattern = extractor.get("url_pattern", "")
                 header_key = extractor.get("header_key", "Authorization").lower()
                 header_prefix = extractor.get("header_prefix", "Bearer ")
@@ -835,20 +877,64 @@ class TokenExtractor:
                         token = val[len(header_prefix):]
                         if len(token) > 10:
                             return token
+                # 也检查 _captured_auth_headers
+                for token in self._captured_auth_headers:
+                    if len(token) > 10:
+                        return token
+                return None
+
+            elif ext_type == "network_cookie":
+                # 从已捕获的网络请求 Cookie header 中提取指定 cookie
+                url_pattern = extractor.get("url_pattern", "")
+                cookie_name = extractor.get("cookie_name", "")
+
+                # 先从 _captured_cookies 查找
+                captured = self._captured_cookies.get(cookie_name, [])
+                if captured:
+                    return captured[-1]  # 最新捕获的
+
+                # 兜底：从 _network_requests 的 Cookie header 中解析
+                for req in self._network_requests:
+                    if url_pattern and url_pattern not in req["url"]:
+                        continue
+                    cookie_header = req["headers"].get("cookie", "")
+                    if cookie_header and cookie_name in cookie_header:
+                        match = re.search(rf"{re.escape(cookie_name)}=([^;]+)", cookie_header)
+                        if match:
+                            return match.group(1)
+                return None
+
+            elif ext_type == "network_set_cookie":
+                # 从 Set-Cookie 响应头中提取指定 cookie
+                cookie_name = extractor.get("cookie_name", "")
+
+                # 先从 _captured_cookies 查找（由 capture_response 捕获）
+                # 注意 _captured_cookies 格式: { "cookie_name": "cookie_value" }
+                # 但 capture_response 中是 dict[str, str]
+                # 这里需要适配
+                captured_val = self._captured_cookies.get(cookie_name, "")
+                if captured_val and isinstance(captured_val, str):
+                    return captured_val
+
+                # 兜底：从浏览器 cookies 中查找（可能由 Set-Cookie 设置后写入）
+                if cookie_name:
+                    cookies = await self.context.cookies()
+                    for c in cookies:
+                        if c["name"] == cookie_name:
+                            return c["value"]
                 return None
 
             elif ext_type == "html":
                 pattern = extractor.get("pattern", "")
                 if pattern:
                     html = await self.page.content()
-                    import re as _re
-                    match = _re.search(pattern, html)
+                    match = re.search(pattern, html)
                     if match:
                         self.extracted[extractor.get("name", "extra")] = match.group(1)
                         return match.group(1)
                 return None
 
-        except Exception as e:
+        except Exception:
             # 提取失败继续尝试下一个
             pass
 
@@ -874,7 +960,11 @@ class TokenExtractor:
 
     @staticmethod
     def _parse_jwt_user_id(jwt_str: str) -> Optional[str]:
-        """解析 JWT，提取 user_id（尝试常见字段名）"""
+        """解析 JWT，提取 user_id（尝试常见字段名）
+
+        优先级：realUserId / real_user_id 优先（MiniMax 等需要 Real User ID），
+        其次才是 sub / id / uid 等通用字段。
+        """
         import base64
         if not jwt_str or "." not in jwt_str:
             return None
@@ -890,10 +980,11 @@ class TokenExtractor:
                 payload_b64 += "=" * padding
             payload_bytes = base64.urlsafe_b64decode(payload_b64)
             payload = json.loads(payload_bytes.decode("utf-8", errors="replace"))
-            # 尝试常见字段
+            # ★ 优先 Real User ID 字段（minimax 等）
             for key in (
-                "user_id", "userId", "uid", "sub", "id",
-                "real_user_id", "realUserId", "real_userid",
+                "realUserId", "real_user_id", "real_userid",
+                "user_id", "userId", "uid",
+                "id", "sub",
             ):
                 v = payload.get(key)
                 if v and isinstance(v, (str, int)):

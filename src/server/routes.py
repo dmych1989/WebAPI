@@ -157,34 +157,90 @@ async def chat_completions(request: ChatCompletionRequest):
 async def _stream_response(
     provider, request: ChatCompletionRequest, actual_model: str
 ):
-    """流式响应生成器"""
+    """流式响应生成器（OpenAI 严格兼容）
+
+    关键点（修复 Cherry Studio 等客户端的 "Connection closed" 错误）：
+    1. 第一个 chunk 必须是单独的 role chunk（delta: {role: "assistant"}，无 content）
+    2. 每个 chunk 的 finish_reason 在非终态时必须省略（而非 null）
+    3. 终态 chunk 用 delta: {} + finish_reason: "stop"（不带 content）
+    4. 保持稳定的 request_id/created/model 字段
+    5. 使用 \r\n 分隔（SSE 规范，部分 SDK 严格要求）
+    6. 每隔 10s 发送 ": keep-alive\r\n\r\n" 注释防超时
+    """
     request_id = f"chatcmpl-{uuid4().hex[:12]}"
     created = int(time.time())
     is_first = True
-    try:
-        async for chunk in provider.chat_completion_stream(request):
-            if chunk.content or chunk.reasoning_content:
-                yield f"data: {json.dumps(_chunk_to_openai(chunk, actual_model, request_id, created, include_role=is_first), ensure_ascii=False)}\n\n"
-                is_first = False
+    last_send_ts = time.time()
 
-        # DONE 标记
-        done = {
+    async def _send_event(payload: dict) -> str:
+        """序列化并包装成 SSE 事件，使用 \\r\\n 分隔"""
+        return f"data: {json.dumps(payload, ensure_ascii=False)}\r\n\r\n"
+
+    async def _send_keepalive():
+        """发送 SSE 注释心跳（Cherry Studio 等客户端需要）"""
+        return ": keep-alive\r\n\r\n"
+
+    def _base_chunk(delta: dict, finish_reason: Optional[str] = None) -> dict:
+        """构造基础 chunk 字典"""
+        return {
             "id": request_id,
             "object": "chat.completion.chunk",
             "created": created,
             "model": actual_model,
-            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": delta,
+                    **({"finish_reason": finish_reason} if finish_reason else {}),
+                }
+            ],
         }
-        yield f"data: {json.dumps(done, ensure_ascii=False)}\n\n"
-        yield "data: [DONE]\n\n"
+
+    try:
+        # ── 1) 先发 role-only 块（严格 OpenAI 协议） ──
+        role_chunk = _base_chunk({"role": "assistant", "content": ""})
+        yield await _send_event(role_chunk)
+        last_send_ts = time.time()
+        is_first = False
+
+        # ── 2) 主循环：转发 content 块 ──
+        async for chunk in provider.chat_completion_stream(request):
+            # 防止长流超时
+            if time.time() - last_send_ts > 10:
+                yield await _send_keepalive()
+                last_send_ts = time.time()
+
+            if chunk.content or chunk.reasoning_content:
+                delta: dict = {}
+                if chunk.content:
+                    delta["content"] = chunk.content
+                if chunk.reasoning_content:
+                    delta["reasoning_content"] = chunk.reasoning_content
+                yield await _send_event(_base_chunk(delta))
+                last_send_ts = time.time()
+
+        # ── 3) 终态块：delta: {} + finish_reason: "stop" ──
+        yield await _send_event(_base_chunk({}, finish_reason="stop"))
+
+        # ── 4) 终止标记 ──
+        yield "data: [DONE]\r\n\r\n"
 
     except Exception as e:
         logger.error(f"[Stream] Error: {traceback.format_exc()}")
-        error_chunk = {
-            "error": {"message": str(e), "type": "stream_error"}
-        }
-        yield f"data: {json.dumps(error_chunk, ensure_ascii=False)}\n\n"
-        yield "data: [DONE]\n\n"
+        # 尝试发送错误块（保持流可被客户端识别为已结束）
+        try:
+            err_payload = {
+                "id": request_id,
+                "object": "chat.completion.chunk",
+                "created": created,
+                "model": actual_model,
+                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                "error": {"message": str(e), "type": "stream_error"},
+            }
+            yield await _send_event(err_payload)
+            yield "data: [DONE]\r\n\r\n"
+        except Exception:
+            pass
 
 
 def _chunk_to_openai(
@@ -194,7 +250,7 @@ def _chunk_to_openai(
     created: Optional[int] = None,
     include_role: bool = False,
 ) -> dict:
-    """StreamChunk → OpenAI Delta Chunk"""
+    """StreamChunk → OpenAI Delta Chunk（保留兼容旧调用）"""
     delta: dict = {}
     if include_role:
         delta["role"] = "assistant"

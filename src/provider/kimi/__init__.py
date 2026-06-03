@@ -67,20 +67,9 @@ def _detect_token_type(token: str) -> str:
     return "refresh"
 
 
-def _encode_grpc_frame(data: bytes) -> bytes:
-    """gRPC-Web 帧编码: 1 byte flag + 4 bytes length + data"""
-    length = len(data)
-    return b"\x00" + struct.pack(">I", length) + data
-
-
-def _encode_varint(value: int) -> bytes:
-    """Protobuf varint 编码"""
-    result = b""
-    while value > 127:
-        result += bytes([(value & 0x7F) | 0x80])
-        value >>= 7
-    result += bytes([value & 0x7F])
-    return result
+def _resolve_kimi_scenario(model: str) -> str:
+    """根据模型名解析 Kimi scenario"""
+    return "SCENARIO_K2D6" if "k2.6" in model.lower() else "SCENARIO_K2D5"
 
 
 def _build_kimi_payload(
@@ -88,35 +77,40 @@ def _build_kimi_payload(
     content: str,
     enable_search: bool = False,
     enable_thinking: bool = False,
-) -> bytes:
+) -> dict:
     """
-    构建 Kimi gRPC-Web 请求体
+    构建 Kimi Connect JSON 请求体（参考 Chat2API-main createKimiChatPayload）
 
-    Protobuf 消息手动编码（固定结构）：
-    - field 1 (string model) → tag=0x0A
-    - field 2 (string content) → tag=0x12
-    - field 5 (bool is_search) → tag=0x28
-    - field 6 (bool use_enhance) → tag=0x30
+    Kimi 新版 API 使用 JSON 结构（非 protobuf），外层用 gRPC-Web frame 包裹 JSON。
     """
-    body = b""
+    scenario = _resolve_kimi_scenario(model)
+    return {
+        "scenario": scenario,
+        "chat_id": "",
+        "tools": [{"type": "TOOL_TYPE_SEARCH", "search": {}}] if enable_search else [],
+        "message": {
+            "parent_id": "",
+            "role": "user",
+            "blocks": [{
+                "message_id": "",
+                "text": {"content": content},
+            }],
+            "scenario": scenario,
+        },
+        "options": {
+            "thinking": enable_thinking,
+        },
+    }
 
-    # field 1: model (string, wire=2)
-    model_enc = model.encode("utf-8")
-    body += b"\x0a" + _encode_varint(len(model_enc)) + model_enc
 
-    # field 2: content (string, wire=2)
-    content_enc = content.encode("utf-8")
-    body += b"\x12" + _encode_varint(len(content_enc)) + content_enc
+def _encode_grpc_frame(payload: dict) -> bytes:
+    """gRPC-Web 帧编码（JSON 版）: 1 byte flag + 4 bytes length + JSON data
 
-    # field 5: is_search (bool, wire=0)
-    if enable_search:
-        body += b"\x28\x01"
-
-    # field 6: use_enhance / thinking (bool, wire=0)
-    if enable_thinking:
-        body += b"\x30\x01"
-
-    return body
+    参考 Chat2API-main encodeKimiGrpcFrame:
+      frameBuffer = 5 bytes header + JSON payload
+    """
+    json_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    return b"\x00" + struct.pack(">I", len(json_bytes)) + json_bytes
 
 
 # 多个已知的 refresh-token 兑换端点，按顺序尝试
@@ -405,7 +399,15 @@ class KimiProvider(BaseProvider):
     async def chat_completion_stream(
         self, request: ChatCompletionRequest
     ) -> AsyncIterator[StreamChunk]:
-        """流式对话"""
+        """流式对话
+
+        Kimi (www.kimi.com) 返回的是 gRPC-Web Connect 协议响应:
+        - 帧格式: 1 byte flag (0x00) + 4 bytes length (big-endian) + JSON payload
+        - 事件类型: heartbeat, op:set, op:append
+        - 文本事件: {"op":"append", "mask":"block.text.content", "block":{"text":{"content":"..."}}}
+        - 初始事件: {"op":"set", "mask":"block.text", "block":{"text":{"content":"..."}}}
+        - 结束事件: {"op":"set", "mask":"message.status", "message":{"status":"MESSAGE_STATUS_COMPLETED"}}
+        """
         token = await self.login()
         content, enable_search, enable_thinking = self._messages_to_content(request)
 
@@ -415,7 +417,7 @@ class KimiProvider(BaseProvider):
             f"msgs={len(request.messages)}"
         )
 
-        # 构建 gRPC-Web 请求
+        # 构建 Connect JSON 请求 + gRPC-Web frame
         payload = _build_kimi_payload(
             request.model or "Kimi-K2.6",
             content,
@@ -432,56 +434,119 @@ class KimiProvider(BaseProvider):
             data=grpc_frame,
             headers={
                 "Authorization": f"Bearer {token}",
-                "Content-Type": "application/connect+proto",
-                "Connect-Protocol-Version": "1",
+                "Content-Type": "application/connect+json",
                 **FAKE_HEADERS,
             },
         ) as resp:
             if resp.status != 200:
                 text = await resp.text()
-                # Token 过期 → 清缓存，下次重新 login
                 if resp.status == 401:
                     self._cache_token = None
                     self._cache_expires = 0
                     raise AuthError(
-                        f"Kimi API 401 — access token rejected. "
-                        f"Body: {text[:200]}"
+                        f"Kimi API 401 — access token rejected. Body: {text[:200]}"
                     )
                 raise ProviderError(
                     f"Kimi API error: HTTP {resp.status} — {text[:200]}",
                     provider="kimi",
                 )
 
-            # Connect 协议流式响应 = SSE (`data: {...}` 行)
-            # 不再使用 gRPC-Web 帧头解析（响应不带 5 字节帧头）
+            # gRPC-Web Connect 流式响应: 5-byte frame header + JSON payload
+            # Frame: 1 byte flag (0x00 = data) + 4 bytes big-endian length + payload
             buf = b""
             async for data in resp.content.iter_any():
                 if not data:
                     continue
                 buf += data
-                # 用换行切分行（容忍 data 跨 chunk）
+                # 持续解析所有完整帧
                 while True:
-                    nl = buf.find(b"\n")
-                    if nl < 0:
+                    frame_data, buf = self._consume_grpc_frame(buf)
+                    if frame_data is None:
                         break
-                    line = bytes(buf[:nl]).decode("utf-8", errors="replace")
-                    buf = buf[nl + 1:]
-                    text = self._parse_sse_line(line)
-                    if text:
-                        yield StreamChunk(
-                            content=text, model=(request.model or "kimi").strip()
-                        )
+                    for chunk in self._parse_kimi_event(frame_data, request.model):
+                        yield chunk
 
-            # 处理缓冲区最后一行（无 trailing \n）
-            if buf:
-                tail = bytes(buf).decode("utf-8", errors="replace")
-                text = self._parse_sse_line(tail)
-                if text:
-                    yield StreamChunk(
-                        content=text, model=(request.model or "kimi").strip()
-                    )
+            # 处理尾部残留
+            if len(buf) >= 5:
+                frame_data, _ = self._consume_grpc_frame(buf)
+                if frame_data is not None:
+                    for chunk in self._parse_kimi_event(frame_data, request.model):
+                        yield chunk
 
             logger.debug("[Kimi] Stream done")
+
+    @staticmethod
+    def _consume_grpc_frame(buf: bytes) -> tuple[Optional[bytes], bytes]:
+        """从 buf 头部取出一个 gRPC-Web 帧 (5 字节 header + payload)，返回 (payload, 剩余 buf)
+
+        返回 (None, buf) 表示当前 buf 不足以组成一个完整帧。
+        """
+        if len(buf) < 5:
+            return None, buf
+        # 1 byte flag + 4 bytes big-endian length
+        flag = buf[0]
+        length = struct.unpack(">I", buf[1:5])[0]
+        if flag != 0x00:
+            # 非数据帧（trailer 等），跳过
+            if len(buf) < 5 + length:
+                return None, buf
+            return b"", buf[5 + length:]
+        if len(buf) < 5 + length:
+            return None, buf
+        payload = bytes(buf[5:5 + length])
+        return payload, buf[5 + length:]
+
+    def _parse_kimi_event(
+        self, frame_data: bytes, request_model: Optional[str]
+    ) -> list[StreamChunk]:
+        """解析单个 gRPC-Web 帧 (JSON) → StreamChunk 列表"""
+        if not frame_data:
+            return []
+        actual_model = (request_model or "kimi").strip()
+        try:
+            obj = json.loads(frame_data.decode("utf-8", errors="replace"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return []
+
+        if not isinstance(obj, dict):
+            return []
+
+        # heartbeat 事件 → 跳过
+        if "heartbeat" in obj:
+            return []
+
+        op = obj.get("op")
+
+        # op:append + block.text.content → 增量文本
+        if op == "append":
+            block = obj.get("block") or {}
+            text_obj = block.get("text") if isinstance(block, dict) else None
+            if isinstance(text_obj, dict):
+                delta = text_obj.get("content")
+                if isinstance(delta, str) and delta:
+                    return [StreamChunk(content=delta, model=actual_model)]
+            return []
+
+        # op:set + block.text → 首块文本（包含 " 从前" 等首段）
+        if op == "set" and obj.get("mask") == "block.text":
+            block = obj.get("block") or {}
+            text_obj = block.get("text") if isinstance(block, dict) else None
+            if isinstance(text_obj, dict):
+                first = text_obj.get("content")
+                if isinstance(first, str) and first:
+                    return [StreamChunk(content=first, model=actual_model)]
+            return []
+
+        # 消息状态完成 → finish_reason
+        if op == "set" and obj.get("mask") == "message.status":
+            msg = obj.get("message") or {}
+            status = msg.get("status") if isinstance(msg, dict) else None
+            if status == "MESSAGE_STATUS_COMPLETED":
+                return [StreamChunk(finish_reason="stop", model=actual_model)]
+            return []
+
+        # 其它事件 (chat, message, chat.lastRequest, chat.name, ...) → 跳过
+        return []
 
     @staticmethod
     def _parse_sse_line(line: str) -> str:

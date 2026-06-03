@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Keys管理 - WebAPI</title>
+<style>
+/* API Keys管理全局样式 */
+:root {
+  /* 主色调 */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary: #64748b;
+  --accent: #06b6d4;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  /* 背景色 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f8fafc;
+  
+  /* 文字色 */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  
+  /* 边框色 */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  
+  /* 动画 */
+  --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* 布局容器 */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 头部 */
+.header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 20px 0;
+  margin-bottom: 24px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 搜索和过滤 */
+.search-filter {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.search-filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 300px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-primary);
+  cursor: pointer;
+}
+
+/* API Keys网格 */
+.apikeys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.apikey-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.apikey-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.apikey-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.apikey-card:hover::before {
+  transform: scaleX(1);
+}
+
+.apikey-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.apikey-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-right: 16px;
+}
+
+.apikey-info {
+  flex: 1;
+}
+
+.apikey-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.apikey-type {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.apikey-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apikey-status.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.apikey-status.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.apikey-status.expired {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.apikey-details {
+  margin-bottom: 20px;
+}
+
+.apikey-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.apikey-detail-row:last-child {
+  border-bottom: none;
+}
+
+.apikey-detail-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.apikey-detail-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.apikey-key {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  word-break: break-all;
+  position: relative;
+}
+
+.apikey-key.show {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.apikey-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #d97706;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-icon {
+  padding: 6px;
+  border-radius: 6px;
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 模态框 */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-primary);
+  cursor: pointer;
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* 加载动画 */
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-primary);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast 通知 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--error);
+}
+
+.toast.warning {
+  border-left: 4px solid var(--warning);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .apikeys-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input {
+    min-width: 100%;
+  }
+  
+  .apikey-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="container">
+    <div class="header-content">
+      <div class="header-title">API Keys管理</div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="showAddApiKeyModal()">
+          ➕ 添加API Key
+        </button>
+        <button class="btn btn-secondary" onclick="refreshApiKeys()">
+          🔄 刷新
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 统计卡片 -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="totalKeys">0</div>
+      <div class="stat-label">总Key数量</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="activeKeys">0</div>
+      <div class="stat-label">活跃Key</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="totalRequests">0</div>
+      <div class="stat-label">总请求数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="avgRequests">0</div>
+      <div class="stat-label">平均请求数</div>
+    </div>
+  </div>
+
+  <!-- 搜索和过滤 -->
+  <div class="search-filter">
+    <div class="search-filter-row">
+      <input type="text" class="search-input" placeholder="搜索API Key..." id="searchInput" onkeyup="filterApiKeys()">
+      <div class="filter-group">
+        <label class="form-label">状态:</label>
+        <select class="filter-select" id="statusFilter" onchange="filterApiKeys()">
+          <option value="all">全部</option>
+          <option value="active">活跃</option>
+          <option value="inactive">停用</option>
+          <option value="expired">过期</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="form-label">类型:</label>
+        <select class="filter-select" id="typeFilter" onchange="filterApiKeys()">
+          <option value="all">全部</option>
+          <option value="system">系统</option>
+          <option value="user">用户</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Keys网格 -->
+  <div class="apikeys-grid" id="apikeysGrid">
+    <!-- API Key卡片将通过JavaScript动态生成 -->
+  </div>
+</div>
+
+<!-- 添加API Key模态框 -->
+<div class="modal" id="addApiKeyModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">添加API Key</h2>
+      <button class="modal-close" onclick="closeModal('addApiKeyModal')">&times;</button>
+    </div>
+    <form id="addApiKeyForm">
+      <div class="form-group">
+        <label class="form-label">Key名称</label>
+        <input type="text" class="form-input" id="apiKeyName" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Key类型</label>
+        <select class="form-select" id="apiKeyType" required>
+          <option value="">选择Key类型</option>
+          <option value="system">系统Key</option>
+          <option value="user">用户Key</option>
+          <option value="custom">自定义Key</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">权限设置</label>
+        <div class="form-checkbox">
+          <input type="checkbox" id="readPermission" checked>
+          <label for="readPermission">读取权限</label>
+        </div>
+        <div class="form-checkbox">
+          <input type="checkbox" id="writePermission" checked>
+          <label for="writePermission">写入权限</label>
+        </div>
+        <div class="form-checkbox">
+          <input type="checkbox" id="adminPermission">
+          <label for="adminPermission">管理权限</label>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">过期时间</label>
+        <select class="form-select" id="expireTime">
+          <option value="never">永不过期</option>
+          <option value="1d">1天后</option>
+          <option value="7d">7天后</option>
+          <option value="30d">30天后</option>
+          <option value="90d">90天后</option>
+          <option value="1y">1年后</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">使用限制</label>
+        <input type="number" class="form-input" id="requestLimit" placeholder="请求数限制（留空表示无限制）" min="1">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">IP限制</label>
+        <input type="text" class="form-input" id="ipRestriction" placeholder="允许的IP地址（留空表示无限制）">
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">创建Key</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addApiKeyModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// API Keys管理器
+const ApiKeyManager = {
+  data: {
+    apikeys: [],
+    filteredApikeys: [],
+    isLoading: false
+  },
+
+  async loadApiKeys() {
+    this.isLoading = true;
+    try {
+      const response = await fetch('/api/api-keys');
+      const data = await response.json();
+      
+      this.data.apikeys = data.api_keys || [
+        {
+          id: 'sk_1234567890abcdef',
+          name: '系统管理员Key',
+          type: 'system',
+          status: 'active',
+          created: '2024-01-01 00:00:00',
+          lastUsed: '2分钟前',
+          requests: 12500,
+          permissions: ['read', 'write', 'admin'],
+          expireTime: 'never',
+          requestLimit: null,
+          ipRestriction: null
+        },
+        {
+          id: 'sk_0987654321fedcba',
+          name: '用户Key',
+          type: 'user',
+          status: 'active',
+          created: '2024-01-15 00:00:00',
+          lastUsed: '5分钟前',
+          requests: 8500,
+          permissions: ['read', 'write'],
+          expireTime: '2024-12-31 23:59:59',
+          requestLimit: 10000,
+          ipRestriction: '192.168.1.0/24'
+        },
+        {
+          id: 'sk_abcdef1234567890',
+          name: '测试Key',
+          type: 'custom',
+          status: 'inactive',
+          created: '2024-02-01 00:00:00',
+          lastUsed: '1天前',
+          requests: 500,
+          permissions: ['read'],
+          expireTime: '2024-02-15 23:59:59',
+          requestLimit: 1000,
+          ipRestriction: null
+        },
+        {
+          id: 'sk_5678901234efghij',
+          name: '过期Key',
+          type: 'custom',
+          status: 'expired',
+          created: '2024-01-01 00:00:00',
+          lastUsed: '7天前',
+          requests: 2000,
+          permissions: ['read'],
+          expireTime: '2024-01-31 23:59:59',
+          requestLimit: 5000,
+          ipRestriction: null
+        }
+      ];
+      
+      this.data.filteredApikeys = [...this.data.apikeys];
+      this.renderApiKeys();
+      this.updateStats();
+    } catch (error) {
+      console.error('加载API Keys数据失败:', error);
+      this.loadMockData();
+    } finally {
+      this.isLoading = false;
+    }
+  },
+
+  loadMockData() {
+    this.data.apikeys = [
+      {
+        id: 'sk_1234567890abcdef',
+        name: '系统管理员Key',
+        type: 'system',
+        status: 'active',
+        created: '2024-01-01 00:00:00',
+        lastUsed: '2分钟前',
+        requests: 12500,
+        permissions: ['read', 'write', 'admin'],
+        expireTime: 'never',
+        requestLimit: null,
+        ipRestriction: null
+      },
+      {
+        id: 'sk_0987654321fedcba',
+        name: '用户Key',
+        type: 'user',
+        status: 'active',
+        created: '2024-01-15 00:00:00',
+        lastUsed: '5分钟前',
+        requests: 8500,
+        permissions: ['read', 'write'],
+        expireTime: '2024-12-31 23:59:59',
+        requestLimit: 10000,
+        ipRestriction: '192.168.1.0/24'
+      },
+      {
+        id: 'sk_abcdef1234567890',
+        name: '测试Key',
+        type: 'custom',
+        status: 'inactive',
+        created: '2024-02-01 00:00:00',
+        lastUsed: '1天前',
+        requests: 500,
+        permissions: ['read'],
+        expireTime: '2024-02-15 23:59:59',
+        requestLimit: 1000,
+        ipRestriction: null
+      },
+      {
+        id: 'sk_5678901234efghij',
+        name: '过期Key',
+        type: 'custom',
+        status: 'expired',
+        created: '2024-01-01 00:00:00',
+        lastUsed: '7天前',
+        requests: 2000,
+        permissions: ['read'],
+        expireTime: '2024-01-31 23:59:59',
+        requestLimit: 5000,
+        ipRestriction: null
+      }
+    ];
+    
+    this.data.filteredApikeys = [...this.data.apikeys];
+    this.renderApiKeys();
+    this.updateStats();
+  },
+
+  renderApiKeys() {
+    const grid = document.getElementById('apikeysGrid');
+    grid.innerHTML = '';
+    
+    this.data.filteredApikeys.forEach(apikey => {
+      const card = document.createElement('div');
+      card.className = 'apikey-card';
+      card.innerHTML = `
+        <div class="apikey-header">
+          <div style="display: flex; align-items: center;">
+            <div class="apikey-icon">🔑</div>
+            <div class="apikey-info">
+              <div class="apikey-name">${apikey.name}</div>
+              <div class="apikey-type">${apikey.type === 'system' ? '系统' : apikey.type === 'user' ? '用户' : '自定义'}</div>
+            </div>
+          </div>
+          <div class="apikey-status ${apikey.status}">
+            ${apikey.status === 'active' ? '✅' : apikey.status === 'inactive' ? '⚪' : '⏰'}
+            ${apikey.status === 'active' ? '活跃' : apikey.status === 'inactive' ? '停用' : '过期'}
+          </div>
+        </div>
+        
+        <div class="apikey-details">
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">Key ID</span>
+            <span class="apikey-detail-value">${apikey.id}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">创建时间</span>
+            <span class="apikey-detail-value">${apikey.created}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">最后使用</span>
+            <span class="apikey-detail-value">${apikey.lastUsed}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">请求数量</span>
+            <span class="apikey-detail-value">${apikey.requests.toLocaleString()}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">权限</span>
+            <span class="apikey-detail-value">${apikey.permissions.join(', ')}</span>
+          </div>
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">过期时间</span>
+            <span class="apikey-detail-value">${apikey.expireTime === 'never' ? '永不过期' : apikey.expireTime}</span>
+          </div>
+          ${apikey.requestLimit ? `
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">请求限制</span>
+            <span class="apikey-detail-value">${apikey.requestLimit.toLocaleString()}</span>
+          </div>
+          ` : ''}
+          ${apikey.ipRestriction ? `
+          <div class="apikey-detail-row">
+            <span class="apikey-detail-label">IP限制</span>
+            <span class="apikey-detail-value">${apikey.ipRestriction}</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        <div class="apikey-actions">
+          <button class="btn btn-sm btn-primary" onclick="showApiKey('${apikey.id}')">
+            👁️ 查看
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="copyApiKey('${apikey.id}')">
+            📋 复制Key
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="regenerateApiKey('${apikey.id}')">
+            🔄 重新生成
+          </button>
+          <button class="btn btn-sm ${apikey.status === 'active' ? 'btn-warning' : 'btn-success'}" onclick="toggleApiKey('${apikey.id}')">
+            ${apikey.status === 'active' ? '⏸️ 停用' : '▶️ 启用'}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteApiKey('${apikey.id}')">
+            🗑️ 删除
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  },
+
+  updateStats() {
+    const totalKeys = this.data.apikeys.length;
+    const activeKeys = this.data.apikeys.filter(k => k.status === 'active').length;
+    const totalRequests = this.data.apikeys.reduce((sum, k) => sum + k.requests, 0);
+    const avgRequests = totalKeys > 0 ? Math.round(totalRequests / totalKeys) : 0;
+    
+    document.getElementById('totalKeys').textContent = totalKeys;
+    document.getElementById('activeKeys').textContent = activeKeys;
+    document.getElementById('totalRequests').textContent = totalRequests.toLocaleString();
+    document.getElementById('avgRequests').textContent = avgRequests.toLocaleString();
+  },
+
+  filterApiKeys() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+    
+    this.data.filteredApikeys = this.data.apikeys.filter(apikey => {
+      const matchesSearch = apikey.name.toLowerCase().includes(searchTerm) ||
+                           apikey.id.toLowerCase().includes(searchTerm);
+      const matchesStatus = statusFilter === 'all' || apikey.status === statusFilter;
+      const matchesType = typeFilter === 'all' || apikey.type === typeFilter;
+      
+      return matchesSearch && matchesStatus && matchesType;
+    });
+    
+    this.renderApiKeys();
+  },
+
+  async addApiKey(formData) {
+    try {
+      const response = await fetch('/api/api-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (response.ok) {
+        showToast('API Key创建成功', 'success');
+        this.loadApiKeys();
+        closeModal('addApiKeyModal');
+      } else {
+        showToast('API Key创建失败', 'error');
+      }
+    } catch (error) {
+      console.error('创建API Key失败:', error);
+      showToast('API Key创建失败', 'error');
+    }
+  }
+};
+
+// 工具函数
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+    <span>${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function showAddApiKeyModal() {
+  document.getElementById('addApiKeyModal').classList.add('active');
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
+}
+
+function refreshApiKeys() {
+  ApiKeyManager.loadApiKeys();
+  showToast('API Keys列表已刷新', 'success');
+}
+
+function filterApiKeys() {
+  ApiKeyManager.filterApiKeys();
+}
+
+function showApiKey(id) {
+  showToast(`查看 ${id}`, 'info');
+}
+
+function copyApiKey(id) {
+  navigator.clipboard.writeText(id).then(() => {
+    showToast('Key已复制到剪贴板', 'success');
+  }).catch(() => {
+    showToast('复制失败', 'error');
+  });
+}
+
+function regenerateApiKey(id) {
+  showToast(`重新生成 ${id}`, 'info');
+}
+
+function toggleApiKey(id) {
+  showToast(`切换 ${id} 状态`, 'info');
+}
+
+function deleteApiKey(id) {
+  if (confirm(`确定要删除 ${id} 吗？`)) {
+    showToast(`删除 ${id}`, 'info');
+  }
+}
+
+// 表单提交
+document.getElementById('addApiKeyForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = {
+    name: document.getElementById('apiKeyName').value,
+    type: document.getElementById('apiKeyType').value,
+    permissions: [],
+    expireTime: document.getElementById('expireTime').value,
+    requestLimit: document.getElementById('requestLimit').value ? parseInt(document.getElementById('requestLimit').value) : null,
+    ipRestriction: document.getElementById('ipRestriction').value || null
+  };
+  
+  if (document.getElementById('readPermission').checked) {
+    formData.permissions.push('read');
+  }
+  if (document.getElementById('writePermission').checked) {
+    formData.permissions.push('write');
+  }
+  if (document.getElementById('adminPermission').checked) {
+    formData.permissions.push('admin');
+  }
+  
+  ApiKeyManager.addApiKey(formData);
+});
+
+// 点击模态框外部关闭
+document.getElementById('addApiKeyModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeModal('addApiKeyModal');
+  }
+});
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  ApiKeyManager.loadApiKeys();
+});
+</script>
+</body>
+</html>

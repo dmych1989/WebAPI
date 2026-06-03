@@ -14,9 +14,10 @@ from src.provider.doubao import DoubaoProvider
 from src.provider.yuanbao import YuanbaoProvider
 from src.provider.glm import GLMProvider
 from src.provider.coze import CozeProvider
+from src.provider.mimo import MiMoProvider
 
 __all__ = [
     "DeepSeekProvider", "KimiProvider", "QwenProvider",
     "MiniMaxProvider", "DoubaoProvider", "YuanbaoProvider",
-    "GLMProvider", "CozeProvider",
+    "GLMProvider", "CozeProvider", "MiMoProvider",
 ]
