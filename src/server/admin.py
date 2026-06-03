@@ -886,6 +886,10 @@ async def oauth_validate_credentials(provider: str, body: OAuthValidateInput):
         credentials["user_id"] = body.user_id
     if body.real_user_id:
         credentials["realUserID"] = body.real_user_id
+    if body.refresh_token:
+        credentials["refresh_token"] = body.refresh_token
+    if body.chatglm_refresh_token:
+        credentials["chatglm_refresh_token"] = body.chatglm_refresh_token
     # MiMo 专用字段
     if body.service_token:
         credentials["service_token"] = body.service_token

@@ -114,36 +114,13 @@ TOKEN_EXTRACTION_CONFIGS: dict[str, TokenExtractionConfig] = {
     "glm": TokenExtractionConfig(
         login_url="https://chatglm.cn",
         token_sources=[
-            # GLM 把 refresh_token 存到 localStorage.token
-            # 同时存在 cookie chatglm_refresh_token（双保险）
-            TokenSource(type="localStorage", key="token"),
-            TokenSource(type="localStorage", key="chatglm_refresh_token"),
-            TokenSource(type="localStorage", key="refreshToken"),
+            # 对齐 Chat2API: GLM 把 refresh_token 存到名为 chatglm_refresh_token 的 cookie
+            # 该 cookie 由 Set-Cookie 头设置（可能是 HttpOnly），所以需要 webRequest.onHeadersReceived
             TokenSource(type="cookie", key="chatglm_refresh_token"),
-            # 拦截 chatglm.cn 的 Authorization 头
-            TokenSource(
-                type="networkHeader",
-                key="Authorization",
-                url_pattern="*://*.chatglm.cn/*",
-                extract_pattern="^Bearer\\s+(.+)$",
-            ),
-            TokenSource(
-                type="networkHeader",
-                key="Authorization",
-                url_pattern="*://*.bigmodel.cn/*",
-                extract_pattern="^Bearer\\s+(.+)$",
-            ),
         ],
         target_domains=[".chatglm.cn", "chatglm.cn", ".bigmodel.cn", "bigmodel.cn"],
-        # 登录成功的 URL 模式（区分于登录页 / 静态资源）
-        success_url_patterns=[
-            "chatglm.cn/main",          # 主聊天页
-            "chatglm.cn/chat",
-            "chatglm.cn/conversation",
-            "bigmodel.cn/center",
-            "bigmodel.cn/big",          # 模型广场
-            "bigmodel.cn/console",
-        ],
+        # 对齐 Chat2API: 任何 chatglm.cn 子页面都算登录
+        success_url_patterns=["chatglm.cn"],
         window_title="GLM Login",
     ),
     "yuanbao": TokenExtractionConfig(
