@@ -68,7 +68,7 @@ def integrate_improved_login():
     # 创建备份
     print("\n3. 创建备份...")
     backup_path = PROJECT_ROOT / "src" / "login" / "__init__.py.backup"
-    original_path = PROJECT_ROOT / "src" / "login" __init__.py
+    original_path = PROJECT_ROOT / "src" / "login" / "__init__.py"
     
     try:
         import shutil
